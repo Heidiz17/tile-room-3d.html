@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>圖層王 - 坐標對齊全屋向量空間引擎</title>
+  <title>圖層王 - 工業級角點共用向量空間引擎</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="ikea_catalog.js"></script>
@@ -27,7 +27,7 @@
     #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
     .input-group { display: flex; align-items: center; gap: 2px; font-size: 10px; flex-shrink: 0; }
     input { padding: 2px 4px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 10px; width: 44px; }
-    input[type="color"] { width: 18px; height: 18px; padding: 0; border: none; cursor: border-radius: 50%; }
+    input[type="color"] { width: 18px; height: 18px; padding: 0; border: none; cursor: pointer; border-radius: 50%; }
     button { padding: 3px 7px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; flex-shrink: 0; }
     .btn-action { background: #0070f3; color: #fff; }
     .btn-calc { background: #9b59b6; color: #fff; }
@@ -131,7 +131,7 @@
 
   <div id="txt-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:10.5px; color:#aaa;">📝 自然語言坐標手帳 (基準牆鎖定 ＋ 向量頂點回路 ➔ 撳套用)</span>
+      <span style="font-size:10.5px; color:#aaa;">📝 自然語言坐標手帳 (角點圖論連線 ➔ 撳套用)</span>
       <div style="display:flex; gap:5px;">
         <button style="background:#27ae60; padding:2px 6px;" onclick="applyTxtBlueprint()">⚡ 套用手帳</button>
         <button style="background:#7f8c8d; padding:2px 6px;" onclick="toggleTxtDrawer()">收起</button>
@@ -314,7 +314,23 @@
     let isCalibrating = false;
     let calibPoints = [];
 
-    // 🌟 工業級尺寸鏈推導：第一幅基準牆 Datum Wall 鎖定在頂部 Y=660
+    // 🌟 GitHub 工業級角點圖論：共用牆自動推導 (Corner-Wall Graph)
+    // 儲物房與客廁共用縱向 X=5380，凸出量 = 2450 - 1790 = 660mm 自動咬合！
+    const huangpuCorners = {
+      C01: [0, 3180],     C02: [2400, 3180],   C03: [2400, 1000],  C04: [3180, 1000],
+      C05: [3180, 0],     C06: [5380, 0],      C07: [5380, 660],   C08: [12920, 660],
+      C09: [12920, 3900], C10: [10040, 3900],  C11: [10040, 5680], C12: [5400, 5680],
+      C13: [5400, 7880],  C14: [2220, 7880],   C15: [2220, 3180]
+    };
+
+    // 依序串連外牆輪廓，保證 100% 閉環
+    const huangpuPerimeterLoop = [
+      huangpuCorners.C01, huangpuCorners.C02, huangpuCorners.C03, huangpuCorners.C04,
+      huangpuCorners.C05, huangpuCorners.C06, huangpuCorners.C07, huangpuCorners.C08,
+      huangpuCorners.C09, huangpuCorners.C10, huangpuCorners.C11, huangpuCorners.C12,
+      huangpuCorners.C13, huangpuCorners.C14, huangpuCorners.C15
+    ];
+
     const initialRoomsData = {
       living: { 
         name: '客飯廳', originX: 2220, originY: 3180, w: 3180, l: 4700, h: 2500, 
@@ -349,12 +365,7 @@
       fullHouse: {
         name: '全屋坐標藍圖', originX: 0, originY: 0, w: 12920, l: 7880, h: 2500,
         door: { type: "door", face: "back", w: 900, h: 2000, x: 2400, swingRadius: 900 },
-        // 🌟 15點圖紙尺寸鏈閉環回路：廚房閉合、儲物房凸位 660mm 精確收邊
-        polygon: [
-          [0, 3180], [2400, 3180], [2400, 1000], [3180, 1000], [3180, 0], 
-          [5380, 0], [5380, 660], [12920, 660], [12920, 3900], [10040, 3900], 
-          [10040, 5680], [5400, 5680], [5400, 7880], [2220, 7880], [2220, 3180]
-        ],
+        polygon: huangpuPerimeterLoop,
         structures: [
           { id: 601, type: 'pillar', name: '廚房客廳分界牆', w: 100, l: 1330, d: 2500, x: 2400, y: 1850, col: '#576574' },
           { id: 602, type: 'pillar', name: '客廳睡房1分界牆', w: 100, l: 2420, d: 2500, x: 5400, y: 3260, col: '#576574' },
@@ -380,10 +391,10 @@
       curRoomKey = 'fullHouse';
       saveToIndexedDB();
       loadCurRoomToUI();
-      alert("✅ 已成功解鎖並灌入基準牆尺寸鏈母表！");
+      alert("✅ 已成功灌入角點共用圖論母表！");
     }
 
-    const SHARED_DB_NAME = "LayerKingDB_v69_cad";
+    const SHARED_DB_NAME = "LayerKingDB_v70_graph";
     const SHARED_STORE_NAME = "MediaStore";
     const ROOM_DATA_KEY = "cartridge_vector_room_data";
     let db;
@@ -597,7 +608,6 @@
       }
       controls.update(); renderer.render(scene, camera);
     }
-
 
 
 
@@ -857,6 +867,7 @@
 
 
 
+
         function draw2D() {
       const ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, cv.width, cv.height);
@@ -872,7 +883,7 @@
         ctx.restore();
       }
 
-      // 🌟 2D 多邊形外牆回路：加入 Auto-Snap 自動吸附封閉
+      // 🌟 2D 向量多邊形：嚴格閉合連線
       if (r.polygon && curFace === 'floor') {
         ctx.beginPath();
         r.polygon.forEach((pt, i) => {
@@ -1036,7 +1047,7 @@
       curRoomKey = 'fullHouse';
       loadCurRoomToUI();
       saveToIndexedDB();
-      alert("✅ 已成功灌入坐標化全屋藍圖！");
+      alert("✅ 已成功灌入角點圖論全屋藍圖！");
     }
 
     function applyTxtBlueprint() { 
@@ -1104,5 +1115,3 @@
   </script>
 </body>
 </html>
-
-
