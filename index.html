@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>圖層王 - 自訂色彩空間卡帶</title>
+  <title>圖層王 - 實體防穿透空間卡帶</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
@@ -44,7 +44,6 @@
     #cam-ctrl button { background: rgba(0,0,0,0.65); color: #fff; border: 1px solid #666; font-size: 10px; padding: 3px 6px; }
     canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; }
     
-    /* 懸浮控制列（旋轉 ＋ 自訂色彩條） */
     #float-ctrl { position: absolute; bottom: 8px; right: 8px; display: none; gap: 6px; z-index: 20; background: rgba(0,0,0,0.7); padding: 5px 8px; border-radius: 8px; align-items: center; }
     #float-ctrl button { background: #e67e22; color: #fff; padding: 5px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); font-weight: bold; }
 
@@ -60,9 +59,13 @@
     .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid #3d566e; }
   </style>
 </head>
-<body>
 
-  <!-- 控制面板 -->
+
+
+
+
+  <body>
+
   <div id="header">
     <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="2150" readonly></div>
     <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2650" readonly></div>
@@ -77,7 +80,6 @@
     <button class="btn-action" onclick="reset2DView()">🔍 居中</button>
   </div>
 
-  <!-- 人類手帳 TXT 展開抽屜 -->
   <div id="txt-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <span style="font-size:11px; color:#aaa;">📝 自然語言手帳 (直接改字 ➔ 撳套用)</span>
@@ -89,19 +91,16 @@
     <textarea id="txt-area" spellcheck="false"></textarea>
   </div>
 
-  <!-- 兩大分類主選籤 -->
   <div id="cat-bar">
     <button id="cat-btn-struct" class="btn-cat" onclick="switchCategory('struct')">🏛️ 建築結構 (<span id="count-struct">0</span>)</button>
     <button id="cat-btn-item" class="btn-cat active" onclick="switchCategory('item')">🛋️ 傢俬與設備 (<span id="count-item">0</span>)</button>
     <span style="margin-left:auto; font-size:10px; color:#aaa;">單指推移 / 點選換色</span>
   </div>
 
-  <!-- 橫向滑動條目列 -->
   <div id="item-deck">
     <div id="chips-container" style="display:inline-flex; gap:6px;"></div>
   </div>
 
-  <!-- 六面視點切換列 -->
   <div id="face-tabs">
     <div class="tab-btn active" onclick="switchFace('floor')">地板 (Floor)</div>
     <div class="tab-btn" onclick="switchFace('front')">前牆 (主景牆)</div>
@@ -111,7 +110,6 @@
     <div class="tab-btn" onclick="switchFace('ceiling')">天花 (Ceiling)</div>
   </div>
 
-  <!-- 主操作區 -->
   <div id="workspace">
     <div id="pane-2d">
       <div id="face-tag" class="pane-tag">📐 當前視點: 地板 (實體防穿透中)</div>
@@ -131,16 +129,11 @@
     </div>
   </div>
 
-  <!-- 底部核算 -->
   <div id="info-bar">
     <div id="stat-text">計算中...</div>
     <button id="btn-wa" onclick="exportWhatsApp()">📲 出單</button>
   </div>
 
-
-
-
-    <!-- Modal 1: 加結構 -->
   <div id="modal-struct" class="modal">
     <div class="modal-content">
       <b>🏛️ 新增建築結構 (硬實體)</b>
@@ -162,7 +155,6 @@
     </div>
   </div>
 
-  <!-- Modal 2: 加傢俬 (含自訂色彩) -->
   <div id="modal-item" class="modal">
     <div class="modal-content">
       <b>🛋️ 新增傢俬設備</b>
@@ -199,7 +191,6 @@
     </div>
   </div>
 
-  <!-- Modal 3: 點料算料 (呎數 + 單價) -->
   <div id="modal-material" class="modal">
     <div class="modal-content">
       <b>📊 裝修工程用料詳細清算 (以實用呎數為準)</b>
@@ -225,7 +216,11 @@
     </div>
   </div>
 
-  <script>
+
+
+
+
+      <script>
     let curCategory = 'item';
     let curFace = 'floor';
     let selectedItemId = 101;
@@ -267,8 +262,7 @@
           if (xM) newDoor.x = parseFloat(xM[1]);
           newDoor.swingRadius = newDoor.w;
         } else if (line.startsWith('柱:')) {
-          const parts = line.replace('柱:', '').split(',');
-          const name = parts[0].trim();
+          const name = line.replace('柱:', '').split(',')[0].trim();
           const sz = line.match(/(\d+)\s*x\s*(\d+)/i);
           const pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/);
           const colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
@@ -293,7 +287,7 @@
           });
         } else if (line.startsWith('傢俬:')) {
           const name = line.replace('傢俬:', '').split(',')[0].trim();
-          const sz = line.match(/(\d+)\s*x\s*(\d+)\s*x\s*(\d+)/i);
+          const sz = line.match(/(\d+)\s*x\s*(\d+)/i);
           const pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/);
           const colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
           let face = 'floor';
@@ -307,7 +301,7 @@
             const defCol = name.includes('電掣') ? '#e74c3c' : (face === 'ceiling' ? '#00d2d3' : '#d4a373');
             newItems.push({
               id: Date.now() + idx, name: name, face: face,
-              w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: parseFloat(sz[3] || 400),
+              w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: 400,
               x: parseFloat(pos[1]), y: parseFloat(pos[2]), rot: 0,
               col: colM ? colM[1] : defCol
             });
@@ -324,7 +318,42 @@
       if (items.length) selectedItemId = items[0].id;
     }
 
-    // Three.js 引擎
+    function syncToTxtArea() {
+      const W = document.getElementById('rm-w').value;
+      const L = document.getElementById('rm-l').value;
+      const H = document.getElementById('rm-h').value;
+      let txt = `房型: ${W} x ${L} x ${H}\n門口: 闊 ${roomDoor.w}, 距左邊 ${roomDoor.x}, 裝喺 後牆\n\n# 建築結構 (不可改動)\n`;
+      structures.forEach(s => {
+        if (s.type === 'pillar') txt += `柱: ${s.name}, ${s.w} x ${s.l}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#576574'}\n`;
+        else txt += `樑: ${s.name}, 闊 ${s.w}, 深 ${s.l}, 吊 ${s.d}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#7f8c8d'}\n`;
+      });
+      txt += `\n# IKEA / 淘寶傢俬設備\n`;
+      const faceMap = { floor:'地板', front:'前牆', back:'後牆', left:'左牆', right:'右牆', ceiling:'天花' };
+      items.forEach(i => {
+        txt += `傢俬: ${i.name}, ${i.w} x ${i.l} x ${i.h}, 擺喺 ${i.x}, ${i.y}, ${faceMap[i.face]||'地板'}, 色彩 ${i.col||'#d4a373'}\n`;
+      });
+      document.getElementById('txt-area').value = txt;
+    }
+
+    function toggleTxtDrawer() {
+      const d = document.getElementById('txt-drawer');
+      d.style.display = d.style.display === 'flex' ? 'none' : 'flex';
+      if (d.style.display === 'flex') syncToTxtArea();
+    }
+
+    function applyTxtBlueprint() {
+      parseTxtBlueprint(document.getElementById('txt-area').value);
+      updateAll();
+      alert("✅ 已成功根據人類手帳更新全屋！");
+    }
+
+    function newBlankRoom() {
+      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
+      document.getElementById('txt-area').value = blankTxt;
+      parseTxtBlueprint(blankTxt);
+      updateAll();
+    }
+
     const container3D = document.getElementById('pane-3d');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x181818);
@@ -358,7 +387,7 @@
 
 
 
-        function applyItemTpl() {
+            function applyItemTpl() {
       const v = document.getElementById('item-tpl').value;
       if (v === 'ikea-malm') {
         document.getElementById('it-name').value = "IKEA Malm 雙人床"; document.getElementById('it-face').value = "floor";
@@ -512,7 +541,10 @@
       return { x: Math.max(0, Math.round(resX)), y: Math.max(0, Math.round(resY)) };
     }
 
-    const cv = document.getElementById('cv-2d');
+
+
+
+            const cv = document.getElementById('cv-2d');
     let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
     
     cv.addEventListener('pointerdown', e => {
@@ -752,452 +784,18 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
     }
 
-    function newBlankRoom() {
-      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
-      document.getElementById('txt-area').value = blankTxt;
-      parseTxtBlueprint(blankTxt);
-      updateAll();
-    }
-
-        function toggleTxtDrawer() {
-      const d = document.getElementById('txt-drawer');
-      d.style.display = d.style.display === 'flex' ? 'none' : 'flex';
-      if (d.style.display === 'flex') syncToTxtArea();
-    }
-
-    function applyTxtBlueprint() {
-      parseTxtBlueprint(document.getElementById('txt-area').value);
-      updateAll();
-      alert("✅ 已成功根據人類手帳更新全屋！");
-    }
-
-    function newBlankRoom() {
-      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
-      document.getElementById('txt-area').value = blankTxt;
-      parseTxtBlueprint(blankTxt);
-      updateAll();
-    }
-
-    // Three.js 引擎初始化
-    const container3D = document.getElementById('pane-3d');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x181818);
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container3D.appendChild(renderer.domElement);
-
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-    const dLight = new THREE.DirectionalLight(0xffffff, 0.55);
-    dLight.position.set(6, 12, 8);
-    scene.add(dLight);
-    let roomGroup = new THREE.Group();
-    scene.add(roomGroup);
-
-    function resizeRenderer() {
-      const w = container3D.clientWidth, h = container3D.clientHeight;
-      if (!w || !h) return;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function applyItemTpl() {
-      const v = document.getElementById('item-tpl').value;
-      if (v === 'ikea-malm') {
-        document.getElementById('it-name').value = "IKEA Malm 雙人床"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 1560; document.getElementById('it-l').value = 2090; document.getElementById('it-h').value = 380;
-      } else if (v === 'ikea-billy') {
-        document.getElementById('it-name').value = "IKEA Billy 書櫃"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 800; document.getElementById('it-l').value = 280; document.getElementById('it-h').value = 2020;
-      } else if (v === 'ikea-kallax') {
-        document.getElementById('it-name').value = "IKEA Kallax 四格架"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 770; document.getElementById('it-l').value = 390; document.getElementById('it-h').value = 770;
-      } else if (v === 'ikea-pax') {
-        document.getElementById('it-name').value = "IKEA Pax 趟門衣櫃"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 1500; document.getElementById('it-l').value = 660; document.getElementById('it-h').value = 2360;
-      } else if (v === 'ceiling-light') {
-        document.getElementById('it-name').value = "吸頂風扇燈"; document.getElementById('it-face').value = "ceiling";
-        document.getElementById('it-w').value = 500; document.getElementById('it-l').value = 500; document.getElementById('it-h').value = 250;
-      } else if (v === 'socket') {
-        document.getElementById('it-name').value = "13A雙位電掣"; document.getElementById('it-face').value = "front";
-        document.getElementById('it-w').value = 146; document.getElementById('it-l').value = 25; document.getElementById('it-h').value = 86;
-      }
-    }
-
-    function addStructureManual() {
-      structures.push({
-        id: Date.now(),
-        type: document.getElementById('st-type').value,
-        name: document.getElementById('st-name').value,
-        w: parseFloat(document.getElementById('st-w').value) || 350,
-        l: parseFloat(document.getElementById('st-l').value) || 350,
-        d: parseFloat(document.getElementById('st-d').value) || 350,
-        x: parseFloat(document.getElementById('st-x').value) || 0,
-        y: parseFloat(document.getElementById('st-y').value) || 0
-      });
-      closeModal('modal-struct');
-      switchCategory('struct');
-      updateAll();
-    }
-
-    function addItemManual() {
-      const fc = document.getElementById('it-face').value;
-      const isSocket = document.getElementById('it-name').value.includes('電掣');
-      const newItem = {
-        id: Date.now(),
-        name: document.getElementById('it-name').value,
-        face: fc,
-        w: parseFloat(document.getElementById('it-w').value) || 1000,
-        l: parseFloat(document.getElementById('it-l').value) || 1000,
-        h: parseFloat(document.getElementById('it-h').value) || 400,
-        x: 400, y: 400, rot: 0,
-        col: isSocket ? 0xe74c3c : (fc === 'ceiling' ? 0x00d2d3 : 0x8c7ae6)
-      };
-      const validated = resolveCollision(newItem, newItem.x, newItem.y);
-      newItem.x = validated.x; newItem.y = validated.y;
-      items.push(newItem);
-      selectedItemId = newItem.id;
-      closeModal('modal-item');
-      switchCategory('item');
-      if (curFace !== fc) switchFace(fc);
-      updateAll();
-    }
-
-    function switchCategory(cat) {
-      curCategory = cat;
-      document.getElementById('cat-btn-struct').classList.toggle('active', cat === 'struct');
-      document.getElementById('cat-btn-item').classList.toggle('active', cat === 'item');
-      renderChips();
-    }
-
-    function switchFace(face) {
-      curFace = face;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
-      const names = { floor: "地板 (Floor)", front: "前牆 (主景牆)", back: "後牆 (門口牆)", left: "左牆", right: "右牆", ceiling: "天花 (Ceiling)" };
-      document.getElementById('face-tag').innerText = `📐 當前視點: ${names[face]} (實體防穿透中)`;
-      reset2DView();
-      updateAll();
-    }
-
-    function set3DCameraMode(mode) {
-      const W = parseFloat(document.getElementById('rm-w').value)/1000;
-      const L = parseFloat(document.getElementById('rm-l').value)/1000;
-      const H = parseFloat(document.getElementById('rm-h').value)/1000;
-      if (mode === 'corner') { camera.position.set(W*1.2, H*1.3, L*1.4); controls.target.set(0, H/3, 0); }
-      else if (mode === 'door') { camera.position.set(0, H*0.8, -L*1.1); controls.target.set(0, H/2, L/2); }
-      else if (mode === 'ceiling') { camera.position.set(0, 0.4, 0); controls.target.set(0, H, 0); }
-      controls.update();
-    }
-
-    function rotateSelectedItem() {
-      const it = items.find(i => i.id === selectedItemId);
-      if (!it) return;
-      const oldW = it.w, oldL = it.l;
-      it.w = oldL; it.l = oldW;
-      const validated = resolveCollision(it, it.x, it.y);
-      it.x = validated.x; it.y = validated.y;
-      it.rot = (it.rot + 90) % 360;
-      updateAll();
-    }
-
-    function reset2DView() { viewZoom = 1.0; viewPanX = 0; viewPanY = 0; draw2D(); }
-
-    // 核心物理防穿透與防重疊算法（硬碰阻擋）
-    function resolveCollision(it, targetX, targetY) {
-      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
-      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
-      let resX = Math.max(0, Math.min(targetX, W - it.w));
-      let resY = Math.max(0, Math.min(targetY, L - it.l));
-
-      if (it.face === 'floor') {
-        structures.filter(s => s.type === 'pillar').forEach(p => {
-          if (resX < p.x + p.w && resX + it.w > p.x && resY < p.y + p.l && resY + it.l > p.y) {
-            const dL = p.x - (resX + it.w), dR = p.x + p.w - resX, dT = p.y - (resY + it.l), dB = p.y + p.l - resY;
-            const minA = Math.min(Math.abs(dL), Math.abs(dR), Math.abs(dT), Math.abs(dB));
-            if (minA === Math.abs(dR)) resX = p.x + p.w;
-            else if (minA === Math.abs(dL)) resX = p.x - it.w;
-            else if (minA === Math.abs(dB)) resY = p.y + p.l;
-            else if (minA === Math.abs(dT)) resY = p.y - it.l;
-          }
-        });
-
-        const doorLeft = roomDoor.x, doorRight = roomDoor.x + roomDoor.w;
-        const doorTop = L - roomDoor.swingRadius;
-        if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) {
-          resY = doorTop - it.l;
-        }
-
-        items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
-          if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
-            const dL = other.x - (resX + it.w), dR = other.x + other.w - resX;
-            const dT = other.y - (resY + it.l), dB = other.y + other.l - resY;
-            const minA = Math.min(Math.abs(dL), Math.abs(dR), Math.abs(dT), Math.abs(dB));
-            if (minA === Math.abs(dR)) resX = other.x + other.w;
-            else if (minA === Math.abs(dL)) resX = other.x - it.w;
-            else if (minA === Math.abs(dB)) resY = other.y + other.l;
-            else if (minA === Math.abs(dT)) resY = other.y - it.l;
-          }
-        });
-      }
-      return { x: Math.max(0, Math.round(resX)), y: Math.max(0, Math.round(resY)) };
-    }
-
-
-
-
-        const cv = document.getElementById('cv-2d');
-    let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
-    
-    cv.addEventListener('pointerdown', e => {
-      const rect = cv.getBoundingClientRect();
-      const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
-      const hit = getHitItem(clickX, clickY);
-      if (hit) {
-        selectedItemId = hit.id;
-        isDragging = true;
-        dragStartX = clickX; dragStartY = clickY;
-        itemOrigX = hit.x; itemOrigY = hit.y;
-        document.getElementById('float-ctrl').style.display = 'flex';
-      } else {
-        selectedItemId = null;
-        document.getElementById('float-ctrl').style.display = 'none';
-      }
-      updateAll();
-    });
-
-    window.addEventListener('pointermove', e => {
-      if (!isDragging || !selectedItemId) return;
-      const rect = cv.getBoundingClientRect();
-      const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
-      const it = items.find(i => i.id === selectedItemId);
-      if (it) {
-        const sc = getScale();
-        const targetX = itemOrigX + (curX - dragStartX) / sc;
-        const targetY = itemOrigY + (curY - dragStartY) / sc;
-        const resolved = resolveCollision(it, targetX, targetY);
-        it.x = resolved.x;
-        it.y = resolved.y;
-        updateAll();
-      }
-    });
-
-    window.addEventListener('pointerup', () => { isDragging = false; });
-    cv.addEventListener('wheel', e => {
-      e.preventDefault();
-      viewZoom = Math.min(Math.max(0.6, viewZoom - e.deltaY * 0.001), 4.0);
-      draw2D();
-    }, { passive: false });
-
-    function getScale() {
-      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
-      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
-      return (240 / Math.max(W, L)) * viewZoom;
-    }
-
-    function getHitItem(cx, cy) {
-      const sc = getScale();
-      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
-      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
-      const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
-      return items.find(it => {
-        if (it.face !== curFace) return false;
-        const rx = ox + it.x * sc, ry = oy + it.y * sc, rw = it.w * sc, rh = it.l * sc;
-        return cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh;
-      });
-    }
-
-    function updateAll() {
-      calcAllMaterials();
-      renderChips();
-      draw2D();
-      draw3D();
-    }
-
-    function calcAllMaterials() {
-      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
-      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
-      const H = parseFloat(document.getElementById('rm-h').value) || 2600;
-
-      const rawFloorM2 = (W * L) / 1000000;
-      let pillarAreaM2 = 0;
-      structures.filter(s => s.type === 'pillar').forEach(p => { pillarAreaM2 += (p.w * p.l) / 1000000; });
-      const netFloorM2 = Math.max(0, rawFloorM2 - pillarAreaM2);
-      const netFloorSqft = (netFloorM2 * 10.764);
-      const orderFloorSqft = (netFloorSqft * 1.1);
-
-      const fPrice = parseFloat(document.getElementById('inp-floor-price')?.value) || 35;
-      const floorTotalCost = Math.round(orderFloorSqft * fPrice);
-
-      const totalWallM2 = ((W + L) * 2 * H) / 1000000;
-      const doorM2 = (roomDoor.w * roomDoor.h) / 1000000;
-      const netPaintM2 = Math.max(0, totalWallM2 - doorM2);
-      const netPaintSqft = (netPaintM2 * 10.764);
-      const pPrice = parseFloat(document.getElementById('inp-paint-price')?.value) || 22;
-      const paintTotalCost = Math.round(netPaintSqft * pPrice);
-      const volM3 = ((W * L * H) / 1000000000).toFixed(1);
-
-      document.getElementById('stat-text').innerHTML = 
-        `實鋪：<b>${netFloorSqft.toFixed(1)}</b>呎 (備料<b>${orderFloorSqft.toFixed(1)}</b>呎) | 地板約 <b>HK$${floorTotalCost}</b> | 油漆約 <b>HK$${paintTotalCost}</b>`;
-
-      document.getElementById('mat-floor-sqft').innerText = `${netFloorSqft.toFixed(1)} 呎 (${netFloorM2.toFixed(2)} ㎡)`;
-      document.getElementById('mat-pillar-sub').innerText = `- ${(pillarAreaM2 * 10.764).toFixed(1)} 呎`;
-      document.getElementById('mat-floor-order').innerText = `${orderFloorSqft.toFixed(1)} 呎`;
-      document.getElementById('mat-floor-cost').innerText = `HK$ ${floorTotalCost.toLocaleString()}`;
-      document.getElementById('mat-paint-sqft').innerText = `${netPaintSqft.toFixed(1)} 呎 (${netPaintM2.toFixed(2)} ㎡)`;
-      document.getElementById('mat-paint-cost').innerText = `HK$ ${paintTotalCost.toLocaleString()}`;
-      document.getElementById('mat-vol').innerText = `${volM3} 立方米`;
-    }
-
-    function renderChips() {
-      document.getElementById('count-struct').innerText = structures.length + 1; // 連門口
-      document.getElementById('count-item').innerText = items.length;
-
-      const cont = document.getElementById('chips-container');
-      cont.innerHTML = '';
-      if (curCategory === 'struct') {
-        cont.innerHTML += `<div class="chip" style="border-color:#f39c12;">🚪 房門 (後牆)</div>`;
-        structures.forEach(s => {
-          cont.innerHTML += `<div class="chip" style="border-color:${s.type==='pillar'?'#e84118':'#e67e22'};">🏛️ ${s.name} <span class="del" onclick="removeStructure(${s.id})">×</span></div>`;
-        });
-      } else {
-        items.forEach(i => {
-          const isSel = i.id === selectedItemId;
-          cont.innerHTML += `<div class="chip ${isSel?'active':''}" onclick="selectItemFromChip(${i.id})">🛋️ ${i.name} (${i.face}) <span class="del" onclick="removeItem(${i.id})">×</span></div>`;
-        });
-      }
-    }
-
-    function selectItemFromChip(id) {
-      selectedItemId = id;
-      const it = items.find(i => i.id === id);
-      if (it && it.face !== curFace) { switchFace(it.face); }
-      else { 
-        document.getElementById('float-ctrl').style.display = 'flex';
-        updateAll(); 
-      }
-    }
-
-    function removeStructure(id) { structures = structures.filter(s => s.id !== id); updateAll(); }
-    function removeItem(id) { items = items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; updateAll(); }
-
-    function draw2D() {
-      const ctx = cv.getContext('2d');
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
-      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
-      const sc = getScale();
-      const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
-
-      ctx.fillStyle = '#333'; ctx.fillRect(ox, oy, W * sc, L * sc);
-      ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, W * sc, L * sc);
-
-      if (curFace === 'floor') {
-        const doorX = ox + roomDoor.x * sc, doorY = oy + L * sc, doorW = roomDoor.w * sc;
-        ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(doorX, doorY); ctx.lineTo(doorX, doorY - doorW); ctx.stroke();
-        ctx.setLineDash([4, 4]); ctx.beginPath();
-        ctx.arc(doorX, doorY, doorW, -Math.PI/2, 0); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = '#f1c40f'; ctx.font = '9px sans-serif'; ctx.fillText('🚪 開門弧線 (阻擋區)', doorX + 8, doorY - 8);
-      }
-
-      if (curFace === 'floor' || curFace === 'ceiling') {
-        structures.forEach(s => {
-          ctx.fillStyle = s.type === 'pillar' ? '#e84118' : 'rgba(230, 126, 34, 0.7)';
-          ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
-        });
-      }
-
-      items.filter(i => i.face === curFace).forEach(it => {
-        const isSel = it.id === selectedItemId;
-        ctx.fillStyle = it.name.includes('電掣') ? '#e74c3c' : (isSel ? '#0984e3' : 'rgba(140,122,230,0.85)');
-        ctx.fillRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
-        ctx.strokeStyle = isSel ? '#00ffcc' : '#ffffff';
-        ctx.lineWidth = isSel ? 2 : 1;
-        ctx.strokeRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
-        ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif';
-        ctx.fillText(it.name, ox + it.x * sc + 2, oy + it.y * sc + 10);
-      });
-    }
-
-    function draw3D() {
-      while(roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
-      const W = parseFloat(document.getElementById('rm-w').value)/1000;
-      const L = parseFloat(document.getElementById('rm-l').value)/1000;
-      const H = parseFloat(document.getElementById('rm-h').value)/1000;
-      
-      const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: 0x555 }));
-      fl.rotation.x = -Math.PI / 2; roomGroup.add(fl);
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0xefede6, roughness: 0.8 });
-
-      const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
-      fWall.position.set(0, H/2, -L/2); roomGroup.add(fWall);
-      const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
-      lWall.position.set(-W/2, H/2, 0); roomGroup.add(lWall);
-
-      const dw = roomDoor.w/1000, dh = roomDoor.h/1000, dx = roomDoor.x/1000;
-      if (dx > 0) {
-        const ldw = new THREE.Mesh(new THREE.BoxGeometry(dx, H, 0.05), wallMat);
-        ldw.position.set(-W/2 + dx/2, H/2, L/2); roomGroup.add(ldw);
-      }
-      const tdw = new THREE.Mesh(new THREE.BoxGeometry(dw, H - dh, 0.05), wallMat);
-      tdw.position.set(-W/2 + dx + dw/2, dh + (H - dh)/2, L/2); roomGroup.add(tdw);
-      const rightW = W - (dx + dw);
-      if (rightW > 0) {
-        const rdw = new THREE.Mesh(new THREE.BoxGeometry(rightW, H, 0.05), wallMat);
-        rdw.position.set(W/2 - rightW/2, H/2, L/2); roomGroup.add(rdw);
-      }
-
-      structures.forEach(s => {
-        const sw = s.w/1000, sl = s.l/1000;
-        if (s.type === 'pillar') {
-          const colMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, H, sl), new THREE.MeshStandardMaterial({ color: 0x576574 }));
-          colMesh.position.set(-W/2 + (s.x/1000) + sw/2, H/2, -L/2 + (s.y/1000) + sl/2);
-          roomGroup.add(colMesh);
-        } else if (s.type === 'beam') {
-          const sd = (s.d || 350)/1000;
-          const beamMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), new THREE.MeshStandardMaterial({ color: 0x7f8c8d }));
-          beamMesh.position.set(-W/2 + (s.x/1000) + sw/2, H - sd/2, -L/2 + (s.y/1000) + sl/2);
-          roomGroup.add(beamMesh);
-        }
-      });
-
-      items.forEach(it => {
-        const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
-        let px = -W/2 + (it.x/1000) + iw/2, py = ih/2, pz = -L/2 + (it.y/1000) + il/2;
-        if (it.face === 'front') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = -L/2 + 0.05; }
-        else if (it.face === 'ceiling') { py = H - ih/2; }
-        const msh = new THREE.Mesh(new THREE.BoxGeometry(iw, ih, il), new THREE.MeshStandardMaterial({ color: it.col || 0x8c7ae6 }));
-        msh.position.set(px, py, pz);
-        roomGroup.add(msh);
-      });
-      resizeRenderer();
-    }
-
-    function exportWhatsApp() {
-      const stat = document.getElementById('stat-text').innerText;
-      const msg = `【圖層王香港房型報價單】\n${stat}\n傢俬清單：\n${items.map(i => `- ${i.name} (${i.face})`).join('\n')}`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
-    }
-
     window.onload = () => {
       document.getElementById('txt-area').value = defaultTxtBlueprint;
       parseTxtBlueprint(defaultTxtBlueprint);
       resizeRenderer();
       updateAll();
-      (function anim(){ requestAnimationFrame(anim); controls.update(); renderer.render(scene, camera); })();
+      (function anim() {
+        requestAnimationFrame(anim);
+        controls.update();
+        renderer.render(scene, camera);
+      })();
     };
     window.onresize = resizeRenderer;
   </script>
 </body>
 </html>
-
-                              
