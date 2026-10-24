@@ -18,11 +18,12 @@
     .mode-btn-group { display: flex; gap: 3px; margin-left: auto; }
     .btn-mode { background: #242c3d; color: #bbb; border: 1px solid #3b4674; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
     .btn-mode.active { background: #0070f3; color: #fff; border-color: #00ffcc; }
-    .btn-mode.combine-active { background: #8e44ad; color: #fff; border-color: #f1c40f; box-shadow: 0 0 6px rgba(241,196,15,0.4); }
 
+    /* 房間導航列：加入第 5 個「🌐 全屋藍圖」Tab！ */
     #room-bar { padding: 3px 8px; background: #141822; display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
     .room-tab { background: #202636; color: #8892b0; padding: 3px 8px; border-radius: 10px; font-size: 10px; cursor: pointer; border: 1px solid #2d3748; flex-shrink: 0; }
     .room-tab.active { background: #0070f3; color: #fff; font-weight: 900; border-color: #00ffcc; box-shadow: 0 0 6px rgba(0,255,204,0.3); }
+    .room-tab.full-active { background: #8e44ad; color: #fff; font-weight: 900; border-color: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.4); }
 
     #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
     .input-group { display: flex; align-items: center; gap: 2px; font-size: 10px; flex-shrink: 0; }
@@ -91,18 +92,20 @@
       <input type="text" id="p-floor" value="23" placeholder="樓" style="width:26px;" onchange="saveProjectMeta()">
       <input type="text" id="p-unit" value="室" placeholder="室" style="width:26px;" onchange="saveProjectMeta()">
       
+      <!-- 頂部只保留極速切換：設計工作區 vs 全屋報價單 -->
       <div class="mode-btn-group">
-        <button id="btn-mode-edit" class="btn-mode active" onclick="switchMainViewMode('edit')">🛠️ 分房微操</button>
-        <button id="btn-mode-combine" class="btn-mode" onclick="switchMainViewMode('combine')">🌐 全屋 3D 合體</button>
+        <button id="btn-mode-edit" class="btn-mode active" onclick="switchMainViewMode('edit')">🛠️ 空間設計</button>
         <button id="btn-mode-report" class="btn-mode" onclick="switchMainViewMode('report')">📊 全屋報價</button>
       </div>
     </div>
 
+    <!-- 空間選擇列：直接納入「🌐 全屋藍圖」！一按秒到，絕無黑屏！ -->
     <div id="room-bar">
-      <div class="room-tab active" onclick="switchRoom('living')">🛋️ 客飯廳 (3.9x2.9m)</div>
-      <div class="room-tab" onclick="switchRoom('masterBed')">🛏️ 大睡房 (2.8x4.5m)</div>
-      <div class="room-tab" onclick="switchRoom('kitchen')">🍳 廚房 (1.5x1.5m)</div>
-      <div class="room-tab" onclick="switchRoom('bathroom')">🚿 浴室 (1.0x1.5m)</div>
+      <div class="room-tab active" onclick="switchRoom('living')">🛋️ 客飯廳</div>
+      <div class="room-tab" onclick="switchRoom('masterBed')">🛏️ 大睡房</div>
+      <div class="room-tab" onclick="switchRoom('kitchen')">🍳 廚房</div>
+      <div class="room-tab" onclick="switchRoom('bathroom')">🚿 浴室</div>
+      <div class="room-tab" style="border-color:#ffd700;" onclick="switchRoom('fullHouse')">🌐 全屋藍圖 (6.9x4.5m)</div>
     </div>
   </div>
 
@@ -196,7 +199,6 @@
     <button id="btn-wa" onclick="exportWhatsApp()">📲 出單</button>
   </div>
 
-  <!-- Modal 1: 加結構 -->
   <div id="modal-struct" class="modal">
     <div class="modal-content">
       <b>🏛️ 新增建築結構 (硬實體)</b>
@@ -218,7 +220,6 @@
     </div>
   </div>
 
-  <!-- Modal 2: 加傢俬 -->
   <div id="modal-item" class="modal">
     <div class="modal-content">
       <b>🛋️ 新增傢俬設備 (全屋卡帶庫)</b>
@@ -258,7 +259,6 @@
     </div>
   </div>
 
-  <!-- Modal 3: 改尺寸 -->
   <div id="modal-edit-dim" class="modal">
     <div class="modal-content">
       <b>✏️ 自由自訂傢俬尺寸 (毫米 mm)</b>
@@ -272,7 +272,6 @@
     </div>
   </div>
 
-  <!-- Modal 4: 點料算料 -->
   <div id="modal-material" class="modal">
     <div class="modal-content">
       <b>📊 裝修工程用料詳細清算 (以實用呎數為準)</b>
@@ -313,31 +312,39 @@
     let projectMeta = { estate: '彩園邨', block: '彩湖樓2', floor: '23', unit: '室' };
     let curRoomKey = 'living';
 
-    // 嚴格依照真實 Floor Plan C4439 (2376mm 樓底) 座標位移建立四個分區[span_3](start_span)[span_3](end_span)
+    // 🌟 在 rooms 數據中直接加入全屋大藍圖！零模式切換，零黑屏！
     const initialRoomsData = {
       living: { 
         name: '客飯廳', w: 3970, l: 2920, h: 2376, 
         door: { face: "left", w: 800, h: 2000, x: 1920, swingRadius: 800 }, 
-        worldOffset: { x: 0, z: 1600 }, // 位於全屋左下[span_4](start_span)[span_4](end_span)
         structures: [], items: [] 
       },
       masterBed: { 
         name: '大睡房', w: 2830, l: 4520, h: 2376, 
-        door: { face: "left", w: 2300, h: 2376, x: 0, swingRadius: 0 }, // 2300mm 開放式無門扇[span_5](start_span)[span_5](end_span)
-        worldOffset: { x: 3970, z: 0 }, // 位於全屋右側[span_6](start_span)[span_6](end_span)
+        door: { face: "left", w: 2300, h: 2376, x: 0, swingRadius: 0 }, 
         structures: [], items: [] 
       },
       kitchen: { 
         name: '廚房', w: 1510, l: 1500, h: 2376, 
         door: { face: "back", w: 750, h: 2000, x: 0, swingRadius: 750 }, 
-        worldOffset: { x: 2460, z: 0 }, // 位於全屋左上方走廊右邊[span_7](start_span)[span_7](end_span)
         structures: [], items: [] 
       },
       bathroom: { 
         name: '浴室', w: 1020, l: 1500, h: 2376, 
         door: { face: "back", w: 690, h: 2000, x: 150, swingRadius: 690 }, 
-        worldOffset: { x: 0, z: 0 }, // 位於全屋左上角[span_8](start_span)[span_8](end_span)
         structures: [], items: [] 
+      },
+      fullHouse: {
+        name: '全屋藍圖', w: 6900, l: 4520, h: 2376,
+        door: { face: "left", w: 800, h: 2000, x: 1920, swingRadius: 800 },
+        structures: [
+          { id: 201, type: 'pillar', name: '廚廁橫隔牆', w: 3970, l: 80, d: 2376, x: 0, y: 1500, col: '#576574' },
+          { id: 202, type: 'pillar', name: '浴室縱隔牆', w: 80, l: 1500, d: 2376, x: 1020, y: 0, col: '#576574' },
+          { id: 203, type: 'pillar', name: '廚房縱隔牆', w: 80, l: 1500, d: 2376, x: 2460, y: 0, col: '#576574' },
+          { id: 204, type: 'pillar', name: '客房短隔牆', w: 80, l: 700, d: 2376, x: 3970, y: 3820, col: '#576574' },
+          { id: 205, type: 'beam', name: '全屋通風頂陣', w: 6900, l: 300, d: 300, x: 0, y: 0, col: '#7f8c8d' }
+        ],
+        items: []
       }
     };
     let rooms = JSON.parse(JSON.stringify(initialRoomsData));
@@ -396,10 +403,10 @@
       saveToIndexedDB();
     }
 
+    // 簡潔流暢模式切換：空間設計工作區 vs 全屋工程報價長卷
     function switchMainViewMode(mode) {
       curMainMode = mode;
       document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
-      document.getElementById('btn-mode-combine').className = (mode === 'combine') ? 'btn-mode combine-active' : 'btn-mode';
       document.getElementById('btn-mode-report').classList.toggle('active', mode === 'report');
 
       const ws = document.getElementById('workspace');
@@ -408,37 +415,28 @@
       const cb = document.getElementById('cat-bar');
       const idck = document.getElementById('item-deck');
       const ftabs = document.getElementById('face-tabs');
-      const p2d = document.getElementById('pane-2d');
-      const camCtrl = document.getElementById('cam-ctrl');
 
       if (mode === 'edit') {
         ws.style.display = 'flex'; rep.style.display = 'none';
         hdr.style.display = 'flex'; cb.style.display = 'flex'; idck.style.display = 'flex'; ftabs.style.display = 'flex';
-        p2d.style.display = 'flex'; camCtrl.style.display = 'flex';
-      } else if (mode === 'combine') {
-        ws.style.display = 'flex'; rep.style.display = 'none';
-        hdr.style.display = 'none'; cb.style.display = 'none'; idck.style.display = 'none'; ftabs.style.display = 'none';
-        p2d.style.display = 'none'; camCtrl.style.display = 'none';
+        resizeRenderer();
+        set3DCameraMode(curViewMode);
       } else if (mode === 'report') {
         ws.style.display = 'none'; rep.style.display = 'flex';
         hdr.style.display = 'none'; cb.style.display = 'none'; idck.style.display = 'none'; ftabs.style.display = 'none';
         renderReportPage();
-        return;
       }
-      
-      setTimeout(() => {
-        resizeRenderer();
-        if (mode === 'edit') set3DCameraMode(curViewMode);
-        else draw3DUnified();
-      }, 50);
       updateAll();
     }
 
     function switchRoom(key) {
       curRoomKey = key;
-      document.querySelectorAll('.room-tab').forEach((t, i) => {
-        const keys = ['living','masterBed','kitchen','bathroom'];
-        t.classList.toggle('active', keys[i] === key);
+      const keys = ['living','masterBed','kitchen','bathroom','fullHouse'];
+      document.querySelectorAll('#room-bar .room-tab').forEach((t, i) => {
+        t.classList.remove('active', 'full-active');
+        if (keys[i] === key) {
+          t.classList.add(key === 'fullHouse' ? 'full-active' : 'active');
+        }
       });
       loadCurRoomToUI();
       saveToIndexedDB();
@@ -498,11 +496,11 @@
       document.getElementById('btn-cam-ceiling')?.classList.toggle('active', mode === 'ceiling');
 
       if (mode === 'cut-left') {
-        camera.position.set(-W*1.6, H*1.0, 0);
-        controls.target.set(W*0.2, H*0.4, 0);
+        camera.position.set(-W*1.5, H*1.1, 0);
+        controls.target.set(W*0.2, H*0.35, 0);
       } else if (mode === 'cut-right') {
-        camera.position.set(W*1.6, H*1.0, 0);
-        controls.target.set(-W*0.2, H*0.4, 0);
+        camera.position.set(W*1.5, H*1.1, 0);
+        controls.target.set(-W*0.2, H*0.35, 0);
       } else if (mode === 'box') {
         camera.position.set(W*1.2, H*1.3, L*1.35);
         controls.target.set(0, H*0.35, 0);
@@ -511,7 +509,7 @@
         controls.target.set(0, H, 0);
       }
       controls.update();
-      draw3DUnified();
+      renderer.render(scene, camera);
     }
 
     const container3D = document.getElementById('pane-3d');
@@ -734,7 +732,6 @@
 
 
 
-
           const cv = document.getElementById('cv-2d');
     let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
     
@@ -833,8 +830,10 @@
       const volM3 = ((r.w * r.l * r.h) / 1000000000).toFixed(1);
 
       let grandTotalFloor = 0, grandTotalPaint = 0;
-      Object.keys(rooms).forEach(k => {
+      // 計算四個實體分區總額
+      ['living','masterBed','kitchen','bathroom'].forEach(k => {
         const rm = rooms[k];
+        if (!rm) return;
         grandTotalFloor += ((rm.w * rm.l)/1000000 * 10.764 * 1.1) * fPrice;
         grandTotalPaint += (((rm.w + rm.l)*2*rm.h - rm.door.w*rm.door.h)/1000000 * 10.764) * pPrice;
       });
@@ -859,7 +858,7 @@
       const cont = document.getElementById('chips-container');
       cont.innerHTML = '';
       if (curCategory === 'struct') {
-        cont.innerHTML += `<div class="chip" style="border-color:#f39c12;">🚪 房門 (後牆)</div>`;
+        cont.innerHTML += `<div class="chip" style="border-color:#f39c12;">🚪 房門 (${r.door.face||'後牆'})</div>`;
         r.structures.forEach(s => {
           cont.innerHTML += `<div class="chip" style="border-color:${s.col};">🏛️ ${s.name} <span class="del" onclick="event.stopPropagation(); removeStructure(${s.id})">×</span></div>`;
         });
@@ -894,7 +893,8 @@
       const ox = (cv.width - maxDim * sc) / 2 + viewPanX, oy = (cv.height - r.l * sc) / 2 + viewPanY;
 
       ctx.fillStyle = '#202636'; ctx.fillRect(ox, oy, maxDim * sc, r.l * sc);
-      ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, maxDim * sc, r.l * sc);
+      ctx.strokeStyle = (curRoomKey === 'fullHouse') ? '#ffd700' : '#0070f3';
+      ctx.lineWidth = 2; ctx.strokeRect(ox, oy, maxDim * sc, r.l * sc);
 
       if (curFace === 'floor' && r.door.swingRadius > 0) {
         const doorX = ox + r.door.x * sc, doorY = oy + r.l * sc, doorW = r.door.w * sc;
@@ -902,7 +902,7 @@
         ctx.beginPath(); ctx.moveTo(doorX, doorY); ctx.lineTo(doorX, doorY - doorW); ctx.stroke();
         ctx.setLineDash([4, 4]); ctx.beginPath();
         ctx.arc(doorX, doorY, doorW, -Math.PI/2, 0); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = '#f1c40f'; ctx.font = '9px sans-serif'; ctx.fillText('🚪 開門扇形阻擋', doorX + 6, doorY - 6);
+        ctx.fillStyle = '#f1c40f'; ctx.font = '9px sans-serif'; ctx.fillText('🚪 開門阻擋', doorX + 4, doorY - 4);
       }
 
       if (curFace === 'floor' || curFace === 'ceiling') {
@@ -924,7 +924,7 @@
       });
     }
 
-    // 🌟 核心革新：彩園邨真實藍圖一體化實體空間建模（零拼湊、零黑畫面）[span_9](start_span)[span_9](end_span)
+    // 🌟 100% 穩定且永不黑屏的 3D 渲染函數！單房與全屋手感完全一致
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
@@ -936,150 +936,62 @@
         renderGroup.remove(obj);
       }
 
+      const r = getCurRoom();
+      const W = r.w/1000, L = r.l/1000, H = r.h/1000;
       const wallColor = document.getElementById('col-wall').value || '#efede6';
       const floorColor = document.getElementById('col-floor').value || '#555555';
 
-      if (curMainMode === 'combine') {
-        const fullHouseGroup = new THREE.Group();
-        const H = 2.376; // 彩園邨實測 2376mm 樓底[span_10](start_span)[span_10](end_span)
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.6, side: THREE.DoubleSide });
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: (curRoomKey === 'fullHouse' ? 0x3d4452 : floorColor), roughness: 0.5 }));
+      fl.rotation.x = -Math.PI / 2; renderGroup.add(fl);
+      const wallMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.8, side: THREE.DoubleSide });
 
-        // 1. 全屋整體一體化實體大地台（6.9m x 4.52m）[span_11](start_span)[span_11](end_span)
-        const mainFloor = new THREE.Mesh(new THREE.PlaneGeometry(6.9, 4.52), new THREE.MeshStandardMaterial({ color: 0x3d4452, roughness: 0.5 }));
-        mainFloor.rotation.x = -Math.PI / 2;
-        mainFloor.position.set(3.45, 0, 2.26);
-        fullHouseGroup.add(mainFloor);
-
-        // 2. 彩園邨外圍真實結構牆（按照圖紙尺寸實體封閉）[span_12](start_span)[span_12](end_span)
-        // 後外牆（長 6.9 米）[span_13](start_span)[span_13](end_span)
-        const bWall = new THREE.Mesh(new THREE.BoxGeometry(6.9, H, 0.08), wallMat);
-        bWall.position.set(3.45, H/2, 4.52); fullHouseGroup.add(bWall);
-
-        // 前外牆（廚廁＋大陣長 6.9 米）[span_14](start_span)[span_14](end_span)
-        const fWall = new THREE.Mesh(new THREE.BoxGeometry(6.9, H, 0.08), wallMat);
-        fWall.position.set(3.45, H/2, 0); fullHouseGroup.add(fWall);
-
-        // 右外牆（睡房 4.52 米實心牆）[span_15](start_span)[span_15](end_span)
-        const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 4.52), wallMat);
-        rWall.position.set(6.9, H/2, 2.26); fullHouseGroup.add(rWall);
-
-        // 左外牆連大門（廚廁 1.5 米 ＋ 客廳大門 0.8 米 ＋ 1.92 米實牆）[span_16](start_span)[span_16](end_span)
-        const lWallTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.5), wallMat);
-        lWallTop.position.set(0, H/2, 0.75); fullHouseGroup.add(lWallTop);
-        const lWallBtm = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.92), wallMat);
-        lWallBtm.position.set(0, H/2, 3.56); fullHouseGroup.add(lWallBtm);
-
-        // 3. 室內隔間硬牆（浴室 1020mm、廚房 1510mm，以及睡房 2300mm 開放式開口）[span_17](start_span)[span_17](end_span)
-        // 廚廁前部橫向隔間牆（深 1.5m 處，長 3.97 米）[span_18](start_span)[span_18](end_span)
-        const kitchenWall = new THREE.Mesh(new THREE.BoxGeometry(3.97, H, 0.08), wallMat);
-        kitchenWall.position.set(1.985, H/2, 1.5); fullHouseGroup.add(kitchenWall);
-
-        // 浴室與走廊縱向隔間牆（1020mm 處）[span_19](start_span)[span_19](end_span)
-        const bathDivider = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.5), wallMat);
-        bathDivider.position.set(1.02, H/2, 0.75); fullHouseGroup.add(bathDivider);
-
-        // 走廊與廚房隔間牆（2260mm 處）[span_20](start_span)[span_20](end_span)
-        const kitchenDivider = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.5), wallMat);
-        kitchenDivider.position.set(2.46, H/2, 0.75); fullHouseGroup.add(kitchenDivider);
-
-        // 客廳與大睡房之間 700mm 短牆（保留 2300mm 闊巨型開口）[span_21](start_span)[span_21](end_span)
-        const archWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 0.7), wallMat);
-        archWall.position.set(3.97, H/2, 4.17); fullHouseGroup.add(archWall);
-
-        // 4. 所有房間的傢俬與結構實體咬合進大藍圖
-        Object.keys(rooms).forEach(k => {
-          const r = rooms[k];
-          const ox = r.worldOffset.x / 1000;
-          const oz = r.worldOffset.z / 1000;
-
-          r.structures.forEach(s => {
-            const sw = s.w/1000, sl = s.l/1000, sd = (s.d || 300)/1000;
-            const bm = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), new THREE.MeshStandardMaterial({ color: 0x576574 }));
-            bm.position.set(ox + (s.x/1000) + sw/2, H - sd/2, oz + (s.y/1000) + sl/2);
-            fullHouseGroup.add(bm);
-          });
-
-          r.items.forEach(it => {
-            const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
-            let geom = new THREE.BoxGeometry(iw, ih, il);
-            let px = ox + (it.x/1000) + iw/2, py = ih/2, pz = oz + (it.y/1000) + il/2;
-            if (it.face === 'ceiling') py = H - ih/2;
-            const msh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ color: it.col || 0xd4a373, roughness: 0.3 }));
-            msh.position.set(px, py, pz);
-            fullHouseGroup.add(msh);
-          });
-        });
-
-        // 🌟 自動取得全屋中心點咬死在原點 (0,0,0)，相機居中俯瞰[span_22](start_span)[span_22](end_span)
-        const bbox = new THREE.Box3().setFromObject(fullHouseGroup);
-        const center = new THREE.Vector3();
-        bbox.getCenter(center);
-        fullHouseGroup.position.x = -center.x;
-        fullHouseGroup.position.z = -center.z;
-        renderGroup.add(fullHouseGroup);
-
-        const size = new THREE.Vector3();
-        bbox.getSize(size);
-        const maxDim = Math.max(size.x, size.z, 6.0);
-        
-        camera.position.set(0, maxDim * 1.3, maxDim * 1.35);
-        controls.target.set(0, 0, 0);
-        controls.update();
-
-      } else {
-        const r = getCurRoom();
-        const W = r.w/1000, L = r.l/1000, H = r.h/1000;
-        const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.5 }));
-        fl.rotation.x = -Math.PI / 2; renderGroup.add(fl);
-        const wallMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.8, side: THREE.DoubleSide });
-
-        const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
-        fWall.position.set(0, H/2, -L/2); renderGroup.add(fWall);
-        
-        if (curViewMode !== 'cut-left') { 
-          const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat); 
-          lWall.position.set(-W/2, H/2, 0); renderGroup.add(lWall); 
-        }
-        if (curViewMode !== 'cut-right') { 
-          const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat); 
-          rWall.position.set(W/2, H/2, 0); renderGroup.add(rWall); 
-        }
-
-        const dw = r.door.w/1000, dh = r.door.h/1000, dx = r.door.x/1000;
-        if (dx > 0) { const ldw = new THREE.Mesh(new THREE.BoxGeometry(dx, H, 0.05), wallMat); ldw.position.set(-W/2 + dx/2, H/2, L/2); renderGroup.add(ldw); }
-        const tdw = new THREE.Mesh(new THREE.BoxGeometry(dw, H - dh, 0.05), wallMat); tdw.position.set(-W/2 + dx + dw/2, dh + (H - dh)/2, L/2); renderGroup.add(tdw);
-        const rightW = W - (dx + dw);
-        if (rightW > 0) { const rdw = new THREE.Mesh(new THREE.BoxGeometry(rightW, H, 0.05), wallMat); rdw.position.set(W/2 - rightW/2, H/2, L/2); renderGroup.add(rdw); }
-
-        r.structures.forEach(s => {
-          const sw = s.w/1000, sl = s.l/1000, structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x576574 });
-          if (s.type === 'pillar') {
-            const colMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, H, sl), structMat);
-            colMesh.position.set(-W/2 + (s.x/1000) + sw/2, H/2, -L/2 + (s.y/1000) + sl/2);
-            renderGroup.add(colMesh);
-          } else if (s.type === 'beam') {
-            const sd = (s.d || 300)/1000;
-            const beamMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), structMat);
-            beamMesh.position.set(-W/2 + (s.x/1000) + sw/2, H - sd/2, -L/2 + (s.y/1000) + sl/2);
-            renderGroup.add(beamMesh);
-          }
-        });
-
-        r.items.forEach(it => {
-          const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
-          let geom = new THREE.BoxGeometry(iw, ih, il);
-          let px = 0, py = ih/2, pz = 0;
-          if (it.face === 'floor') { px = -W/2 + (it.x/1000) + iw/2; py = ih/2; pz = -L/2 + (it.y/1000) + il/2; }
-          else if (it.face === 'front') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = -L/2 + il/2 + 0.02; }
-          else if (it.face === 'back') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = L/2 - il/2 - 0.02; }
-          else if (it.face === 'left') { geom = new THREE.BoxGeometry(il, ih, iw); px = -W/2 + il/2 + 0.02; py = (it.y/1000) + ih/2; pz = -L/2 + (it.x/1000) + iw/2; }
-          else if (it.face === 'right') { geom = new THREE.BoxGeometry(il, ih, iw); px = W/2 - il/2 - 0.02; py = (it.y/1000) + ih/2; pz = -L/2 + (it.x/1000) + iw/2; }
-          else if (it.face === 'ceiling') { px = -W/2 + (it.x/1000) + iw/2; py = H - ih/2; pz = -L/2 + (it.y/1000) + il/2; }
-          const msh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ color: it.col || 0xd4a373, roughness: 0.4 }));
-          msh.position.set(px, py, pz);
-          renderGroup.add(msh);
-        });
+      const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
+      fWall.position.set(0, H/2, -L/2); renderGroup.add(fWall);
+      
+      if (curViewMode !== 'cut-left') { 
+        const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat); 
+        lWall.position.set(-W/2, H/2, 0); renderGroup.add(lWall); 
       }
+      if (curViewMode !== 'cut-right') { 
+        const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat); 
+        rWall.position.set(W/2, H/2, 0); renderGroup.add(rWall); 
+      }
+
+      const dw = r.door.w/1000, dh = r.door.h/1000, dx = r.door.x/1000;
+      if (dx > 0) { const ldw = new THREE.Mesh(new THREE.BoxGeometry(dx, H, 0.05), wallMat); ldw.position.set(-W/2 + dx/2, H/2, L/2); renderGroup.add(ldw); }
+      const tdw = new THREE.Mesh(new THREE.BoxGeometry(dw, H - dh, 0.05), wallMat); tdw.position.set(-W/2 + dx + dw/2, dh + (H - dh)/2, L/2); renderGroup.add(tdw);
+      const rightW = W - (dx + dw);
+      if (rightW > 0) { const rdw = new THREE.Mesh(new THREE.BoxGeometry(rightW, H, 0.05), wallMat); rdw.position.set(W/2 - rightW/2, H/2, L/2); renderGroup.add(rdw); }
+
+      r.structures.forEach(s => {
+        const sw = s.w/1000, sl = s.l/1000, structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x576574 });
+        if (s.type === 'pillar') {
+          const colMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, H, sl), structMat);
+          colMesh.position.set(-W/2 + (s.x/1000) + sw/2, H/2, -L/2 + (s.y/1000) + sl/2);
+          renderGroup.add(colMesh);
+        } else if (s.type === 'beam') {
+          const sd = (s.d || 300)/1000;
+          const beamMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), structMat);
+          beamMesh.position.set(-W/2 + (s.x/1000) + sw/2, H - sd/2, -L/2 + (s.y/1000) + sl/2);
+          renderGroup.add(beamMesh);
+        }
+      });
+
+      r.items.forEach(it => {
+        const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
+        let geom = new THREE.BoxGeometry(iw, ih, il);
+        let px = 0, py = ih/2, pz = 0;
+        if (it.face === 'floor') { px = -W/2 + (it.x/1000) + iw/2; py = ih/2; pz = -L/2 + (it.y/1000) + il/2; }
+        else if (it.face === 'front') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = -L/2 + il/2 + 0.02; }
+        else if (it.face === 'back') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = L/2 - il/2 - 0.02; }
+        else if (it.face === 'left') { geom = new THREE.BoxGeometry(il, ih, iw); px = -W/2 + il/2 + 0.02; py = (it.y/1000) + ih/2; pz = -L/2 + (it.x/1000) + iw/2; }
+        else if (it.face === 'right') { geom = new THREE.BoxGeometry(il, ih, iw); px = W/2 - il/2 - 0.02; py = (it.y/1000) + ih/2; pz = -L/2 + (it.x/1000) + iw/2; }
+        else if (it.face === 'ceiling') { px = -W/2 + (it.x/1000) + iw/2; py = H - ih/2; pz = -L/2 + (it.y/1000) + il/2; }
+        const msh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ color: it.col || 0xd4a373, roughness: 0.4 }));
+        msh.position.set(px, py, pz);
+        renderGroup.add(msh);
+      });
+
       renderer.render(scene, camera);
     }
 
@@ -1132,7 +1044,7 @@
 
     function parseFullHouseBlueprint(fullText) {
       const parts = fullText.split('=== 空間:');
-      const keyMap = { '客飯廳': 'living', '大睡房': 'masterBed', '睡房一': 'masterBed', '廚房': 'kitchen', '浴室': 'bathroom' };
+      const keyMap = { '客飯廳': 'living', '大睡房': 'masterBed', '睡房一': 'masterBed', '廚房': 'kitchen', '浴室': 'bathroom', '全屋藍圖': 'fullHouse', '全屋': 'fullHouse' };
       parts.forEach(p => {
         if (!p.trim()) return;
         const roomTitle = p.split('===')[0].trim();
@@ -1158,8 +1070,9 @@
       cont.innerHTML = '';
       let gFloor = 0, gPaint = 0;
 
-      Object.keys(rooms).forEach(k => {
+      ['living','masterBed','kitchen','bathroom'].forEach(k => {
         const r = rooms[k];
+        if (!r) return;
         const sqft = (r.w * r.l / 1000000 * 10.764);
         const fCost = Math.round(sqft * 1.1 * 35);
         const pSqft = Math.max(0, ((r.w + r.l)*2*r.h - r.door.w*r.door.h)/1000000 * 10.764);
@@ -1184,8 +1097,9 @@
       const addr = `${projectMeta.estate||'彩園邨'} ${projectMeta.block||'彩湖樓2'} ${projectMeta.floor||'23'}${projectMeta.unit||'室'}`;
       let msg = `【圖層王香港 3D 全屋一體化裝修報價單】\n📍 物業：${addr}\n`;
       let grandTotalFloor = 0, grandTotalPaint = 0;
-      Object.keys(rooms).forEach(k => {
+      ['living','masterBed','kitchen','bathroom'].forEach(k => {
         const r = rooms[k];
+        if (!r) return;
         const netF = ((r.w * r.l)/1000000 * 10.764 * 1.1) * 35;
         const netP = (((r.w + r.l)*2*r.h - r.door.w*r.door.h)/1000000 * 10.764) * 22;
         grandTotalFloor += netF; grandTotalPaint += netP;
@@ -1208,6 +1122,7 @@
   </script>
 </body>
 </html>
+
 
 
 
