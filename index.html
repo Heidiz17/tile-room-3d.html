@@ -86,9 +86,9 @@
   <div id="top-nav-bar">
     <div id="proj-row">
       <span>📍 物業:</span>
-      <input type="text" id="p-estate" value="彩園邨" placeholder="屋苑" style="width:72px;" onchange="saveProjectMeta()">
-      <input type="text" id="p-block" value="彩湖樓2" placeholder="座數" style="width:48px;" onchange="saveProjectMeta()">
-      <input type="text" id="p-floor" value="23" placeholder="樓" style="width:26px;" onchange="saveProjectMeta()">
+      <input type="text" id="p-estate" value="慈康邨" placeholder="屋苑" style="width:72px;" onchange="saveProjectMeta()">
+      <input type="text" id="p-block" value="540呎" placeholder="座數" style="width:48px;" onchange="saveProjectMeta()">
+      <input type="text" id="p-floor" value="兩房" placeholder="樓" style="width:36px;" onchange="saveProjectMeta()">
       <input type="text" id="p-unit" value="室" placeholder="室" style="width:26px;" onchange="saveProjectMeta()">
       
       <div class="mode-btn-group">
@@ -97,28 +97,29 @@
       </div>
     </div>
 
-    <!-- 空間選擇列：直接納入「🌐 全屋藍圖」 -->
     <div id="room-bar">
-      <div class="room-tab active" onclick="switchRoom('living')">🛋️ 客飯廳</div>
+      <div class="room-tab" onclick="switchRoom('living')">🛋️ 客飯廳</div>
       <div class="room-tab" onclick="switchRoom('masterBed')">🛏️ 大睡房</div>
       <div class="room-tab" onclick="switchRoom('kitchen')">🍳 廚房</div>
       <div class="room-tab" onclick="switchRoom('bathroom')">🚿 浴室</div>
-      <div class="room-tab" style="border-color:#ffd700;" onclick="switchRoom('fullHouse')">🌐 全屋藍圖 (6.9x4.5m)</div>
+      <div class="room-tab active full-active" style="border-color:#ffd700;" onclick="switchRoom('fullHouse')">🌐 全屋藍圖 (540呎)</div>
     </div>
   </div>
 
+  <div id="header">
+    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="8000" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="7000" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2600" onchange="updateRoomDimensions()"></div>
+    
+    <!-- 🌟 新增：載入底圖、定標與透明度滑桿 -->
+    <input type="file" id="inp-blueprint-file" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
+    <button style="background:#16a085;" onclick="document.getElementById('inp-blueprint-file').click()">🖼️ 載入底圖</button>
+    <button id="btn-calibrate" style="background:#d35400;" onclick="startCalibration()">📏 對尺校準</button>
+    <div class="input-group" title="底圖透明度"><label>透:</label><input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.45" style="width:40px;" oninput="draw2D()"></div>
 
-
-
-
-
-    <div id="header">
-    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="3970" onchange="updateRoomDimensions()"></div>
-    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2920" onchange="updateRoomDimensions()"></div>
-    <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2376" onchange="updateRoomDimensions()"></div>
     <div class="input-group" title="牆身顏色"><label>牆:</label><input type="color" id="col-wall" value="#efede6" onchange="updateAll()"></div>
-    <div class="input-group" title="地板顏色"><label>地:</label><input type="color" id="col-floor" value="#555555" onchange="updateAll()"></div>
-    <button class="btn-add" onclick="openModal('modal-struct')">🏛️ 加柱/樑</button>
+    <div class="input-group" title="地板顏色"><label>地:</label><input type="color" id="col-floor" value="#3d4452" onchange="updateAll()"></div>
+    <button class="btn-add" onclick="openModal('modal-struct')">🏛️ 加柱/樑/遮罩</button>
     <button class="btn-add" onclick="openModal('modal-item')">🛋️ 加傢俬</button>
     <button class="btn-txt" onclick="toggleTxtDrawer()">📝 手帳TXT</button>
     <button class="btn-calc" onclick="openModal('modal-material')">📊 點料</button>
@@ -182,7 +183,7 @@
 
   <div id="page-report">
     <div class="report-card">
-      <b style="color:#ffd700; font-size:12px;" id="rep-title">📍 彩園邨彩湖樓2座23室 全屋裝修工程核算單</b>
+      <b style="color:#ffd700; font-size:12px;" id="rep-title">📍 慈康邨540呎兩房 全屋裝修工程核算單</b>
       <span style="font-size:9.5px; color:#8892b0;">以實用面積與施工標準尺寸計算</span>
     </div>
     <div id="report-items-container" style="display:flex; flex-direction:column; gap:6px;"></div>
@@ -200,18 +201,19 @@
 
   <div id="modal-struct" class="modal">
     <div class="modal-content">
-      <b>🏛️ 新增建築結構 (硬實體)</b>
+      <b>🏛️ 新增建築結構 (含凹凸剪刀遮罩)</b>
       <label>類型:
         <select id="st-type">
-          <option value="pillar">石屎柱 (直通地天防穿透)</option>
+          <option value="pillar">石屎柱/隔牆 (直通地天防穿透)</option>
           <option value="beam">頂陣/大樑 (吊天花不擋地)</option>
+          <option value="void">✂️ 空氣遮罩 (挖空天井/大門凹位)</option>
         </select>
       </label>
-      <label>名稱: <input type="text" id="st-name" value="窗台大陣"></label>
-      <label>闊(X mm): <input type="number" id="st-w" value="3970"></label>
-      <label>長(Y mm): <input type="number" id="st-l" value="300"></label>
-      <label>吊深(mm): <input type="number" id="st-d" value="300"></label>
-      <label>自訂色彩: <input type="color" id="st-col" value="#576574"></label>
+      <label>名稱: <input type="text" id="st-name" value="大門凹位天井"></label>
+      <label>闊(X mm): <input type="number" id="st-w" value="1600"></label>
+      <label>長(Y mm): <input type="number" id="st-l" value="2000"></label>
+      <label>吊深(mm): <input type="number" id="st-d" value="2600"></label>
+      <label>自訂色彩: <input type="color" id="st-col" value="#12141a"></label>
       <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
         <button onclick="closeModal('modal-struct')">取消</button>
         <button style="background:#27ae60;" onclick="addStructureManual()">確定加入</button>
@@ -275,7 +277,7 @@
     <div class="modal-content">
       <b>📊 裝修工程用料詳細清算 (以實用呎數為準)</b>
       <div class="detail-row"><span>當前房間淨鋪面積:</span><b id="mat-floor-sqft">-- 呎</b></div>
-      <div class="detail-row"><span>扣除石屎柱佔用:</span><b id="mat-pillar-sub">-- 呎</b></div>
+      <div class="detail-row"><span>扣除石屎柱/遮罩:</span><b id="mat-pillar-sub">-- 呎</b></div>
       <div class="detail-row" style="color:#2ecc71;"><span>建議備料總呎數 (+10%耗損):</span><b id="mat-floor-order">-- 呎</b></div>
       <div class="detail-row">
         <span>地板材料單價 (HK$/呎):</span>
@@ -296,11 +298,7 @@
     </div>
   </div>
 
-
-
-
-
-    <script>
+  <script>
     let curCategory = 'item';
     let curFace = 'floor';
     let selectedItemId = null;
@@ -308,42 +306,64 @@
     let curViewMode = 'box';
     let curMainMode = 'edit';
 
-    let projectMeta = { estate: '彩園邨', block: '彩湖樓2', floor: '23', unit: '室' };
-    let curRoomKey = 'living';
+    let projectMeta = { estate: '慈康邨', block: '540呎', floor: '兩房', unit: '室' };
+    let curRoomKey = 'fullHouse';
 
-    // 🌟 嚴格遵照圖紙：只有客廳大門同浴室有 door，睡房是 2300mm archway，廚房是 none！
-    const initialRoomsData = {
+    // 🌟 底圖與兩點校準狀態
+    let blueprintImg = null;
+    let isCalibrating = false;
+    let calibPoints = [];
+
+        const initialRoomsData = {
       living: { 
-        name: '客飯廳', w: 3970, l: 2920, h: 2376, 
-        door: { type: "door", face: "left", w: 800, h: 2000, x: 1920, swingRadius: 800 }, 
+        name: '客飯廳', w: 4200, l: 3600, h: 2600, 
+        door: { type: "door", face: "left", w: 850, h: 2000, x: 2100, swingRadius: 850 }, 
         structures: [], items: [] 
       },
       masterBed: { 
-        name: '大睡房', w: 2830, l: 4520, h: 2376, 
-        door: { type: "archway", face: "left", w: 2300, h: 2376, x: 0, swingRadius: 0 }, 
+        name: '大睡房', w: 3200, l: 2800, h: 2600, 
+        door: { type: "archway", face: "left", w: 2300, h: 2600, x: 0, swingRadius: 0 }, 
         structures: [], items: [] 
       },
       kitchen: { 
-        name: '廚房', w: 1510, l: 1500, h: 2376, 
-        door: { type: "none", face: "back", w: 750, h: 2000, x: 0, swingRadius: 0 }, 
+        name: '廚房', w: 2800, l: 1800, h: 2600, 
+        door: { type: "none", face: "back", w: 800, h: 2000, x: 0, swingRadius: 0 }, 
         structures: [], items: [] 
       },
       bathroom: { 
-        name: '浴室', w: 1020, l: 1500, h: 2376, 
-        door: { type: "door", face: "back", w: 690, h: 2000, x: 150, swingRadius: 690 }, 
+        name: '浴室', w: 2000, l: 1600, h: 2600, 
+        door: { type: "door", face: "back", w: 680, h: 2000, x: 100, swingRadius: 680 }, 
         structures: [], items: [] 
       },
       fullHouse: {
-        name: '全屋藍圖', w: 6900, l: 4520, h: 2376,
-        door: { type: "door", face: "left", w: 800, h: 2000, x: 1920, swingRadius: 800 },
+        name: '全屋藍圖', w: 8000, l: 7000, h: 2600,
+        door: { type: "door", face: "back", w: 850, h: 2000, x: 3400, swingRadius: 850 },
         structures: [
-          { id: 201, type: 'pillar', name: '廚廁橫隔牆', w: 3970, l: 80, d: 2376, x: 0, y: 1500, col: '#576574' },
-          { id: 202, type: 'pillar', name: '浴室縱隔牆', w: 80, l: 1500, d: 2376, x: 1020, y: 0, col: '#576574' },
-          { id: 203, type: 'pillar', name: '廚房縱隔牆', w: 80, l: 1500, d: 2376, x: 2460, y: 0, col: '#576574' },
-          { id: 204, type: 'pillar', name: '客房短隔牆', w: 80, l: 700, d: 2376, x: 3970, y: 3820, col: '#576574' },
-          { id: 205, type: 'beam', name: '全屋通風頂陣', w: 6900, l: 300, d: 300, x: 0, y: 0, col: '#7f8c8d' }
+          { id: 301, type: 'pillar', name: '細房分界牆', w: 80, l: 2600, d: 2600, x: 2400, y: 0, col: '#576574' },
+          { id: 302, type: 'pillar', name: '客廳大房主牆', w: 80, l: 4800, d: 2600, x: 4800, y: 0, col: '#576574' },
+          { id: 303, type: 'pillar', name: '兩睡房分界牆', w: 3200, l: 80, d: 2600, x: 4800, y: 2600, col: '#576574' },
+          { id: 304, type: 'pillar', name: '次房浴室分界牆', w: 3200, l: 80, d: 2600, x: 4800, y: 4800, col: '#576574' },
+          { id: 305, type: 'pillar', name: '廚房縱向隔牆', w: 80, l: 2200, d: 2600, x: 2400, y: 4800, col: '#576574' },
+          { id: 306, type: 'pillar', name: '走廊浴室縱牆', w: 80, l: 2200, d: 2600, x: 4800, y: 4800, col: '#576574' },
+          { id: 307, type: 'beam', name: '客房分界頂樑', w: 8000, l: 300, d: 300, x: 0, y: 2600, col: '#7f8c8d' },
+          { id: 308, type: 'beam', name: '玄關通道頂樑', w: 8000, l: 300, d: 300, x: 0, y: 4800, col: '#7f8c8d' },
+          { id: 309, type: 'void', name: '大門玄關天井凹位', w: 1600, l: 2000, d: 2600, x: 3200, y: 5000, col: '#0d1017' }
         ],
-        items: []
+        items: [
+          { id: 401, name: '3尺上床下櫃', face: 'floor', w: 2000, l: 980, h: 2000, x: 200, y: 200, rot: 0, col: '#dfe6e9' },
+          { id: 402, name: '飯廳餐枱', face: 'floor', w: 1200, l: 750, h: 750, x: 3000, y: 400, rot: 0, col: '#f5f6fa' },
+          { id: 403, name: '飯廳C字櫃', face: 'floor', w: 1200, l: 380, h: 2100, x: 3000, y: 0, rot: 0, col: '#d4a373' },
+          { id: 404, name: '大睡房5尺床', face: 'floor', w: 1560, l: 2000, h: 450, x: 6300, y: 300, rot: 0, col: '#d4a373' },
+          { id: 405, name: '大睡房衣櫃', face: 'floor', w: 1500, l: 600, h: 2300, x: 4950, y: 100, rot: 0, col: '#2f3640' },
+          { id: 406, name: '客廳梳化', face: 'floor', w: 1800, l: 850, h: 750, x: 200, y: 2800, rot: 0, col: '#576574' },
+          { id: 407, name: '電視矮櫃', face: 'floor', w: 1600, l: 400, h: 450, x: 200, y: 4200, rot: 0, col: '#2f3640' },
+          { id: 408, name: '次房4尺床', face: 'floor', w: 1240, l: 1950, h: 450, x: 6600, y: 2800, rot: 0, col: '#7f8c8d' },
+          { id: 409, name: '次房衣櫃', face: 'floor', w: 1200, l: 600, h: 2200, x: 4950, y: 2800, rot: 0, col: '#2f3640' },
+          { id: 410, name: '玄關鞋櫃', face: 'floor', w: 1400, l: 380, h: 2100, x: 2600, y: 4200, rot: 0, col: '#e0a96d' },
+          { id: 411, name: '廚房L型地櫃', face: 'floor', w: 2200, l: 600, h: 850, x: 100, y: 5000, rot: 0, col: '#b2bec3' },
+          { id: 412, name: '企缸石基', face: 'floor', w: 900, l: 900, h: 100, x: 5000, y: 5000, rot: 0, col: '#636e72' },
+          { id: 413, name: '貼牆座廁', face: 'floor', w: 400, l: 700, h: 780, x: 6100, y: 5000, rot: 0, col: '#ffffff' }
+        ]
       }
     };
     let rooms = JSON.parse(JSON.stringify(initialRoomsData));
@@ -372,7 +392,6 @@
       } catch (err) {}
     }
 
-    // 🌟 核心防禦：自動補全 fullHouse 與 door.type，解決舊緩存撳落冇反應問題！
     function loadFromIndexedDB(callback) {
       if (!db) { if (callback) callback(); return; }
       try {
@@ -383,17 +402,8 @@
           if (req.result) {
             projectMeta = req.result.meta || projectMeta;
             rooms = req.result.rooms || rooms;
-            // 防禦兜底：確保 fullHouse 必定存在！
-            if (!rooms.fullHouse) {
-              rooms.fullHouse = JSON.parse(JSON.stringify(initialRoomsData.fullHouse));
-            }
-            // 確保每間房嘅 door.type 存在
-            Object.keys(initialRoomsData).forEach(k => {
-              if (rooms[k] && (!rooms[k].door || !rooms[k].door.type)) {
-                rooms[k].door = { ...initialRoomsData[k].door, ...(rooms[k].door||{}) };
-              }
-            });
-            curRoomKey = req.result.curRoomKey || 'living';
+            if (!rooms.fullHouse) rooms.fullHouse = JSON.parse(JSON.stringify(initialRoomsData.fullHouse));
+            curRoomKey = req.result.curRoomKey || 'fullHouse';
             document.getElementById('p-estate').value = projectMeta.estate || '';
             document.getElementById('p-block').value = projectMeta.block || '';
             document.getElementById('p-floor').value = projectMeta.floor || '';
@@ -411,6 +421,25 @@
       projectMeta.floor = document.getElementById('p-floor').value.trim();
       projectMeta.unit = document.getElementById('p-unit').value.trim();
       saveToIndexedDB();
+    }
+
+    function handleBlueprintUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        blueprintImg = new Image();
+        blueprintImg.onload = () => { draw2D(); alert("✅ 2D 底圖已成功墊底！可以用滑桿調整透明度對位。"); };
+        blueprintImg.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function startCalibration() {
+      if (!blueprintImg) { alert("請先撳「🖼️ 載入底圖」揀張平面圖相片！"); return; }
+      isCalibrating = true;
+      calibPoints = [];
+      alert("📐 請喺 2D 畫布底圖上，點擊某件標準傢俬（例如 5 尺床或大門）嘅左右兩端！");
     }
 
     function switchMainViewMode(mode) {
@@ -447,15 +476,13 @@
       const keys = ['living','masterBed','kitchen','bathroom','fullHouse'];
       document.querySelectorAll('#room-bar .room-tab').forEach((t, i) => {
         t.classList.remove('active', 'full-active');
-        if (keys[i] === key) {
-          t.classList.add(key === 'fullHouse' ? 'full-active' : 'active');
-        }
+        if (keys[i] === key) t.classList.add(key === 'fullHouse' ? 'full-active' : 'active');
       });
       loadCurRoomToUI();
       saveToIndexedDB();
     }
 
-    function getCurRoom() { return rooms[curRoomKey] || rooms['living']; }
+    function getCurRoom() { return rooms[curRoomKey] || rooms['fullHouse']; }
 
     function loadCurRoomToUI() {
       const r = getCurRoom();
@@ -470,9 +497,9 @@
 
     function updateRoomDimensions() {
       const r = getCurRoom();
-      r.w = parseFloat(document.getElementById('rm-w').value) || 2150;
-      r.l = parseFloat(document.getElementById('rm-l').value) || 2650;
-      r.h = parseFloat(document.getElementById('rm-h').value) || 2376;
+      r.w = parseFloat(document.getElementById('rm-w').value) || 8000;
+      r.l = parseFloat(document.getElementById('rm-l').value) || 7000;
+      r.h = parseFloat(document.getElementById('rm-h').value) || 2600;
       r.items.forEach(it => { const v = resolveCollision(it, it.x, it.y); it.x = v.x; it.y = v.y; });
       syncToTxtArea(); updateAll(); saveToIndexedDB();
     }
@@ -483,6 +510,7 @@
       let txt = `房型: ${r.w} x ${r.l} x ${r.h}\n門口: ${dTypeStr}, 闊 ${r.door.w}, 距左邊 ${r.door.x}, 裝喺 ${r.door.face||'後牆'}\n\n# 建築結構 (不可改動)\n`;
       r.structures.forEach(s => {
         if (s.type === 'pillar') txt += `柱: ${s.name}, ${s.w} x ${s.l}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#576574'}\n`;
+        else if (s.type === 'void') txt += `遮罩: ${s.name}, ${s.w} x ${s.l}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#0d1017'}\n`;
         else txt += `樑: ${s.name}, 闊 ${s.w}, 深 ${s.l}, 吊 ${s.d}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#7f8c8d'}\n`;
       });
       txt += `\n# 傢俬設備\n`;
@@ -560,11 +588,7 @@
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-
-
-
-
-          function onCategoryChange() {
+    function onCategoryChange() {
       const cat = document.getElementById('item-cat-select').value;
       const subSelect = document.getElementById('item-sub-select');
       subSelect.innerHTML = '';
@@ -634,15 +658,16 @@
 
     function addStructureManual() {
       const r = getCurRoom();
+      const sType = document.getElementById('st-type').value;
       r.structures.push({
         id: Date.now(),
-        type: document.getElementById('st-type').value,
+        type: sType,
         name: document.getElementById('st-name').value,
         w: parseFloat(document.getElementById('st-w').value) || 350,
         l: parseFloat(document.getElementById('st-l').value) || 350,
-        d: parseFloat(document.getElementById('st-d').value) || 300,
+        d: parseFloat(document.getElementById('st-d').value) || 2600,
         x: 0, y: 0,
-        col: document.getElementById('st-col').value || "#576574"
+        col: sType === 'void' ? '#0d1017' : (document.getElementById('st-col').value || "#576574")
       });
       closeModal('modal-struct'); switchCategory('struct'); syncToTxtArea(); updateAll(); saveToIndexedDB();
     }
@@ -721,9 +746,8 @@
             else if (minA === Math.abs(dB)) resY = p.y + p.l;
             else if (minA === Math.abs(dT)) resY = p.y - it.l;
           }
-        });
+           });
         
-        // 🌟 只在有實體門 (type === 'door') 且有開門扇形時才進行開門阻擋！
         if (r.door.type === 'door' && r.door.swingRadius > 0) {
           const doorLeft = r.door.x, doorRight = r.door.x + r.door.w;
           const doorTop = r.l - r.door.swingRadius;
@@ -747,16 +771,37 @@
       return { x: Math.round(resX), y: Math.round(resY) };
     }
 
-
-
-
-
-          const cv = document.getElementById('cv-2d');
+    const cv = document.getElementById('cv-2d');
     let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
     
     cv.addEventListener('pointerdown', e => {
       const rect = cv.getBoundingClientRect();
       const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
+
+      if (isCalibrating) {
+        calibPoints.push({ x: clickX, y: clickY });
+        draw2D();
+        if (calibPoints.length === 2) {
+          const pixelDist = Math.hypot(calibPoints[1].x - calibPoints[0].x, calibPoints[1].y - calibPoints[0].y);
+          const realMm = prompt("請輸入這兩點之間的真實物理尺寸 (毫米 mm，例如 5尺床輸入 1560，3尺床輸入 980):", "1560");
+          if (realMm && parseFloat(realMm) > 0) {
+            const r = getCurRoom();
+            const sc = getScale();
+            const measuredMm = pixelDist / sc;
+            const factor = parseFloat(realMm) / measuredMm;
+            r.w = Math.round(r.w * factor);
+            r.l = Math.round(r.l * factor);
+            document.getElementById('rm-w').value = r.w;
+            document.getElementById('rm-l').value = r.l;
+            alert(`🎯 校準成功！已將空間自動修正為: ${r.w} x ${r.l} mm！`);
+          }
+          isCalibrating = false;
+          calibPoints = [];
+          updateAll();
+        }
+        return;
+      }
+
       const hit = getHitItem(clickX, clickY);
       if (hit) {
         selectedItemId = hit.id; isDragging = true;
@@ -821,7 +866,12 @@
       document.getElementById('float-hex-input').value = it.col || '#d4a373';
     }
 
-    function updateAll() {
+
+
+
+
+
+        function updateAll() {
       calcAllMaterials();
       renderChips();
       draw2D();
@@ -832,7 +882,7 @@
       const r = getCurRoom();
       const rawFloorM2 = (r.w * r.l) / 1000000;
       let pillarAreaM2 = 0;
-      r.structures.filter(s => s.type === 'pillar').forEach(p => { pillarAreaM2 += (p.w * p.l) / 1000000; });
+      r.structures.filter(s => s.type === 'pillar' || s.type === 'void').forEach(p => { pillarAreaM2 += (p.w * p.l) / 1000000; });
       const netFloorM2 = Math.max(0, rawFloorM2 - pillarAreaM2);
       const netFloorSqft = (netFloorM2 * 10.764);
       const orderFloorSqft = (netFloorSqft * 1.1);
@@ -881,7 +931,8 @@
         if (hasDoor) cont.innerHTML += `<div class="chip" style="border-color:#f39c12;">🚪 房門 (${r.door.face||'後牆'})</div>`;
         else if (r.door.type === 'archway') cont.innerHTML += `<div class="chip" style="border-color:#3498db;">🏛️ 開放大開口 (貫通)</div>`;
         r.structures.forEach(s => {
-          cont.innerHTML += `<div class="chip" style="border-color:${s.col};">🏛️ ${s.name} <span class="del" onclick="event.stopPropagation(); removeStructure(${s.id})">×</span></div>`;
+          const badge = s.type === 'void' ? '✂️' : (s.type === 'beam' ? '樑' : '🏛️');
+          cont.innerHTML += `<div class="chip" style="border-color:${s.col};">${badge} ${s.name} <span class="del" onclick="event.stopPropagation(); removeStructure(${s.id})">×</span></div>`;
         });
       } else {
         r.items.forEach(i => {
@@ -913,11 +964,17 @@
       const maxDim = (curFace === 'left' || curFace === 'right') ? r.l : r.w;
       const ox = (cv.width - maxDim * sc) / 2 + viewPanX, oy = (cv.height - r.l * sc) / 2 + viewPanY;
 
-      ctx.fillStyle = '#202636'; ctx.fillRect(ox, oy, maxDim * sc, r.l * sc);
+      if (blueprintImg && curFace === 'floor') {
+        const op = parseFloat(document.getElementById('bg-opacity')?.value) || 0.45;
+        ctx.save();
+        ctx.globalAlpha = op;
+        ctx.drawImage(blueprintImg, ox, oy, maxDim * sc, r.l * sc);
+        ctx.restore();
+      }
+
       ctx.strokeStyle = (curRoomKey === 'fullHouse') ? '#ffd700' : '#0070f3';
       ctx.lineWidth = 2; ctx.strokeRect(ox, oy, maxDim * sc, r.l * sc);
 
-      // 🌟 2D 真實門型：只有真正實體門 (door) 先畫開門扇形阻擋，archway 或 none 則通透！
       if (curFace === 'floor' && r.door.type === 'door' && r.door.swingRadius > 0) {
         const doorX = ox + r.door.x * sc, doorY = oy + r.l * sc, doorW = r.door.w * sc;
         ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2;
@@ -925,17 +982,21 @@
         ctx.setLineDash([4, 4]); ctx.beginPath();
         ctx.arc(doorX, doorY, doorW, -Math.PI/2, 0); ctx.stroke(); ctx.setLineDash([]);
         ctx.fillStyle = '#f1c40f'; ctx.font = '9px sans-serif'; ctx.fillText('🚪 實體門阻擋', doorX + 4, doorY - 4);
-      } else if (curFace === 'floor' && r.door.type === 'archway') {
-        const openX = ox + r.door.x * sc, openY = oy, openW = r.door.w * sc;
-        ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
-        ctx.strokeRect(openX, openY, openW, 4); ctx.setLineDash([]);
-        ctx.fillStyle = '#2ecc71'; ctx.font = '9px sans-serif'; ctx.fillText('🏛️ 2.3米開放大開口 (無門扇)', openX + 6, openY + 14);
       }
 
       if (curFace === 'floor' || curFace === 'ceiling') {
         r.structures.forEach(s => {
-          ctx.fillStyle = s.col || '#e84118';
-          ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
+          if (s.type === 'void') {
+            ctx.fillStyle = 'rgba(13, 16, 23, 0.9)';
+            ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
+            ctx.strokeStyle = '#ff4757'; ctx.setLineDash([4, 4]);
+            ctx.strokeRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#ff4757'; ctx.font = '9px sans-serif'; ctx.fillText('✂️ 挖空區', ox + s.x * sc + 2, oy + s.y * sc + 11);
+          } else {
+            ctx.fillStyle = s.col || '#e84118';
+            ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
+          }
         });
       }
 
@@ -949,9 +1010,15 @@
         ctx.fillStyle = '#fff'; ctx.font = '9.5px sans-serif';
         ctx.fillText(it.name, ox + it.x * sc + 2, oy + it.y * sc + 11);
       });
+
+      if (isCalibrating && calibPoints.length > 0) {
+        ctx.fillStyle = '#e74c3c';
+        calibPoints.forEach(pt => {
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2); ctx.fill();
+        });
+      }
     }
 
-    // 🌟 3D 真實門型渲染：archway 不加多餘門牆阻擋，視野一望到底！
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
@@ -966,9 +1033,9 @@
       const r = getCurRoom();
       const W = r.w/1000, L = r.l/1000, H = r.h/1000;
       const wallColor = document.getElementById('col-wall').value || '#efede6';
-      const floorColor = document.getElementById('col-floor').value || '#555555';
+      const floorColor = document.getElementById('col-floor').value || '#3d4452';
 
-      const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: (curRoomKey === 'fullHouse' ? 0x3d4452 : floorColor), roughness: 0.5 }));
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.5 }));
       fl.rotation.x = -Math.PI / 2; renderGroup.add(fl);
       const wallMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.8, side: THREE.DoubleSide });
 
@@ -984,32 +1051,31 @@
         rWall.position.set(W/2, H/2, 0); renderGroup.add(rWall); 
       }
 
-      // 真實門洞：若為 archway 則大開口透空，若為 door 則保留門頂陣
       if (r.door.type === 'door') {
         const dw = r.door.w/1000, dh = r.door.h/1000, dx = r.door.x/1000;
         if (dx > 0) { const ldw = new THREE.Mesh(new THREE.BoxGeometry(dx, H, 0.05), wallMat); ldw.position.set(-W/2 + dx/2, H/2, L/2); renderGroup.add(ldw); }
         const tdw = new THREE.Mesh(new THREE.BoxGeometry(dw, H - dh, 0.05), wallMat); tdw.position.set(-W/2 + dx + dw/2, dh + (H - dh)/2, L/2); renderGroup.add(tdw);
         const rightW = W - (dx + dw);
         if (rightW > 0) { const rdw = new THREE.Mesh(new THREE.BoxGeometry(rightW, H, 0.05), wallMat); rdw.position.set(W/2 - rightW/2, H/2, L/2); renderGroup.add(rdw); }
-      } else if (r.door.type === 'archway') {
-        // 睡房大開口：2300mm 完全透空，只留兩邊餘牆
-        const dw = r.door.w/1000, dx = r.door.x/1000;
-        if (dx > 0) { const ldw = new THREE.Mesh(new THREE.BoxGeometry(dx, H, 0.05), wallMat); ldw.position.set(-W/2 + dx/2, H/2, L/2); renderGroup.add(ldw); }
-        const rightW = W - (dx + dw);
-        if (rightW > 0) { const rdw = new THREE.Mesh(new THREE.BoxGeometry(rightW, H, 0.05), wallMat); rdw.position.set(W/2 - rightW/2, H/2, L/2); renderGroup.add(rdw); }
       } else {
-        // none: 整面後牆完全封閉實體
         const bWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
         bWall.position.set(0, H/2, L/2); renderGroup.add(bWall);
       }
 
       r.structures.forEach(s => {
-        const sw = s.w/1000, sl = s.l/1000, structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x576574 });
-        if (s.type === 'pillar') {
+        const sw = s.w/1000, sl = s.l/1000;
+        if (s.type === 'void') {
+          const voidMat = new THREE.MeshBasicMaterial({ color: 0x0d1017 });
+          const voidMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, H + 0.1, sl), voidMat);
+          voidMesh.position.set(-W/2 + (s.x/1000) + sw/2, H/2, -L/2 + (s.y/1000) + sl/2);
+          renderGroup.add(voidMesh);
+        } else if (s.type === 'pillar') {
+          const structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x576574 });
           const colMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, H, sl), structMat);
           colMesh.position.set(-W/2 + (s.x/1000) + sw/2, H/2, -L/2 + (s.y/1000) + sl/2);
           renderGroup.add(colMesh);
         } else if (s.type === 'beam') {
+          const structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x7f8c8d });
           const sd = (s.d || 300)/1000;
           const beamMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), structMat);
           beamMesh.position.set(-W/2 + (s.x/1000) + sw/2, H - sd/2, -L/2 + (s.y/1000) + sl/2);
@@ -1020,13 +1086,9 @@
       r.items.forEach(it => {
         const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
         let geom = new THREE.BoxGeometry(iw, ih, il);
-        let px = 0, py = ih/2, pz = 0;
-        if (it.face === 'floor') { px = -W/2 + (it.x/1000) + iw/2; py = ih/2; pz = -L/2 + (it.y/1000) + il/2; }
-        else if (it.face === 'front') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = -L/2 + il/2 + 0.02; }
-        else if (it.face === 'back') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = L/2 - il/2 - 0.02; }
-        else if (it.face === 'left') { geom = new THREE.BoxGeometry(il, ih, iw); px = -W/2 + il/2 + 0.02; py = (it.y/1000) + ih/2; pz = -L/2 + (it.x/1000) + iw/2; }
-        else if (it.face === 'right') { geom = new THREE.BoxGeometry(il, ih, iw); px = W/2 - il/2 - 0.02; py = (it.y/1000) + ih/2; pz = -L/2 + (it.x/1000) + iw/2; }
-        else if (it.face === 'ceiling') { px = -W/2 + (it.x/1000) + iw/2; py = H - ih/2; pz = -L/2 + (it.y/1000) + il/2; }
+        let px = -W/2 + (it.x/1000) + iw/2;
+        let py = ih/2;
+        let pz = -L/2 + (it.y/1000) + il/2;
         const msh = new THREE.Mesh(geom, new THREE.MeshStandardMaterial({ color: it.col || 0xd4a373, roughness: 0.4 }));
         msh.position.set(px, py, pz);
         renderGroup.add(msh);
@@ -1035,11 +1097,12 @@
       renderer.render(scene, camera);
     }
 
-    function parseTxtBlueprint(text) {
-      if (text.includes('=== 空間:')) {
-        parseFullHouseBlueprint(text);
-        return;
-      }
+
+
+
+
+        function parseTxtBlueprint(text) {
+      if (text.includes('=== 空間:')) { parseFullHouseBlueprint(text); return; }
       const r = getCurRoom();
       const lines = text.split('\n');
       let newW = r.w, newL = r.l, newH = r.h;
@@ -1060,10 +1123,11 @@
           if (wM) newDoor.w = parseFloat(wM[1]);
           if (xM) newDoor.x = parseFloat(xM[1]);
           newDoor.swingRadius = (newDoor.type === 'door') ? newDoor.w : 0;
-        } else if (line.startsWith('柱:')) {
-          const name = line.replace('柱:', '').split(',')[0].trim();
+        } else if (line.startsWith('柱:') || line.startsWith('遮罩:')) {
+          const isVoid = line.startsWith('遮罩:');
+          const name = line.replace(/^(柱|遮罩):/, '').split(',')[0].trim();
           const sz = line.match(/(\d+)\s*x\s*(\d+)/i), pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/), colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
-          if (sz && pos) newStructures.push({ id: Date.now() + idx, type: 'pillar', name: name, w: parseFloat(sz[1]), l: parseFloat(sz[2]), d: newH, x: parseFloat(pos[1]), y: parseFloat(pos[2]), col: colM ? colM[1] : '#576574' });
+          if (sz && pos) newStructures.push({ id: Date.now() + idx, type: isVoid ? 'void' : 'pillar', name: name, w: parseFloat(sz[1]), l: parseFloat(sz[2]), d: newH, x: parseFloat(pos[1]), y: parseFloat(pos[2]), col: isVoid ? '#0d1017' : (colM ? colM[1] : '#576574') });
         } else if (line.startsWith('樑:')) {
           const name = line.replace('樑:', '').split(',')[0].trim();
           const wM = line.match(/闊\s*(\d+)/), dM = line.match(/深\s*(\d+)/), hM = line.match(/吊\s*(\d+)/), pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/), colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
@@ -1071,11 +1135,7 @@
         } else if (line.startsWith('傢俬:')) {
           const name = line.replace('傢俬:', '').split(',')[0].trim();
           const sz = line.match(/(\d+)\s*x\s*(\d+)(?:\s*x\s*(\d+))?/i), pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/), colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
-          let face = 'floor';
-          if (line.includes('前')) face = 'front'; else if (line.includes('後')) face = 'back';
-          else if (line.includes('左')) face = 'left'; else if (line.includes('右')) face = 'right';
-          else if (line.includes('天花')) face = 'ceiling';
-          if (sz && pos) newItems.push({ id: Date.now() + idx, name: name, face: face, w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: parseFloat(sz[3] || 400), x: parseFloat(pos[1]), y: parseFloat(pos[2]), rot: 0, col: colM ? colM[1] : '#d4a373' });
+          if (sz && pos) newItems.push({ id: Date.now() + idx, name: name, face: 'floor', w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: parseFloat(sz[3] || 400), x: parseFloat(pos[1]), y: parseFloat(pos[2]), rot: 0, col: colM ? colM[1] : '#d4a373' });
         }
       });
 
@@ -1087,7 +1147,7 @@
 
     function parseFullHouseBlueprint(fullText) {
       const parts = fullText.split('=== 空間:');
-      const keyMap = { '客飯廳': 'living', '大睡房': 'masterBed', '睡房一': 'masterBed', '廚房': 'kitchen', '浴室': 'bathroom', '全屋藍圖': 'fullHouse', '全屋': 'fullHouse' };
+      const keyMap = { '客飯廳': 'living', '大睡房': 'masterBed', '廚房': 'kitchen', '浴室': 'bathroom', '全屋藍圖': 'fullHouse' };
       parts.forEach(p => {
         if (!p.trim()) return;
         const roomTitle = p.split('===')[0].trim();
@@ -1098,17 +1158,17 @@
           parseTxtBlueprint(p);
         }
       });
-      curRoomKey = 'living';
+      curRoomKey = 'fullHouse';
       loadCurRoomToUI();
       saveToIndexedDB();
-      alert("✅ 已成功將 AI 全屋手帳灌入所有空間！");
+      alert("✅ 已成功灌入 540 呎全屋藍圖！");
     }
 
     function applyTxtBlueprint() { parseTxtBlueprint(document.getElementById('txt-area').value); updateAll(); }
     function newBlankRoom() { const r = getCurRoom(); r.structures = []; r.items = []; syncToTxtArea(); updateAll(); saveToIndexedDB(); }
 
     function renderReportPage() {
-      const addr = `${projectMeta.estate||'彩園邨'} ${projectMeta.block||'彩湖樓2'} ${projectMeta.floor||'23'}${projectMeta.unit||'室'}`;
+      const addr = `${projectMeta.estate||'慈康邨'} ${projectMeta.block||'540呎'} ${projectMeta.floor||'兩房'}`;
       document.getElementById('rep-title').innerText = `📍 ${addr} 全屋裝修工程核算單`;
       const cont = document.getElementById('report-items-container');
       cont.innerHTML = '';
@@ -1129,7 +1189,6 @@
             <b style="color:#00ffcc; font-size:11.5px;">【${r.name}】 實用面積：${sqft.toFixed(1)} 呎</b>
             <div class="detail-row"><span>地板備料估算 (+10%):</span><b>HK$ ${fCost.toLocaleString()}</b></div>
             <div class="detail-row"><span>四面牆身乳膠漆估算:</span><b>HK$ ${pCost.toLocaleString()}</b></div>
-            <div class="detail-row" style="color:#8892b0; font-size:9.5px;"><span>配置傢俬(${r.items.length}件):</span><span>${r.items.map(i=>i.name).join(', ')||'純清水吉房'}</span></div>
           </div>
         `;
       });
@@ -1139,7 +1198,7 @@
     }
 
     function exportWhatsApp() {
-      const addr = `${projectMeta.estate||'彩園邨'} ${projectMeta.block||'彩湖樓2'} ${projectMeta.floor||'23'}${projectMeta.unit||'室'}`;
+      const addr = `${projectMeta.estate||'慈康邨'} ${projectMeta.block||'540呎'} ${projectMeta.floor||'兩房'}`;
       let msg = `【圖層王香港 3D 全屋一體化裝修報價單】\n📍 物業：${addr}\n`;
       let grandTotalFloor = 0, grandTotalPaint = 0;
       ['living','masterBed','kitchen','bathroom'].forEach(k => {
@@ -1149,7 +1208,7 @@
         const netF = ((r.w * r.l)/1000000 * 10.764 * 1.1) * 35;
         const netP = Math.max(0, ((r.w + r.l)*2*r.h/1000000 - dM2) * 10.764) * 22;
         grandTotalFloor += netF; grandTotalPaint += netP;
-        msg += `\n[${r.name}] 面積: ${(r.w*r.l/1000000*10.764).toFixed(1)}呎 | 傢俬(${r.items.length}件): ${r.items.map(i=>i.name).join(', ')||'純清水房'}`;
+        msg += `\n[${r.name}] 面積: ${(r.w*r.l/1000000*10.764).toFixed(1)}呎 | 傢俬(${r.items.length}件)`;
       });
       msg += `\n\n💰 全屋地板估算: 約 HK$${Math.round(grandTotalFloor).toLocaleString()}\n🎨 全屋油漆估算: 約 HK$${Math.round(grandTotalPaint).toLocaleString()}`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
@@ -1170,4 +1229,5 @@
 </html>
 
 
-    
+
+
