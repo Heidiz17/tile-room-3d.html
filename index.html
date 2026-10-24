@@ -9,30 +9,35 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #1a1a1a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    
-    /* 頂部操作欄 */
-    #header { padding: 8px 10px; background: #262626; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; z-index: 10; border-bottom: 1px solid #333; }
+    #header { padding: 6px 10px; background: #262626; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; z-index: 10; border-bottom: 1px solid #333; }
     .input-group { display: flex; align-items: center; gap: 3px; font-size: 11px; }
-    input, select { padding: 4px 6px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 11px; }
-    input { width: 52px; }
-    button { padding: 5px 9px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
+    input, select { padding: 3px 5px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 11px; }
+    input { width: 50px; }
+    button { padding: 4px 8px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
     .btn-action { background: #0070f3; color: #fff; }
     .btn-add { background: #4b6584; color: #fff; }
+    
+    /* 六面切換膠囊列 */
+    #face-tabs { padding: 4px 10px; background: #202020; display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid #333; white-space: nowrap; }
+    .tab-btn { background: #333; color: #aaa; padding: 4px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; border: 1px solid #444; }
+    .tab-btn.active { background: #0070f3; color: #fff; border-color: #00a8ff; font-weight: bold; }
 
-    /* 條目微型清單抽屜（橫向滑動） */
-    #item-deck { padding: 5px 10px; background: #1e1e1e; display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid #333; white-space: nowrap; }
-    .chip { background: #2f3640; border: 1px solid #555; padding: 3px 8px; border-radius: 12px; font-size: 10px; display: inline-flex; align-items: center; gap: 5px; }
-    .chip span.del { color: #ff6b6b; cursor: pointer; font-weight: bold; margin-left: 2px; }
+    /* 條目微型清單抽屜 */
+    #item-deck { padding: 4px 10px; background: #181818; display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid #333; white-space: nowrap; }
+    .chip { background: #2f3640; border: 1px solid #555; padding: 2px 7px; border-radius: 10px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; }
+    .chip span.del { color: #ff6b6b; cursor: pointer; font-weight: bold; }
 
-    /* 主工作區：手機直屏上下分欄 */
+    /* 主工作區 */
     #workspace { display: flex; flex: 1; min-height: 0; width: 100%; position: relative; flex-direction: column; }
     @media (min-width: 769px) { #workspace { flex-direction: row; } }
-
-    #pane-2d { flex: 1; border-bottom: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; overflow: hidden; }
+    #pane-2d { flex: 1; border-bottom: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; overflow: hidden; touch-action: none; }
     #pane-3d { flex: 1; position: relative; overflow: hidden; width: 100%; height: 100%; }
-    
     .pane-tag { position: absolute; top: 6px; left: 6px; color: #aaa; font-size: 10px; z-index: 5; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; pointer-events: none; }
-    canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; max-width: 92%; max-height: 92%; }
+    canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; }
+    
+    /* 懸浮控制手掣（旋轉按鈕） */
+    #float-ctrl { position: absolute; bottom: 8px; right: 8px; display: none; gap: 6px; z-index: 20; }
+    #float-ctrl button { background: #e67e22; color: #fff; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 
     /* 底部資訊列 */
     #info-bar { padding: 6px 10px; background: #111; font-size: 11px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; gap: 8px; }
@@ -42,10 +47,10 @@
 
     /* 彈出抽屜 Modal */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 99; justify-content: center; align-items: center; }
-    .modal-content { background: #2c3e50; padding: 15px; border-radius: 8px; width: 85%; max-width: 320px; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .modal-content { background: #2c3e50; padding: 14px; border-radius: 8px; width: 85%; max-width: 320px; font-size: 12px; display: flex; flex-direction: column; gap: 7px; }
     .modal-content label { display: flex; justify-content: space-between; align-items: center; }
     .modal-content input, .modal-content select { width: 120px; }
-    .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 5px; }
+    .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -55,57 +60,65 @@
     <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="3200"></div>
     <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="3800"></div>
     <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2600"></div>
-    <div class="input-group">
-      <select id="tile-sz">
-        <option value="600">600磚</option>
-        <option value="300">300磚</option>
-        <option value="800">800磚</option>
-      </select>
-    </div>
     <button class="btn-add" onclick="openModal('modal-struct')">➕ 加柱/樑</button>
-    <button class="btn-add" onclick="openModal('modal-item')">➕ 加傢俬</button>
-    <button class="btn-action" onclick="updateAll()">🔄 更新</button>
+    <button class="btn-add" onclick="openModal('modal-item')">➕ 加傢俬/電掣</button>
+    <button class="btn-action" onclick="reset2DView()">🔍 居中視角</button>
   </div>
 
-  <!-- 條目抽屜（清單 Tag） -->
+  <!-- 六面視點膠囊列 -->
+  <div id="face-tabs">
+    <div class="tab-btn active" onclick="switchFace('floor')">地板 (Floor)</div>
+    <div class="tab-btn" onclick="switchFace('front')">前牆 (主景牆)</div>
+    <div class="tab-btn" onclick="switchFace('back')">後牆 (門口牆)</div>
+    <div class="tab-btn" onclick="switchFace('left')">左牆</div>
+    <div class="tab-btn" onclick="switchFace('right')">右牆</div>
+    <div class="tab-btn" onclick="switchFace('ceiling')">天花 (Ceiling)</div>
+  </div>
+
+  <!-- 條目微型清單抽屜 -->
   <div id="item-deck">
     <span style="font-size: 10px; color:#888; align-self:center;">清單:</span>
     <div id="chips-container" style="display:inline-flex; gap:6px;"></div>
   </div>
 
-  <!-- 主操作區：上 2D 俯瞰，下 3D 空間 -->
+  <!-- 主操作區 -->
   <div id="workspace">
     <div id="pane-2d">
-      <div class="pane-tag">📐 2D 俯瞰（紅=柱, 橙=樑陣, 藍/紫=傢俬）</div>
-      <canvas id="cv-2d" width="300" height="300"></canvas>
+      <div id="face-tag" class="pane-tag">📐 當前視點: 地板 (可單指拖曳、雙指/滾輪縮放)</div>
+      <canvas id="cv-2d" width="320" height="320"></canvas>
+      <div id="float-ctrl">
+        <button onclick="rotateSelectedItem()">🔄 旋轉 90°</button>
+      </div>
     </div>
     <div id="pane-3d">
-      <div class="pane-tag">🧊 3D 空間（手勢拖曳旋轉 / 雙指縮放）</div>
+      <div class="pane-tag">🧊 3D 空間 (點選視點自動切換平視角度)</div>
     </div>
   </div>
 
   <!-- 底部核算 -->
   <div id="info-bar">
     <div id="stat-text">計算中...</div>
-    <button id="btn-wa" onclick="exportWhatsApp()">📲 WhatsApp 出單</button>
+    <button id="btn-wa" onclick="exportWhatsApp()">📲 出單</button>
   </div>
 
-  <!-- Modal 1: 加柱 / 樑結構 -->
+
+
+
+    <!-- Modal 1: 結構 -->
   <div id="modal-struct" class="modal">
     <div class="modal-content">
-      <b>🏛️ 新增建築結構 (不可改動)</b>
+      <b>🏛️ 新增結構 (不可改動)</b>
       <label>類型:
         <select id="st-type">
           <option value="pillar">石屎柱 (直通地天)</option>
           <option value="beam">頂陣/大樑 (吊天花)</option>
         </select>
       </label>
-      <label>名稱: <input type="text" id="st-name" value="主力角柱"></label>
-      <label>闊(X mm): <input type="number" id="st-w" value="400"></label>
-      <label>長(Y mm): <input type="number" id="st-l" value="400"></label>
-      <label>深(吊高 mm): <input type="number" id="st-d" value="350" title="樑深"></label>
-      <label>座標 X(mm): <input type="number" id="st-x" value="0"></label>
-      <label>座標 Y(mm): <input type="number" id="st-y" value="0"></label>
+      <label>名稱: <input type="text" id="st-name" value="角柱"></label>
+      <label>闊(X): <input type="number" id="st-w" value="400"></label>
+      <label>長(Y): <input type="number" id="st-l" value="400"></label>
+      <label>座標 X: <input type="number" id="st-x" value="0"></label>
+      <label>座標 Y: <input type="number" id="st-y" value="0"></label>
       <div class="modal-btns">
         <button onclick="closeModal('modal-struct')">取消</button>
         <button class="btn-action" onclick="addStructure()">加入</button>
@@ -113,32 +126,33 @@
     </div>
   </div>
 
-  <!-- Modal 2: 加 IKEA / 淘寶傢俬 -->
+  <!-- Modal 2: 傢俬與電掣 -->
   <div id="modal-item" class="modal">
     <div class="modal-content">
-      <b>🛋️ 新增傢俬 (標準模組/自訂)</b>
-      <label>預設範本:
+      <b>🛋️ 新增物件</b>
+      <label>範本:
         <select id="item-tpl" onchange="applyItemTpl()">
-          <option value="custom">-- 自訂淘寶件 --</option>
-          <option value="ikea-bed">IKEA 標準雙人床 (1500x2000)</option>
-          <option value="ikea-kallax">IKEA Kallax 四格架 (770x390)</option>
-          <option value="ikea-wardrobe">IKEA Pax 大衣櫃 (1000x580)</option>
+          <option value="custom">-- 自訂 --</option>
+          <option value="ikea-bed">IKEA 雙人床 (1500x2000)</option>
+          <option value="socket">🔌 86型標準電掣 (86x86)</option>
+          <option value="ikea-wardrobe">IKEA 大衣櫃 (1000x580)</option>
+          <option value="tv">電視機 (1200x80)</option>
         </select>
       </label>
       <label>名稱: <input type="text" id="it-name" value="IKEA雙人床"></label>
-      <label>吸附型態:
-        <select id="it-mount">
-          <option value="onFloor">貼地 (onFloor)</option>
-          <option value="onWall">掛牆 (onWall)</option>
-          <option value="onCeiling">吸頂 (onCeiling)</option>
+      <label>所屬平面:
+        <select id="it-face">
+          <option value="floor">地板 (Floor)</option>
+          <option value="front">前牆 (Front Wall)</option>
+          <option value="back">後牆 (Back Wall)</option>
+          <option value="left">左牆 (Left Wall)</option>
+          <option value="right">右牆 (Right Wall)</option>
+          <option value="ceiling">天花 (Ceiling)</option>
         </select>
       </label>
       <label>闊(W mm): <input type="number" id="it-w" value="1500"></label>
-      <label>長(L mm): <input type="number" id="it-l" value="2000"></label>
+      <label>長/厚(L mm): <input type="number" id="it-l" value="2000"></label>
       <label>高(H mm): <input type="number" id="it-h" value="450"></label>
-      <label>座標 X(mm): <input type="number" id="it-x" value="400"></label>
-      <label>座標 Y(mm): <input type="number" id="it-y" value="0"></label>
-      <label>離地高(mm): <input type="number" id="it-z" value="0" title="掛牆用"></label>
       <div class="modal-btns">
         <button onclick="closeModal('modal-item')">取消</button>
         <button class="btn-action" onclick="addItem()">加入</button>
@@ -147,15 +161,20 @@
   </div>
 
   <script>
-    // 核心數據結構（由一件開始，隨時加減）
+    // 核心數據與控制器狀態
+    let curFace = 'floor'; // floor, front, back, left, right, ceiling
+    let selectedItemId = 101;
+    let viewZoom = 1.0, viewPanX = 0, viewPanY = 0;
+
     let structures = [
-      { id: 1, type: "pillar", name: "主力角柱", x: 0, y: 0, w: 400, l: 400, d: 2600 }
+      { id: 1, type: "pillar", name: "角柱", x: 0, y: 0, w: 400, l: 400, d: 2600 }
     ];
     let items = [
-      { id: 101, name: "IKEA雙人床", w: 1500, l: 2000, h: 450, x: 400, y: 0, zOff: 0, mount: "onFloor", col: 0x8c7ae6 }
+      { id: 101, name: "IKEA雙人床", face: "floor", w: 1500, l: 2000, h: 450, x: 400, y: 0, rot: 0, col: 0x8c7ae6 },
+      { id: 102, name: "13A雙位電掣", face: "front", w: 146, l: 25, h: 86, x: 600, y: 300, rot: 0, col: 0xe74c3c }
     ];
 
-    // 初始化 Three.js
+    // Three.js 初始化
     const container3D = document.getElementById('pane-3d');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x181818);
@@ -172,7 +191,6 @@
     const dLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dLight.position.set(6, 12, 8);
     scene.add(dLight);
-
     let roomGroup = new THREE.Group();
     scene.add(roomGroup);
 
@@ -184,24 +202,27 @@
       renderer.setSize(w, h);
     }
 
-    // Modal 控制
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function applyItemTpl() {
-      const val = document.getElementById('item-tpl').value;
-      if (val === 'ikea-bed') {
+      const v = document.getElementById('item-tpl').value;
+      if (v === 'ikea-bed') {
         document.getElementById('it-name').value = "IKEA雙人床";
+        document.getElementById('it-face').value = "floor";
         document.getElementById('it-w').value = 1500; document.getElementById('it-l').value = 2000; document.getElementById('it-h').value = 450;
-        document.getElementById('it-mount').value = "onFloor";
-      } else if (val === 'ikea-kallax') {
-        document.getElementById('it-name').value = "Kallax四格架";
-        document.getElementById('it-w').value = 770; document.getElementById('it-l').value = 390; document.getElementById('it-h').value = 770;
-        document.getElementById('it-mount').value = "onFloor";
-      } else if (val === 'ikea-wardrobe') {
-        document.getElementById('it-name').value = "Pax大衣櫃";
+      } else if (v === 'socket') {
+        document.getElementById('it-name').value = "13A雙位電掣";
+        document.getElementById('it-face').value = "front";
+        document.getElementById('it-w').value = 146; document.getElementById('it-l').value = 25; document.getElementById('it-h').value = 86;
+      } else if (v === 'ikea-wardrobe') {
+        document.getElementById('it-name').value = "IKEA大衣櫃";
+        document.getElementById('it-face').value = "floor";
         document.getElementById('it-w').value = 1000; document.getElementById('it-l').value = 580; document.getElementById('it-h').value = 2360;
-        document.getElementById('it-mount').value = "onFloor";
+      } else if (v === 'tv') {
+        document.getElementById('it-name').value = "55吋電視機";
+        document.getElementById('it-face').value = "front";
+        document.getElementById('it-w').value = 1230; document.getElementById('it-l').value = 60; document.getElementById('it-h').value = 710;
       }
     }
 
@@ -212,7 +233,7 @@
         name: document.getElementById('st-name').value,
         w: parseFloat(document.getElementById('st-w').value) || 400,
         l: parseFloat(document.getElementById('st-l').value) || 400,
-        d: parseFloat(document.getElementById('st-d').value) || 350,
+        d: 2600,
         x: parseFloat(document.getElementById('st-x').value) || 0,
         y: parseFloat(document.getElementById('st-y').value) || 0
       });
@@ -221,201 +242,197 @@
     }
 
     function addItem() {
-      const m = document.getElementById('it-mount').value;
-      const col = m === 'onCeiling' ? 0x00d2d3 : (m === 'onWall' ? 0xe1b12c : 0x8c7ae6);
+      const fc = document.getElementById('it-face').value;
+      const isSocket = document.getElementById('it-name').value.includes('電掣');
       items.push({
         id: Date.now(),
         name: document.getElementById('it-name').value,
-        mount: m,
+        face: fc,
         w: parseFloat(document.getElementById('it-w').value) || 1000,
         l: parseFloat(document.getElementById('it-l').value) || 1000,
-        h: parseFloat(document.getElementById('it-h').value) || 500,
-        x: parseFloat(document.getElementById('it-x').value) || 0,
-        y: parseFloat(document.getElementById('it-y').value) || 0,
-        zOff: parseFloat(document.getElementById('it-z').value) || 0,
-        col: col
+        h: parseFloat(document.getElementById('it-h').value) || 400,
+        x: 100, y: 100, rot: 0,
+        col: isSocket ? 0xe74c3c : (fc === 'ceiling' ? 0x00d2d3 : 0x8c7ae6)
       });
       closeModal('modal-item');
       updateAll();
     }
 
-    function removeStructure(id) {
-      structures = structures.filter(s => s.id !== id);
+
+
+
+        function switchFace(face) {
+      curFace = face;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      const names = { floor: "地板 (Floor)", front: "前牆 (主景牆)", back: "後牆 (門口牆)", left: "左牆", right: "右牆", ceiling: "天花 (Ceiling)" };
+      document.getElementById('face-tag').innerText = `📐 當前視點: ${names[face]}`;
+      
+      // 3D 相機自動平滑轉動對準該面
+      adjust3DCameraForFace(face);
+      reset2DView();
       updateAll();
     }
 
-    function removeItem(id) {
-      items = items.filter(i => i.id !== id);
+    function rotateSelectedItem() {
+      const it = items.find(i => i.id === selectedItemId);
+      if (!it) return;
+      const tmp = it.w; it.w = it.l; it.l = tmp; // 長闊對調
+      it.rot = (it.rot + 90) % 360;
       updateAll();
     }
 
-    // 渲染條目清單 (Chips)
+    function reset2DView() {
+      viewZoom = 1.0; viewPanX = 0; viewPanY = 0;
+      draw2D();
+    }
+
+    // 2D 交互事件 (單指拖曳、旋轉檢測、滾輪/雙指縮放)
+    const cv = document.getElementById('cv-2d');
+    let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
+    
+    cv.addEventListener('pointerdown', e => {
+      const rect = cv.getBoundingClientRect();
+      const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
+      const hit = getHitItem(clickX, clickY);
+      if (hit) {
+        selectedItemId = hit.id;
+        isDragging = true;
+        dragStartX = clickX; dragStartY = clickY;
+        itemOrigX = hit.x; itemOrigY = hit.y;
+        document.getElementById('float-ctrl').style.display = 'flex';
+      } else {
+        selectedItemId = null;
+        document.getElementById('float-ctrl').style.display = 'none';
+      }
+      updateAll();
+    });
+
+    window.addEventListener('pointermove', e => {
+      if (!isDragging || !selectedItemId) return;
+      const rect = cv.getBoundingClientRect();
+      const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
+      const it = items.find(i => i.id === selectedItemId);
+      if (it) {
+        const sc = getScale();
+        it.x = Math.max(0, Math.round(itemOrigX + (curX - dragStartX) / sc));
+        it.y = Math.max(0, Math.round(itemOrigY + (curY - dragStartY) / sc));
+        updateAll();
+      }
+    });
+
+    window.addEventListener('pointerup', () => { isDragging = false; });
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      viewZoom = Math.min(Math.max(0.6, viewZoom - e.deltaY * 0.001), 4.0);
+      draw2D();
+    }, { passive: false });
+
+    function getScale() {
+      const W = parseFloat(document.getElementById('rm-w').value) || 3200;
+      const L = parseFloat(document.getElementById('rm-l').value) || 3800;
+      return (240 / Math.max(W, L)) * viewZoom;
+    }
+
+    function getHitItem(cx, cy) {
+      const sc = getScale();
+      const W = parseFloat(document.getElementById('rm-w').value) || 3200;
+      const L = parseFloat(document.getElementById('rm-l').value) || 3800;
+      const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
+      return items.find(it => {
+        if (it.face !== curFace) return false;
+        const rx = ox + it.x * sc, ry = oy + it.y * sc, rw = it.w * sc, rh = it.l * sc;
+        return cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh;
+      });
+    }
+
+    function updateAll() {
+      renderChips();
+      draw2D();
+      draw3D();
+    }
+
     function renderChips() {
       const cont = document.getElementById('chips-container');
       cont.innerHTML = '';
-      structures.forEach(s => {
-        cont.innerHTML += `<div class="chip" style="border-color:#e84118;">🏛️ ${s.name} <span class="del" onclick="removeStructure(${s.id})">×</span></div>`;
-      });
       items.forEach(i => {
-        cont.innerHTML += `<div class="chip" style="border-color:#00a8ff;">🛋️ ${i.name} <span class="del" onclick="removeItem(${i.id})">×</span></div>`;
+        const isSel = i.id === selectedItemId;
+        cont.innerHTML += `<div class="chip" style="border-color:${isSel ? '#00d2d3':'#555'};">🛋️ ${i.name} (${i.face}) <span class="del" onclick="removeItem(${i.id})">×</span></div>`;
       });
     }
 
-    // 核心同步計算
-    function updateAll() {
+    function removeItem(id) { items = items.filter(i => i.id !== id); updateAll(); }
+
+    function draw2D() {
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0, 0, cv.width, cv.height);
       const W = parseFloat(document.getElementById('rm-w').value) || 3200;
       const L = parseFloat(document.getElementById('rm-l').value) || 3800;
-      const H = parseFloat(document.getElementById('rm-h').value) || 2600;
-      const T = parseFloat(document.getElementById('tile-sz').value) || 600;
+      const sc = getScale();
+      const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
 
-      renderChips();
+      // 當前面畫布外框
+      ctx.fillStyle = '#333'; ctx.fillRect(ox, oy, W * sc, L * sc);
+      ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, W * sc, L * sc);
 
-      // 料量計算
-      const areaM2 = (W * L) / 1000000;
-      const areaFt2 = areaM2 * 10.764;
-      const tilesTotal = Math.ceil(((Math.ceil(W/T) * Math.ceil(L/T))) * 1.1);
-      const wallPaint = (((W + L) * 2 * H) / 1000000).toFixed(1);
-
-      document.getElementById('stat-text').innerHTML = 
-        `面積：<b>${areaM2.toFixed(1)}</b>㎡ (${areaFt2.toFixed(0)}呎) | 地磚：<b>${tilesTotal}</b>塊(+10%損耗) | 牆漆：<b>${wallPaint}</b>㎡`;
-
-      draw2D(W, L, T);
-      draw3D(W, L, H, T);
-    }
-
-    // 2D 畫布
-    function draw2D(W, L, T) {
-      const cv = document.getElementById('cv-2d'), ctx = cv.getContext('2d');
-      ctx.clearRect(0, 0, cv.width, cv.height);
-
-      const maxDim = Math.max(W, L);
-      const scale = 230 / maxDim;
-      const drawW = W * scale, drawL = L * scale;
-      const ox = (cv.width - drawW) / 2, oy = (cv.height - drawL) / 2;
-
-      // 地台與磚格
-      ctx.fillStyle = '#333';
-      ctx.fillRect(ox, oy, drawW, drawL);
-      ctx.strokeStyle = '#4a4a4a';
-      ctx.lineWidth = 1;
-      const step = T * scale;
-      for (let x = ox; x <= ox + drawW + 0.1; x += step) { ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + drawL); ctx.stroke(); }
-      for (let y = oy; y <= oy + drawL + 0.1; y += step) { ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + drawW, y); ctx.stroke(); }
-
-      // 畫結構（柱/樑）
-      structures.forEach(s => {
-        if (s.type === 'pillar') {
+      // 畫結構柱
+      if (curFace === 'floor' || curFace === 'ceiling') {
+        structures.forEach(s => {
           ctx.fillStyle = '#e84118';
-          ctx.fillRect(ox + s.x * scale, oy + s.y * scale, s.w * scale, s.l * scale);
-        } else {
-          ctx.fillStyle = 'rgba(230, 126, 34, 0.6)';
-          ctx.fillRect(ox + s.x * scale, oy + s.y * scale, s.w * scale, s.l * scale);
-          ctx.strokeStyle = '#e67e22';
-          ctx.strokeRect(ox + s.x * scale, oy + s.y * scale, s.w * scale, s.l * scale);
-        }
-      });
+          ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
+        });
+      }
 
-      // 畫傢俬
-      items.forEach(it => {
-        ctx.fillStyle = it.mount === 'onCeiling' ? 'rgba(0,210,211,0.6)' : (it.mount === 'onWall' ? 'rgba(225,177,44,0.7)' : 'rgba(140,122,230,0.8)');
-        ctx.fillRect(ox + it.x * scale, oy + it.y * scale, it.w * scale, it.l * scale);
-        ctx.strokeStyle = '#fff';
-        ctx.strokeRect(ox + it.x * scale, oy + it.y * scale, it.w * scale, it.l * scale);
+      // 畫該面傢俬
+      items.filter(i => i.face === curFace).forEach(it => {
+        const isSel = it.id === selectedItemId;
+        ctx.fillStyle = it.name.includes('電掣') ? '#e74c3c' : (isSel ? '#0984e3' : 'rgba(140,122,230,0.85)');
+        ctx.fillRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
+        ctx.strokeStyle = isSel ? '#00ffcc' : '#ffffff';
+        ctx.lineWidth = isSel ? 2 : 1;
+        ctx.strokeRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
+        ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif';
+        ctx.fillText(it.name, ox + it.x * sc + 2, oy + it.y * sc + 10);
       });
-
-      // 標註
-      ctx.strokeStyle = '#0070f3';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(ox, oy, drawW, drawL);
-      ctx.fillStyle = '#aaa';
-      ctx.font = '10px sans-serif';
-      ctx.fillText(`${W}mm`, ox + drawW/2 - 18, oy - 5);
-      ctx.fillText(`${L}mm`, ox + drawW + 4, oy + drawL/2);
     }
 
-    // 3D 渲染
-    function draw3D(W, L, H, T) {
-      while(roomGroup.children.length > 0) roomGroup.remove(roomGroup.children[0]);
-
-      const sW = W / 1000, sL = L / 1000, sH = H / 1000;
-      const tx = Math.ceil(W / T), tz = Math.ceil(L / T);
-
-      // 地板貼圖
-      const canvasTex = document.createElement('canvas');
-      canvasTex.width = 128; canvasTex.height = 128;
-      const tctx = canvasTex.getContext('2d');
-      tctx.fillStyle = '#dcdde1'; tctx.fillRect(0, 0, 128, 128);
-      tctx.strokeStyle = '#718093'; tctx.lineWidth = 4;
-      tctx.strokeRect(0, 0, 128, 128);
-      const floorTex = new THREE.CanvasTexture(canvasTex);
-      floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping;
-      floorTex.repeat.set(tx, tz);
-
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(sW, sL), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.3 }));
-      floor.rotation.x = -Math.PI / 2;
-      roomGroup.add(floor);
-
-      // 牆
+    function draw3D() {
+      while(roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
+      const W = parseFloat(document.getElementById('rm-w').value)/1000, L = parseFloat(document.getElementById('rm-l').value)/1000, H = parseFloat(document.getElementById('rm-h').value)/1000;
+      
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: 0x555 }));
+      fl.rotation.x = -Math.PI / 2; roomGroup.add(fl);
       const wallMat = new THREE.MeshStandardMaterial({ color: 0xefede6, roughness: 0.8 });
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(sW, sH, 0.05), wallMat);
-      backWall.position.set(0, sH / 2, -sL / 2);
-      roomGroup.add(backWall);
+      const bWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
+      bWall.position.set(0, H/2, -L/2); roomGroup.add(bWall);
+      const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
+      lWall.position.set(-W/2, H/2, 0); roomGroup.add(lWall);
 
-      const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, sH, sL), wallMat);
-      leftWall.position.set(-sW / 2, sH / 2, 0);
-      roomGroup.add(leftWall);
-
-      // 渲染結構（柱與樑）
-      structures.forEach(s => {
-        const sw = s.w / 1000, sl = s.l / 1000;
-        if (s.type === 'pillar') {
-          const colMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sH, sl), new THREE.MeshStandardMaterial({ color: 0x576574 }));
-          colMesh.position.set(-sW/2 + (s.x/1000) + sw/2, sH/2, -sL/2 + (s.y/1000) + sl/2);
-          roomGroup.add(colMesh);
-        } else {
-          // 頂陣大樑（吊喺天花）
-          const sd = (s.d || 350) / 1000;
-          const beamMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), new THREE.MeshStandardMaterial({ color: 0xd35400 }));
-          beamMesh.position.set(-sW/2 + (s.x/1000) + sw/2, sH - sd/2, -sL/2 + (s.y/1000) + sl/2);
-          roomGroup.add(beamMesh);
-        }
-      });
-
-      // 渲染傢俬
+      // 傢俬立體映射
       items.forEach(it => {
-        const iw = it.w / 1000, il = it.l / 1000, ih = it.h / 1000;
-        let py = ih / 2;
-        if (it.mount === "onWall") py = (it.zOff / 1000) + ih / 2;
-        else if (it.mount === "onCeiling") py = sH - (ih / 2);
-
+        const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
+        let px = -W/2 + (it.x/1000) + iw/2, py = ih/2, pz = -L/2 + (it.y/1000) + il/2;
+        if (it.face === 'front') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = -L/2 + 0.05; }
         const msh = new THREE.Mesh(new THREE.BoxGeometry(iw, ih, il), new THREE.MeshStandardMaterial({ color: it.col || 0x8c7ae6 }));
-        msh.position.set(-sW/2 + (it.x/1000) + iw/2, py, -sL/2 + (it.y/1000) + il/2);
+        msh.position.set(px, py, pz);
         roomGroup.add(msh);
       });
-
-      camera.position.set(sW * 1.3, sH * 1.4, sL * 1.5);
-      controls.target.set(0, sH / 3, 0);
-      controls.update();
       resizeRenderer();
     }
 
-    // 匯出 WhatsApp
+    function adjust3DCameraForFace(face) {
+      const W = parseFloat(document.getElementById('rm-w').value)/1000, L = parseFloat(document.getElementById('rm-l').value)/1000, H = parseFloat(document.getElementById('rm-h').value)/1000;
+      if (face === 'front') { camera.position.set(0, H/2, L*1.2); controls.target.set(0, H/2, -L/2); }
+      else if (face === 'floor') { camera.position.set(W*1.2, H*1.3, L*1.4); controls.target.set(0, H/3, 0); }
+      controls.update();
+    }
+
     function exportWhatsApp() {
-      const W = document.getElementById('rm-w').value, L = document.getElementById('rm-l').value;
-      const stat = document.getElementById('stat-text').innerText;
-      const structList = structures.map(s => `- [結構] ${s.name} (${s.type})`).join('\n');
-      const itemList = items.map(i => `- [傢俬] ${i.name} (${i.w}x${i.l}x${i.h}mm)`).join('\n');
-      const msg = `【圖層王報價清單】\n空間：${W}x${L}mm\n${stat}\n\n結構：\n${structList}\n\n傢俬清單：\n${itemList}`;
+      const msg = `【圖層王報價】\n項目總數：${items.length}件\n${items.map(i => `- ${i.name} (${i.face})`).join('\n')}`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-
-    window.onload = () => { resizeRenderer(); updateAll(); animate(); };
+    window.onload = () => { resizeRenderer(); updateAll(); (function anim(){ requestAnimationFrame(anim); controls.update(); renderer.render(scene, camera); })(); };
     window.onresize = resizeRenderer;
   </script>
 </body>
