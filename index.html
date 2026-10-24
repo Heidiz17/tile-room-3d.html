@@ -24,7 +24,7 @@
     .room-tab { background: #202636; color: #8892b0; padding: 3px 8px; border-radius: 10px; font-size: 10px; cursor: pointer; border: 1px solid #2d3748; flex-shrink: 0; }
     .room-tab.active { background: #0070f3; color: #fff; font-weight: 900; border-color: #00ffcc; box-shadow: 0 0 6px rgba(0,255,204,0.3); }
 
-    /* 🌟 神級瘦身：橫向滑動工具櫃桶（由左至右單行排列，釋放 2D 空間） */
+    /* 單行橫向滑動工具櫃桶：釋放 2D 畫布垂直高度 */
     #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
     .input-group { display: flex; align-items: center; gap: 2px; font-size: 10px; flex-shrink: 0; }
     input { padding: 2px 4px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 10px; width: 44px; }
@@ -113,7 +113,7 @@
 
 
 
-    <!-- 單行橫向滑動工具櫃桶：左右滑動，省出大把垂直高度！ -->
+    <!-- 單行橫向滑動工具櫃桶：左右滑動，省出垂直高度 -->
   <div id="header">
     <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="3970" onchange="updateRoomDimensions()"></div>
     <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2920" onchange="updateRoomDimensions()"></div>
@@ -401,6 +401,7 @@
       saveToIndexedDB();
     }
 
+    // 🌟 神級修復：切換主模式時強制重置相機長寬比與尺寸，杜絕 OrbitControls 一摸即黑！
     function switchMainViewMode(mode) {
       curMainMode = mode;
       document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
@@ -420,7 +421,6 @@
         ws.style.display = 'flex'; rep.style.display = 'none';
         hdr.style.display = 'flex'; cb.style.display = 'flex'; idck.style.display = 'flex'; ftabs.style.display = 'flex';
         p2d.style.display = 'flex'; camCtrl.style.display = 'flex';
-        set3DCameraMode(curViewMode);
       } else if (mode === 'combine') {
         ws.style.display = 'flex'; rep.style.display = 'none';
         hdr.style.display = 'none'; cb.style.display = 'none'; idck.style.display = 'none'; ftabs.style.display = 'none';
@@ -429,8 +429,18 @@
         ws.style.display = 'none'; rep.style.display = 'flex';
         hdr.style.display = 'none'; cb.style.display = 'none'; idck.style.display = 'none'; ftabs.style.display = 'none';
         renderReportPage();
+        return;
       }
-      resizeRenderer();
+      
+      // 確保 DOM 重新計算尺寸後即刻更新 WebGL
+      setTimeout(() => {
+        resizeRenderer();
+        if (mode === 'edit') {
+          set3DCameraMode(curViewMode);
+        } else {
+          draw3DUnified();
+        }
+      }, 50);
       updateAll();
     }
 
@@ -517,21 +527,20 @@
     const container3D = document.getElementById('pane-3d');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0d1017);
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 3000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container3D.appendChild(renderer.domElement);
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true; controls.dampingFactor = 0.05;
     controls.addEventListener('change', () => { renderer.render(scene, camera); });
     
-    // 全域充沛照明：保證 6.9 米全屋亮麗通透
-    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-    const dLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    dLight.position.set(15, 30, 20);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const dLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dLight.position.set(20, 40, 30);
     scene.add(dLight);
-    const dLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-    dLight2.position.set(-15, -20, -15);
+    const dLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    dLight2.position.set(-20, -30, -20);
     scene.add(dLight2);
     
     let renderGroup = new THREE.Group();
@@ -540,14 +549,14 @@
     function resizeRenderer() {
       const w = container3D.clientWidth, h = container3D.clientHeight;
       if (!w || !h) return;
-      camera.aspect = w / h; camera.updateProjectionMatrix();
-      renderer.setSize(w, h); renderer.render(scene, camera);
+      camera.aspect = w / h; 
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h); 
+      renderer.render(scene, camera);
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-
 
 
 
@@ -924,7 +933,7 @@
       });
     }
 
-    // 🌟 核心修復：Box3 動態量度居中，徹底告別全黑畫面！
+    // 🌟 核心修復：Box3 精確自動置中，全屋 4 個空間清晰對比現形
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
@@ -941,19 +950,38 @@
 
       if (curMainMode === 'combine') {
         const fullHouseGroup = new THREE.Group();
+        const roomPalette = { living: 0x4a5568, masterBed: 0x3b4252, kitchen: 0x2e3440, bathroom: 0x2b303c };
+
         Object.keys(rooms).forEach(k => {
           const r = rooms[k];
           const W = r.w/1000, L = r.l/1000, H = r.h/1000;
           const ox = r.worldOffset.x / 1000;
           const oz = r.worldOffset.z / 1000;
 
-          const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: 0x3d4452, roughness: 0.6 }));
-          fl.rotation.x = -Math.PI / 2; fl.position.set(ox + W/2, 0, oz + L/2);
+          // 實用彩色地台，空間位置分明
+          const flMat = new THREE.MeshStandardMaterial({ color: roomPalette[k] || 0x444444, roughness: 0.6 });
+          const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), flMat);
+          fl.rotation.x = -Math.PI / 2;
+          fl.position.set(ox + W/2, 0, oz + L/2);
           fullHouseGroup.add(fl);
 
-          const wallMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, transparent: true, opacity: 0.35, roughness: 0.5 });
-          const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.04), wallMat);
-          fWall.position.set(ox + W/2, H/2, oz); fullHouseGroup.add(fWall);
+          // 實體半透明圍牆，輪廓分明
+          const wallMat = new THREE.MeshStandardMaterial({ color: 0x8892b0, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
+          const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
+          fWall.position.set(ox + W/2, H/2, oz);
+          fullHouseGroup.add(fWall);
+
+          const bWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
+          bWall.position.set(ox + W/2, H/2, oz + L);
+          fullHouseGroup.add(bWall);
+
+          const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
+          lWall.position.set(ox, H/2, oz + L/2);
+          fullHouseGroup.add(lWall);
+
+          const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
+          rWall.position.set(ox + W, H/2, oz + L/2);
+          fullHouseGroup.add(rWall);
 
           r.structures.forEach(s => {
             const sw = s.w/1000, sl = s.l/1000, sd = (s.d || 300)/1000;
@@ -973,16 +1001,20 @@
           });
         });
 
-        // 🌟 神級破案：利用 Box3 精準取得全屋中心點，咬死在原點 (0,0,0)
+        // 🌟 神級破案：利用 Box3 精準取得全屋中心點並置於 (0,0,0)
         const bbox = new THREE.Box3().setFromObject(fullHouseGroup);
         const center = new THREE.Vector3();
         bbox.getCenter(center);
-        fullHouseGroup.position.sub(center); // 居中對齊！
+        fullHouseGroup.position.x = -center.x;
+        fullHouseGroup.position.z = -center.z;
         renderGroup.add(fullHouseGroup);
 
-        // 動態根據大屋尺寸後退鏡頭，永不穿鏡或黑畫面！
-        const maxDim = Math.max(bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z);
-        camera.position.set(0, maxDim * 1.1, maxDim * 1.2);
+        // 動態根據大屋尺寸計算安全俯瞰距離
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
+        const maxDim = Math.max(size.x, size.z, 5.0);
+        
+        camera.position.set(0, maxDim * 1.3, maxDim * 1.4);
         controls.target.set(0, 0, 0);
         controls.update();
 
@@ -1043,7 +1075,6 @@
       renderer.render(scene, camera);
     }
 
-    // 完整彩園邨手帳解析引擎
     function parseTxtBlueprint(text) {
       if (text.includes('=== 空間:')) {
         parseFullHouseBlueprint(text);
