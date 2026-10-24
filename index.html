@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>圖層王 - 實體防穿透空間卡帶</title>
+  <title>圖層王 - 自訂色彩空間卡帶</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
@@ -12,6 +12,7 @@
     #header { padding: 6px 10px; background: #262626; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; z-index: 10; border-bottom: 1px solid #333; }
     .input-group { display: flex; align-items: center; gap: 3px; font-size: 11px; }
     input { padding: 3px 5px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 11px; width: 46px; }
+    input[type="color"] { width: 22px; height: 22px; padding: 0; border: none; cursor: pointer; border-radius: 50%; }
     button { padding: 4px 8px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; }
     .btn-action { background: #0070f3; color: #fff; }
     .btn-calc { background: #9b59b6; color: #fff; }
@@ -43,8 +44,9 @@
     #cam-ctrl button { background: rgba(0,0,0,0.65); color: #fff; border: 1px solid #666; font-size: 10px; padding: 3px 6px; }
     canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; }
     
-    #float-ctrl { position: absolute; bottom: 8px; right: 8px; display: none; gap: 6px; z-index: 20; }
-    #float-ctrl button { background: #e67e22; color: #fff; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); font-weight: bold; }
+    /* 懸浮控制列（旋轉 ＋ 自訂色彩條） */
+    #float-ctrl { position: absolute; bottom: 8px; right: 8px; display: none; gap: 6px; z-index: 20; background: rgba(0,0,0,0.7); padding: 5px 8px; border-radius: 8px; align-items: center; }
+    #float-ctrl button { background: #e67e22; color: #fff; padding: 5px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); font-weight: bold; }
 
     #info-bar { padding: 6px 10px; background: #111; font-size: 11px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; gap: 8px; }
     #stat-text { flex: 1; line-height: 1.3; color: #ddd; }
@@ -65,6 +67,8 @@
     <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="2150" readonly></div>
     <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2650" readonly></div>
     <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2600" readonly></div>
+    <div class="input-group" title="牆身乳膠漆顏色"><label>牆:</label><input type="color" id="col-wall" value="#efede6" onchange="updateAll()"></div>
+    <div class="input-group" title="地板材質顏色"><label>地:</label><input type="color" id="col-floor" value="#555555" onchange="updateAll()"></div>
     <button class="btn-add" onclick="openModal('modal-struct')">🏛️ 加柱/樑</button>
     <button class="btn-add" onclick="openModal('modal-item')">🛋️ 加傢俬</button>
     <button class="btn-txt" onclick="toggleTxtDrawer()">📝 手帳TXT</button>
@@ -89,7 +93,7 @@
   <div id="cat-bar">
     <button id="cat-btn-struct" class="btn-cat" onclick="switchCategory('struct')">🏛️ 建築結構 (<span id="count-struct">0</span>)</button>
     <button id="cat-btn-item" class="btn-cat active" onclick="switchCategory('item')">🛋️ 傢俬與設備 (<span id="count-item">0</span>)</button>
-    <span style="margin-left:auto; font-size:10px; color:#aaa;">單指推移 / 點擊切換</span>
+    <span style="margin-left:auto; font-size:10px; color:#aaa;">單指推移 / 點選換色</span>
   </div>
 
   <!-- 橫向滑動條目列 -->
@@ -113,6 +117,7 @@
       <div id="face-tag" class="pane-tag">📐 當前視點: 地板 (實體防穿透中)</div>
       <canvas id="cv-2d" width="320" height="320"></canvas>
       <div id="float-ctrl">
+        <label style="font-size:10px; display:flex; align-items:center; gap:3px;">🎨 自訂色: <input type="color" id="float-color-picker" onchange="changeSelectedItemColor(this.value)"></label>
         <button onclick="rotateSelectedItem()">🔄 旋轉 90°</button>
       </div>
     </div>
@@ -135,23 +140,21 @@
 
 
 
-
-    <!-- Modal 1: 手動加結構 (柱 / 樑) -->
+    <!-- Modal 1: 加結構 -->
   <div id="modal-struct" class="modal">
     <div class="modal-content">
-      <b>🏛️ 新增建築結構 (硬實體不可改動)</b>
+      <b>🏛️ 新增建築結構 (硬實體)</b>
       <label>類型:
         <select id="st-type">
-          <option value="pillar">石屎柱 (由地到天防穿透)</option>
+          <option value="pillar">石屎柱 (由地到天)</option>
           <option value="beam">頂陣/大樑 (吊掛天花)</option>
         </select>
       </label>
       <label>名稱: <input type="text" id="st-name" value="主力柱"></label>
       <label>闊(X mm): <input type="number" id="st-w" value="350"></label>
       <label>長(Y mm): <input type="number" id="st-l" value="350"></label>
-      <label>吊深(mm): <input type="number" id="st-d" value="350" title="樑深"></label>
-      <label>座標 X(mm): <input type="number" id="st-x" value="0"></label>
-      <label>座標 Y(mm): <input type="number" id="st-y" value="0"></label>
+      <label>吊深(mm): <input type="number" id="st-d" value="350"></label>
+      <label>自訂色彩: <input type="color" id="st-col" value="#576574"></label>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:5px;">
         <button onclick="closeModal('modal-struct')">取消</button>
         <button style="background:#27ae60;" onclick="addStructureManual()">確定加入</button>
@@ -159,19 +162,19 @@
     </div>
   </div>
 
-  <!-- Modal 2: 手動加傢俬 (IKEA Catalog 標配) -->
+  <!-- Modal 2: 加傢俬 (含自訂色彩) -->
   <div id="modal-item" class="modal">
     <div class="modal-content">
-      <b>🛋️ 新增傢俬設備 (實體防重疊)</b>
+      <b>🛋️ 新增傢俬設備</b>
       <label>IKEA 目錄:
         <select id="item-tpl" onchange="applyItemTpl()">
           <option value="custom">-- 自訂淘寶件 --</option>
-          <option value="ikea-malm">IKEA Malm 4呎半床 (1560x2090)</option>
-          <option value="ikea-billy">IKEA Billy 書櫃 (800x280x2020)</option>
-          <option value="ikea-kallax">IKEA Kallax 四格架 (770x390x770)</option>
-          <option value="ikea-pax">IKEA Pax 趟門大衣櫃 (1500x660)</option>
-          <option value="socket">🔌 86型標準電掣 (86x86)</option>
-          <option value="ceiling-light">💡 吸頂風扇燈 (500x500)</option>
+          <option value="ikea-malm">IKEA Malm 4呎半床 (橡木色)</option>
+          <option value="ikea-billy">IKEA Billy 書櫃 (純白色)</option>
+          <option value="ikea-kallax">IKEA Kallax 四格架 (原木色)</option>
+          <option value="ikea-pax">IKEA Pax 趟門大衣櫃 (深灰)</option>
+          <option value="socket">🔌 86型標準電掣 (亮紅色)</option>
+          <option value="ceiling-light">💡 吸頂風扇燈 (青藍色)</option>
         </select>
       </label>
       <label>名稱: <input type="text" id="it-name" value="IKEA Malm 雙人床"></label>
@@ -188,6 +191,7 @@
       <label>闊(W mm): <input type="number" id="it-w" value="1560"></label>
       <label>長/厚(L mm): <input type="number" id="it-l" value="2090"></label>
       <label>高(H mm): <input type="number" id="it-h" value="380"></label>
+      <label>自訂色彩: <input type="color" id="it-col" value="#d4a373"></label>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:5px;">
         <button onclick="closeModal('modal-item')">取消</button>
         <button style="background:#27ae60;" onclick="addItemManual()">確定擺落房</button>
@@ -231,19 +235,18 @@
     let structures = [];
     let items = [];
 
-    // 預設香港眼鏡房人類手帳模板
     const defaultTxtBlueprint = 
 `房型: 2150 x 2650 x 2600
 門口: 闊 750, 距左邊 200, 裝喺 後牆
 
 # 建築結構 (不可改動)
-柱: 左上角柱, 350 x 350, 擺喺 0, 0
-樑: 窗台大陣, 闊 2150, 深 300, 吊 350, 擺喺 0, 0
+柱: 左上角柱, 350 x 350, 擺喺 0, 0, 色彩 #576574
+樑: 窗台大陣, 闊 2150, 深 300, 吊 350, 擺喺 0, 0, 色彩 #7f8c8d
 
 # IKEA / 淘寶傢俬設備
-傢俬: IKEA Malm 雙人床, 1560 x 2090 x 380, 擺喺 400, 0, 地板
-傢俬: 13A雙位電掣, 146 x 25 x 86, 擺喺 500, 300, 前牆
-傢俬: 吸頂風扇燈, 500 x 500 x 250, 擺喺 800, 1000, 天花`;
+傢俬: IKEA Malm 雙人床, 1560 x 2090 x 380, 擺喺 400, 0, 地板, 色彩 #d4a373
+傢俬: IKEA Billy 書櫃, 800 x 280 x 2020, 擺喺 1350, 0, 地板, 色彩 #f5f6fa
+傢俬: 13A雙位電掣, 146 x 25 x 86, 擺喺 500, 300, 前牆, 色彩 #e74c3c`;
 
     function parseTxtBlueprint(text) {
       const lines = text.split('\n');
@@ -265,51 +268,49 @@
           newDoor.swingRadius = newDoor.w;
         } else if (line.startsWith('柱:')) {
           const parts = line.replace('柱:', '').split(',');
-          if (parts.length >= 3) {
-            const name = parts[0].trim();
-            const sz = parts[1].match(/(\d+)\s*x\s*(\d+)/i);
-            const pos = parts[2].match(/(\d+)\s*,\s*(\d+)/);
-            if (sz && pos) {
-              newStructures.push({
-                id: Date.now() + idx, type: 'pillar', name: name,
-                w: parseFloat(sz[1]), l: parseFloat(sz[2]), d: newH,
-                x: parseFloat(pos[1]), y: parseFloat(pos[2])
-              });
-            }
+          const name = parts[0].trim();
+          const sz = line.match(/(\d+)\s*x\s*(\d+)/i);
+          const pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/);
+          const colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
+          if (sz && pos) {
+            newStructures.push({
+              id: Date.now() + idx, type: 'pillar', name: name,
+              w: parseFloat(sz[1]), l: parseFloat(sz[2]), d: newH,
+              x: parseFloat(pos[1]), y: parseFloat(pos[2]),
+              col: colM ? colM[1] : '#576574'
+            });
           }
         } else if (line.startsWith('樑:')) {
-          const parts = line.replace('樑:', '').split(',');
-          const name = parts[0].trim();
+          const name = line.replace('樑:', '').split(',')[0].trim();
           const wM = line.match(/闊\s*(\d+)/), dM = line.match(/深\s*(\d+)/), hM = line.match(/吊\s*(\d+)/);
           const pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/);
+          const colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
           newStructures.push({
             id: Date.now() + idx, type: 'beam', name: name,
             w: wM ? parseFloat(wM[1]) : newW, l: dM ? parseFloat(dM[1]) : 300, d: hM ? parseFloat(hM[1]) : 350,
-            x: pos ? parseFloat(pos[1]) : 0, y: pos ? parseFloat(pos[2]) : 0
+            x: pos ? parseFloat(pos[1]) : 0, y: pos ? parseFloat(pos[2]) : 0,
+            col: colM ? colM[1] : '#7f8c8d'
           });
         } else if (line.startsWith('傢俬:')) {
-          const parts = line.replace('傢俬:', '').split(',');
-          if (parts.length >= 4) {
-            const name = parts[0].trim();
-            const sz = parts[1].match(/(\d+)\s*x\s*(\d+)/i);
-            const pos = parts[2].match(/(\d+)\s*,\s*(\d+)/);
-            const faceStr = parts[3].trim();
-            let face = 'floor';
-            if (faceStr.includes('前')) face = 'front';
-            else if (faceStr.includes('後')) face = 'back';
-            else if (faceStr.includes('左')) face = 'left';
-            else if (faceStr.includes('右')) face = 'right';
-            else if (faceStr.includes('天花')) face = 'ceiling';
+          const name = line.replace('傢俬:', '').split(',')[0].trim();
+          const sz = line.match(/(\d+)\s*x\s*(\d+)\s*x\s*(\d+)/i);
+          const pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/);
+          const colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
+          let face = 'floor';
+          if (line.includes('前')) face = 'front';
+          else if (line.includes('後')) face = 'back';
+          else if (line.includes('左')) face = 'left';
+          else if (line.includes('右')) face = 'right';
+          else if (line.includes('天花')) face = 'ceiling';
 
-            if (sz && pos) {
-              const isSocket = name.includes('電掣');
-              newItems.push({
-                id: Date.now() + idx, name: name, face: face,
-                w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: parseFloat(sz[3] || 400),
-                x: parseFloat(pos[1]), y: parseFloat(pos[2]), rot: 0,
-                col: isSocket ? 0xe74c3c : (face === 'ceiling' ? 0x00d2d3 : 0x8c7ae6)
-              });
-            }
+          if (sz && pos) {
+            const defCol = name.includes('電掣') ? '#e74c3c' : (face === 'ceiling' ? '#00d2d3' : '#d4a373');
+            newItems.push({
+              id: Date.now() + idx, name: name, face: face,
+              w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: parseFloat(sz[3] || 400),
+              x: parseFloat(pos[1]), y: parseFloat(pos[2]), rot: 0,
+              col: colM ? colM[1] : defCol
+            });
           }
         }
       });
@@ -321,42 +322,6 @@
       structures = newStructures;
       items = newItems;
       if (items.length) selectedItemId = items[0].id;
-    }
-
-    function syncToTxtArea() {
-      const W = document.getElementById('rm-w').value;
-      const L = document.getElementById('rm-l').value;
-      const H = document.getElementById('rm-h').value;
-      let txt = `房型: ${W} x ${L} x ${H}\n門口: 闊 ${roomDoor.w}, 距左邊 ${roomDoor.x}, 裝喺 後牆\n\n# 建築結構 (不可改動)\n`;
-      structures.forEach(s => {
-        if (s.type === 'pillar') txt += `柱: ${s.name}, ${s.w} x ${s.l}, 擺喺 ${s.x}, ${s.y}\n`;
-        else txt += `樑: ${s.name}, 闊 ${s.w}, 深 ${s.l}, 吊 ${s.d}, 擺喺 ${s.x}, ${s.y}\n`;
-      });
-      txt += `\n# IKEA / 淘寶傢俬設備\n`;
-      const faceMap = { floor:'地板', front:'前牆', back:'後牆', left:'左牆', right:'右牆', ceiling:'天花' };
-      items.forEach(i => {
-        txt += `傢俬: ${i.name}, ${i.w} x ${i.l} x ${i.h}, 擺喺 ${i.x}, ${i.y}, ${faceMap[i.face]||'地板'}\n`;
-      });
-      document.getElementById('txt-area').value = txt;
-    }
-
-    function toggleTxtDrawer() {
-      const d = document.getElementById('txt-drawer');
-      d.style.display = d.style.display === 'flex' ? 'none' : 'flex';
-      if (d.style.display === 'flex') syncToTxtArea();
-    }
-
-    function applyTxtBlueprint() {
-      parseTxtBlueprint(document.getElementById('txt-area').value);
-      updateAll();
-      alert("✅ 已成功根據人類手帳更新全屋！");
-    }
-
-    function newBlankRoom() {
-      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
-      document.getElementById('txt-area').value = blankTxt;
-      parseTxtBlueprint(blankTxt);
-      updateAll();
     }
 
     // Three.js 引擎
@@ -393,8 +358,458 @@
 
 
 
-
         function applyItemTpl() {
+      const v = document.getElementById('item-tpl').value;
+      if (v === 'ikea-malm') {
+        document.getElementById('it-name').value = "IKEA Malm 雙人床"; document.getElementById('it-face').value = "floor";
+        document.getElementById('it-w').value = 1560; document.getElementById('it-l').value = 2090; document.getElementById('it-h').value = 380;
+        document.getElementById('it-col').value = "#d4a373";
+      } else if (v === 'ikea-billy') {
+        document.getElementById('it-name').value = "IKEA Billy 書櫃"; document.getElementById('it-face').value = "floor";
+        document.getElementById('it-w').value = 800; document.getElementById('it-l').value = 280; document.getElementById('it-h').value = 2020;
+        document.getElementById('it-col').value = "#f5f6fa";
+      } else if (v === 'ikea-kallax') {
+        document.getElementById('it-name').value = "IKEA Kallax 四格架"; document.getElementById('it-face').value = "floor";
+        document.getElementById('it-w').value = 770; document.getElementById('it-l').value = 390; document.getElementById('it-h').value = 770;
+        document.getElementById('it-col').value = "#e0a96d";
+      } else if (v === 'ikea-pax') {
+        document.getElementById('it-name').value = "IKEA Pax 趟門衣櫃"; document.getElementById('it-face').value = "floor";
+        document.getElementById('it-w').value = 1500; document.getElementById('it-l').value = 660; document.getElementById('it-h').value = 2360;
+        document.getElementById('it-col').value = "#3d3d3d";
+      } else if (v === 'ceiling-light') {
+        document.getElementById('it-name').value = "吸頂風扇燈"; document.getElementById('it-face').value = "ceiling";
+        document.getElementById('it-w').value = 500; document.getElementById('it-l').value = 500; document.getElementById('it-h').value = 250;
+        document.getElementById('it-col').value = "#00d2d3";
+      } else if (v === 'socket') {
+        document.getElementById('it-name').value = "13A雙位電掣"; document.getElementById('it-face').value = "front";
+        document.getElementById('it-w').value = 146; document.getElementById('it-l').value = 25; document.getElementById('it-h').value = 86;
+        document.getElementById('it-col').value = "#e74c3c";
+      }
+    }
+
+    function addStructureManual() {
+      structures.push({
+        id: Date.now(),
+        type: document.getElementById('st-type').value,
+        name: document.getElementById('st-name').value,
+        w: parseFloat(document.getElementById('st-w').value) || 350,
+        l: parseFloat(document.getElementById('st-l').value) || 350,
+        d: parseFloat(document.getElementById('st-d').value) || 350,
+        x: 0, y: 0,
+        col: document.getElementById('st-col').value || "#576574"
+      });
+      closeModal('modal-struct');
+      switchCategory('struct');
+      updateAll();
+    }
+
+    function addItemManual() {
+      const fc = document.getElementById('it-face').value;
+      const newItem = {
+        id: Date.now(),
+        name: document.getElementById('it-name').value,
+        face: fc,
+        w: parseFloat(document.getElementById('it-w').value) || 1000,
+        l: parseFloat(document.getElementById('it-l').value) || 1000,
+        h: parseFloat(document.getElementById('it-h').value) || 400,
+        x: 400, y: 400, rot: 0,
+        col: document.getElementById('it-col').value || "#d4a373"
+      };
+      const validated = resolveCollision(newItem, newItem.x, newItem.y);
+      newItem.x = validated.x; newItem.y = validated.y;
+      items.push(newItem);
+      selectedItemId = newItem.id;
+      closeModal('modal-item');
+      switchCategory('item');
+      if (curFace !== fc) switchFace(fc);
+      updateAll();
+    }
+
+    function changeSelectedItemColor(col) {
+      const it = items.find(i => i.id === selectedItemId);
+      if (it) {
+        it.col = col;
+        updateAll();
+      }
+    }
+
+    function switchCategory(cat) {
+      curCategory = cat;
+      document.getElementById('cat-btn-struct').classList.toggle('active', cat === 'struct');
+      document.getElementById('cat-btn-item').classList.toggle('active', cat === 'item');
+      renderChips();
+    }
+
+    function switchFace(face) {
+      curFace = face;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      const names = { floor: "地板 (Floor)", front: "前牆 (主景牆)", back: "後牆 (門口牆)", left: "左牆", right: "右牆", ceiling: "天花 (Ceiling)" };
+      document.getElementById('face-tag').innerText = `📐 當前視點: ${names[face]} (實體防穿透中)`;
+      reset2DView();
+      updateAll();
+    }
+
+    function set3DCameraMode(mode) {
+      const W = parseFloat(document.getElementById('rm-w').value)/1000;
+      const L = parseFloat(document.getElementById('rm-l').value)/1000;
+      const H = parseFloat(document.getElementById('rm-h').value)/1000;
+      if (mode === 'corner') { camera.position.set(W*1.2, H*1.3, L*1.4); controls.target.set(0, H/3, 0); }
+      else if (mode === 'door') { camera.position.set(0, H*0.8, -L*1.1); controls.target.set(0, H/2, L/2); }
+      else if (mode === 'ceiling') { camera.position.set(0, 0.4, 0); controls.target.set(0, H, 0); }
+      controls.update();
+    }
+
+    function rotateSelectedItem() {
+      const it = items.find(i => i.id === selectedItemId);
+      if (!it) return;
+      const oldW = it.w, oldL = it.l;
+      it.w = oldL; it.l = oldW;
+      const validated = resolveCollision(it, it.x, it.y);
+      it.x = validated.x; it.y = validated.y;
+      it.rot = (it.rot + 90) % 360;
+      updateAll();
+    }
+
+    function reset2DView() { viewZoom = 1.0; viewPanX = 0; viewPanY = 0; draw2D(); }
+
+    function resolveCollision(it, targetX, targetY) {
+      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
+      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
+      let resX = Math.max(0, Math.min(targetX, W - it.w));
+      let resY = Math.max(0, Math.min(targetY, L - it.l));
+
+      if (it.face === 'floor') {
+        structures.filter(s => s.type === 'pillar').forEach(p => {
+          if (resX < p.x + p.w && resX + it.w > p.x && resY < p.y + p.l && resY + it.l > p.y) {
+            const dL = p.x - (resX + it.w), dR = p.x + p.w - resX, dT = p.y - (resY + it.l), dB = p.y + p.l - resY;
+            const minA = Math.min(Math.abs(dL), Math.abs(dR), Math.abs(dT), Math.abs(dB));
+            if (minA === Math.abs(dR)) resX = p.x + p.w;
+            else if (minA === Math.abs(dL)) resX = p.x - it.w;
+            else if (minA === Math.abs(dB)) resY = p.y + p.l;
+            else if (minA === Math.abs(dT)) resY = p.y - it.l;
+          }
+        });
+
+        const doorLeft = roomDoor.x, doorRight = roomDoor.x + roomDoor.w;
+        const doorTop = L - roomDoor.swingRadius;
+        if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) {
+          resY = doorTop - it.l;
+        }
+
+        items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
+          if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
+            const dL = other.x - (resX + it.w), dR = other.x + other.w - resX;
+            const dT = other.y - (resY + it.l), dB = other.y + other.l - resY;
+            const minA = Math.min(Math.abs(dL), Math.abs(dR), Math.abs(dT), Math.abs(dB));
+            if (minA === Math.abs(dR)) resX = other.x + other.w;
+            else if (minA === Math.abs(dL)) resX = other.x - it.w;
+            else if (minA === Math.abs(dB)) resY = other.y + other.l;
+            else if (minA === Math.abs(dT)) resY = other.y - it.l;
+          }
+        });
+      }
+      return { x: Math.max(0, Math.round(resX)), y: Math.max(0, Math.round(resY)) };
+    }
+
+    const cv = document.getElementById('cv-2d');
+    let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
+    
+    cv.addEventListener('pointerdown', e => {
+      const rect = cv.getBoundingClientRect();
+      const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
+      const hit = getHitItem(clickX, clickY);
+      if (hit) {
+        selectedItemId = hit.id;
+        isDragging = true;
+        dragStartX = clickX; dragStartY = clickY;
+        itemOrigX = hit.x; itemOrigY = hit.y;
+        document.getElementById('float-ctrl').style.display = 'flex';
+        document.getElementById('float-color-picker').value = hit.col || '#d4a373';
+      } else {
+        selectedItemId = null;
+        document.getElementById('float-ctrl').style.display = 'none';
+      }
+      updateAll();
+    });
+
+    window.addEventListener('pointermove', e => {
+      if (!isDragging || !selectedItemId) return;
+      const rect = cv.getBoundingClientRect();
+      const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
+      const it = items.find(i => i.id === selectedItemId);
+      if (it) {
+        const sc = getScale();
+        const targetX = itemOrigX + (curX - dragStartX) / sc;
+        const targetY = itemOrigY + (curY - dragStartY) / sc;
+        const resolved = resolveCollision(it, targetX, targetY);
+        it.x = resolved.x;
+        it.y = resolved.y;
+        updateAll();
+      }
+    });
+
+    window.addEventListener('pointerup', () => { isDragging = false; });
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      viewZoom = Math.min(Math.max(0.6, viewZoom - e.deltaY * 0.001), 4.0);
+      draw2D();
+    }, { passive: false });
+
+    function getScale() {
+      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
+      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
+      return (240 / Math.max(W, L)) * viewZoom;
+    }
+
+    function getHitItem(cx, cy) {
+      const sc = getScale();
+      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
+      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
+      const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
+      return items.find(it => {
+        if (it.face !== curFace) return false;
+        const rx = ox + it.x * sc, ry = oy + it.y * sc, rw = it.w * sc, rh = it.l * sc;
+        return cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh;
+      });
+    }
+
+    function updateAll() {
+      calcAllMaterials();
+      renderChips();
+      draw2D();
+      draw3D();
+    }
+
+    function calcAllMaterials() {
+      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
+      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
+      const H = parseFloat(document.getElementById('rm-h').value) || 2600;
+
+      const rawFloorM2 = (W * L) / 1000000;
+      let pillarAreaM2 = 0;
+      structures.filter(s => s.type === 'pillar').forEach(p => { pillarAreaM2 += (p.w * p.l) / 1000000; });
+      const netFloorM2 = Math.max(0, rawFloorM2 - pillarAreaM2);
+      const netFloorSqft = (netFloorM2 * 10.764);
+      const orderFloorSqft = (netFloorSqft * 1.1);
+
+      const fPrice = parseFloat(document.getElementById('inp-floor-price')?.value) || 35;
+      const floorTotalCost = Math.round(orderFloorSqft * fPrice);
+
+      const totalWallM2 = ((W + L) * 2 * H) / 1000000;
+      const doorM2 = (roomDoor.w * roomDoor.h) / 1000000;
+      const netPaintM2 = Math.max(0, totalWallM2 - doorM2);
+      const netPaintSqft = (netPaintM2 * 10.764);
+      const pPrice = parseFloat(document.getElementById('inp-paint-price')?.value) || 22;
+      const paintTotalCost = Math.round(netPaintSqft * pPrice);
+      const volM3 = ((W * L * H) / 1000000000).toFixed(1);
+
+      document.getElementById('stat-text').innerHTML = 
+        `實鋪：<b>${netFloorSqft.toFixed(1)}</b>呎 (備料<b>${orderFloorSqft.toFixed(1)}</b>呎) | 地板約 <b>HK$${floorTotalCost}</b> | 油漆約 <b>HK$${paintTotalCost}</b>`;
+
+      document.getElementById('mat-floor-sqft').innerText = `${netFloorSqft.toFixed(1)} 呎 (${netFloorM2.toFixed(2)} ㎡)`;
+      document.getElementById('mat-pillar-sub').innerText = `- ${(pillarAreaM2 * 10.764).toFixed(1)} 呎`;
+      document.getElementById('mat-floor-order').innerText = `${orderFloorSqft.toFixed(1)} 呎`;
+      document.getElementById('mat-floor-cost').innerText = `HK$ ${floorTotalCost.toLocaleString()}`;
+      document.getElementById('mat-paint-sqft').innerText = `${netPaintSqft.toFixed(1)} 呎 (${netPaintM2.toFixed(2)} ㎡)`;
+      document.getElementById('mat-paint-cost').innerText = `HK$ ${paintTotalCost.toLocaleString()}`;
+      document.getElementById('mat-vol').innerText = `${volM3} 立方米`;
+    }
+
+    function renderChips() {
+      document.getElementById('count-struct').innerText = structures.length + 1;
+      document.getElementById('count-item').innerText = items.length;
+
+      const cont = document.getElementById('chips-container');
+      cont.innerHTML = '';
+      if (curCategory === 'struct') {
+        cont.innerHTML += `<div class="chip" style="border-color:#f39c12;">🚪 房門 (後牆)</div>`;
+        structures.forEach(s => {
+          cont.innerHTML += `<div class="chip" style="border-color:${s.col};">🏛️ ${s.name} <span class="del" onclick="removeStructure(${s.id})">×</span></div>`;
+        });
+      } else {
+        items.forEach(i => {
+          const isSel = i.id === selectedItemId;
+          cont.innerHTML += `<div class="chip ${isSel?'active':''}" style="border-left: 5px solid ${i.col};" onclick="selectItemFromChip(${i.id})">🛋️ ${i.name} (${i.face}) <span class="del" onclick="removeItem(${i.id})">×</span></div>`;
+        });
+      }
+    }
+
+    function selectItemFromChip(id) {
+      selectedItemId = id;
+      const it = items.find(i => i.id === id);
+      if (it) {
+        if (it.face !== curFace) switchFace(it.face);
+        document.getElementById('float-ctrl').style.display = 'flex';
+        document.getElementById('float-color-picker').value = it.col || '#d4a373';
+        updateAll();
+      }
+    }
+
+    function removeStructure(id) { structures = structures.filter(s => s.id !== id); updateAll(); }
+    function removeItem(id) { items = items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; updateAll(); }
+
+    function draw2D() {
+      const ctx = cv.getContext('2d');
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
+      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
+      const sc = getScale();
+      const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
+
+      ctx.fillStyle = '#333'; ctx.fillRect(ox, oy, W * sc, L * sc);
+      ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, W * sc, L * sc);
+
+      if (curFace === 'floor') {
+        const doorX = ox + roomDoor.x * sc, doorY = oy + L * sc, doorW = roomDoor.w * sc;
+        ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(doorX, doorY); ctx.lineTo(doorX, doorY - doorW); ctx.stroke();
+        ctx.setLineDash([4, 4]); ctx.beginPath();
+        ctx.arc(doorX, doorY, doorW, -Math.PI/2, 0); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#f1c40f'; ctx.font = '9px sans-serif'; ctx.fillText('🚪 開門弧線 (阻擋區)', doorX + 8, doorY - 8);
+      }
+
+      if (curFace === 'floor' || curFace === 'ceiling') {
+        structures.forEach(s => {
+          ctx.fillStyle = s.col || '#e84118';
+          ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc);
+        });
+      }
+
+      items.filter(i => i.face === curFace).forEach(it => {
+        const isSel = it.id === selectedItemId;
+        ctx.fillStyle = it.col || '#8c7ae6';
+        ctx.fillRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
+        ctx.strokeStyle = isSel ? '#00ffcc' : '#ffffff';
+        ctx.lineWidth = isSel ? 2 : 1;
+        ctx.strokeRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
+        ctx.fillStyle = '#fff'; ctx.font = '9px sans-serif';
+        ctx.fillText(it.name, ox + it.x * sc + 2, oy + it.y * sc + 10);
+      });
+    }
+
+    function draw3D() {
+      while(roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
+      const W = parseFloat(document.getElementById('rm-w').value)/1000;
+      const L = parseFloat(document.getElementById('rm-l').value)/1000;
+      const H = parseFloat(document.getElementById('rm-h').value)/1000;
+      
+      const wallColor = document.getElementById('col-wall').value || '#efede6';
+      const floorColor = document.getElementById('col-floor').value || '#555555';
+
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.5 }));
+      fl.rotation.x = -Math.PI / 2; roomGroup.add(fl);
+      const wallMat = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.8 });
+
+      const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
+      fWall.position.set(0, H/2, -L/2); roomGroup.add(fWall);
+      const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
+      lWall.position.set(-W/2, H/2, 0); roomGroup.add(lWall);
+
+      const dw = roomDoor.w/1000, dh = roomDoor.h/1000, dx = roomDoor.x/1000;
+      if (dx > 0) {
+        const ldw = new THREE.Mesh(new THREE.BoxGeometry(dx, H, 0.05), wallMat);
+        ldw.position.set(-W/2 + dx/2, H/2, L/2); roomGroup.add(ldw);
+      }
+      const tdw = new THREE.Mesh(new THREE.BoxGeometry(dw, H - dh, 0.05), wallMat);
+      tdw.position.set(-W/2 + dx + dw/2, dh + (H - dh)/2, L/2); roomGroup.add(tdw);
+      const rightW = W - (dx + dw);
+      if (rightW > 0) {
+        const rdw = new THREE.Mesh(new THREE.BoxGeometry(rightW, H, 0.05), wallMat);
+        rdw.position.set(W/2 - rightW/2, H/2, L/2); roomGroup.add(rdw);
+      }
+
+      structures.forEach(s => {
+        const sw = s.w/1000, sl = s.l/1000;
+        const structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x576574 });
+        if (s.type === 'pillar') {
+          const colMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, H, sl), structMat);
+          colMesh.position.set(-W/2 + (s.x/1000) + sw/2, H/2, -L/2 + (s.y/1000) + sl/2);
+          roomGroup.add(colMesh);
+        } else if (s.type === 'beam') {
+          const sd = (s.d || 350)/1000;
+          const beamMesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), structMat);
+          beamMesh.position.set(-W/2 + (s.x/1000) + sw/2, H - sd/2, -L/2 + (s.y/1000) + sl/2);
+          roomGroup.add(beamMesh);
+        }
+      });
+
+      items.forEach(it => {
+        const iw = it.w/1000, il = it.l/1000, ih = it.h/1000;
+        let px = -W/2 + (it.x/1000) + iw/2, py = ih/2, pz = -L/2 + (it.y/1000) + il/2;
+        if (it.face === 'front') { px = -W/2 + (it.x/1000) + iw/2; py = (it.y/1000) + ih/2; pz = -L/2 + 0.05; }
+        else if (it.face === 'ceiling') { py = H - ih/2; }
+        const msh = new THREE.Mesh(new THREE.BoxGeometry(iw, ih, il), new THREE.MeshStandardMaterial({ color: it.col || 0xd4a373, roughness: 0.4 }));
+        msh.position.set(px, py, pz);
+        roomGroup.add(msh);
+      });
+      resizeRenderer();
+    }
+
+    function exportWhatsApp() {
+      const stat = document.getElementById('stat-text').innerText;
+      const msg = `【圖層王香港房型報價單】\n${stat}\n傢俬清單：\n${items.map(i => `- ${i.name} (${i.face})`).join('\n')}`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
+    }
+
+    function newBlankRoom() {
+      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
+      document.getElementById('txt-area').value = blankTxt;
+      parseTxtBlueprint(blankTxt);
+      updateAll();
+    }
+
+        function toggleTxtDrawer() {
+      const d = document.getElementById('txt-drawer');
+      d.style.display = d.style.display === 'flex' ? 'none' : 'flex';
+      if (d.style.display === 'flex') syncToTxtArea();
+    }
+
+    function applyTxtBlueprint() {
+      parseTxtBlueprint(document.getElementById('txt-area').value);
+      updateAll();
+      alert("✅ 已成功根據人類手帳更新全屋！");
+    }
+
+    function newBlankRoom() {
+      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
+      document.getElementById('txt-area').value = blankTxt;
+      parseTxtBlueprint(blankTxt);
+      updateAll();
+    }
+
+    // Three.js 引擎初始化
+    const container3D = document.getElementById('pane-3d');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x181818);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container3D.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    const dLight = new THREE.DirectionalLight(0xffffff, 0.55);
+    dLight.position.set(6, 12, 8);
+    scene.add(dLight);
+    let roomGroup = new THREE.Group();
+    scene.add(roomGroup);
+
+    function resizeRenderer() {
+      const w = container3D.clientWidth, h = container3D.clientHeight;
+      if (!w || !h) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function applyItemTpl() {
       const v = document.getElementById('item-tpl').value;
       if (v === 'ikea-malm') {
         document.getElementById('it-name').value = "IKEA Malm 雙人床"; document.getElementById('it-face').value = "floor";
@@ -446,7 +861,6 @@
         x: 400, y: 400, rot: 0,
         col: isSocket ? 0xe74c3c : (fc === 'ceiling' ? 0x00d2d3 : 0x8c7ae6)
       };
-      // 自動避讓合法位置
       const validated = resolveCollision(newItem, newItem.x, newItem.y);
       newItem.x = validated.x; newItem.y = validated.y;
       items.push(newItem);
@@ -504,7 +918,6 @@
       let resX = Math.max(0, Math.min(targetX, W - it.w));
       let resY = Math.max(0, Math.min(targetY, L - it.l));
 
-      // 1. 阻擋石屎柱
       if (it.face === 'floor') {
         structures.filter(s => s.type === 'pillar').forEach(p => {
           if (resX < p.x + p.w && resX + it.w > p.x && resY < p.y + p.l && resY + it.l > p.y) {
@@ -517,14 +930,12 @@
           }
         });
 
-        // 2. 阻擋開門扇形虛線禁區
         const doorLeft = roomDoor.x, doorRight = roomDoor.x + roomDoor.w;
         const doorTop = L - roomDoor.swingRadius;
         if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) {
           resY = doorTop - it.l;
         }
 
-        // 3. 傢俬與傢俬之間實體防重疊
         items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
           if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
             const dL = other.x - (resX + it.w), dR = other.x + other.w - resX;
@@ -540,7 +951,10 @@
       return { x: Math.max(0, Math.round(resX)), y: Math.max(0, Math.round(resY)) };
     }
 
-    const cv = document.getElementById('cv-2d');
+
+
+
+        const cv = document.getElementById('cv-2d');
     let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
     
     cv.addEventListener('pointerdown', e => {
@@ -785,3 +1199,5 @@
   </script>
 </body>
 </html>
+
+                              
