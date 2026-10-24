@@ -27,7 +27,7 @@
     #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
     .input-group { display: flex; align-items: center; gap: 2px; font-size: 10px; flex-shrink: 0; }
     input { padding: 2px 4px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 10px; width: 44px; }
-    input[type="color"] { width: 18px; height: 18px; padding: 0; border: none; cursor: pointer; border-radius: 50%; }
+    input[type="color"] { width: 18px; height: 18px; padding: 0; border: none; cursor: border-radius: 50%; }
     button { padding: 3px 7px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; flex-shrink: 0; }
     .btn-action { background: #0070f3; color: #fff; }
     .btn-calc { background: #9b59b6; color: #fff; }
@@ -109,8 +109,8 @@
   </div>
 
   <div id="header">
-    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="10500" onchange="updateRoomDimensions()"></div>
-    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="8500" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="12920" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="7880" onchange="updateRoomDimensions()"></div>
     <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2500" onchange="updateRoomDimensions()"></div>
     
     <input type="file" id="inp-blueprint-file" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
@@ -131,7 +131,7 @@
 
   <div id="txt-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:10.5px; color:#aaa;">📝 自然語言坐標手帳 (外牆頂點坐標 ＋ 各分房坐標 ➔ 撳套用)</span>
+      <span style="font-size:10.5px; color:#aaa;">📝 自然語言坐標手帳 (基準牆鎖定 ＋ 向量頂點回路 ➔ 撳套用)</span>
       <div style="display:flex; gap:5px;">
         <button style="background:#27ae60; padding:2px 6px;" onclick="applyTxtBlueprint()">⚡ 套用手帳</button>
         <button style="background:#7f8c8d; padding:2px 6px;" onclick="toggleTxtDrawer()">收起</button>
@@ -181,7 +181,11 @@
     </div>
   </div>
 
-  <div id="page-report">
+
+
+
+
+    <div id="page-report">
     <div class="report-card">
       <b style="color:#ffd700; font-size:12px;" id="rep-title">📍 黃埔花園 7期3座E室 全屋裝修工程核算單</b>
       <span style="font-size:9.5px; color:#8892b0;">以實用面積與施工標準尺寸計算</span>
@@ -295,11 +299,7 @@
     </div>
   </div>
 
-
-
-
-
-    <script>
+  <script>
     let curCategory = 'item';
     let curFace = 'floor';
     let selectedItemId = null;
@@ -314,73 +314,76 @@
     let isCalibrating = false;
     let calibPoints = [];
 
-    // 🌟 黃埔花園 7期3座E室：全空間向量坐標母表 (跟足圖紙毫米)
+    // 🌟 工業級尺寸鏈推導：第一幅基準牆 Datum Wall 鎖定在頂部 Y=660
     const initialRoomsData = {
       living: { 
-        name: '客飯廳', originX: 1800, originY: 3000, w: 3360, l: 4490, h: 2500, 
+        name: '客飯廳', originX: 2220, originY: 3180, w: 3180, l: 4700, h: 2500, 
         door: { type: "door", face: "back", w: 900, h: 2000, x: 600, swingRadius: 900 }, 
         structures: [], items: [] 
       },
       masterBed: { 
-        name: '主人房', originX: 7520, originY: 0, w: 2880, l: 3240, h: 2500, 
+        name: '主人房', originX: 10040, originY: 660, w: 2880, l: 3240, h: 2500, 
         door: { type: "door", face: "left", w: 800, h: 2000, x: 200, swingRadius: 800 }, 
         structures: [], items: [] 
       },
       bed1: { 
-        name: '睡房 1', originX: 3900, originY: 3000, w: 2320, l: 2420, h: 2500, 
+        name: '睡房 1', originX: 5400, originY: 3260, w: 2320, l: 2420, h: 2500, 
         door: { type: "door", face: "back", w: 800, h: 2000, x: 100, swingRadius: 800 }, 
         structures: [], items: [] 
       },
       bed2: { 
-        name: '睡房 2', originX: 6220, originY: 3000, w: 2320, l: 2420, h: 2500, 
+        name: '睡房 2', originX: 7720, originY: 3260, w: 2320, l: 2420, h: 2500, 
         door: { type: "door", face: "back", w: 800, h: 2000, x: 100, swingRadius: 800 }, 
         structures: [], items: [] 
       },
       kitchen: { 
-        name: '廚房', originX: 0, originY: 3000, w: 2400, l: 2180, h: 2500, 
+        name: '廚房', originX: 0, originY: 1000, w: 2400, l: 2180, h: 2500, 
         door: { type: "door", face: "left", w: 850, h: 2000, x: 100, swingRadius: 850 }, 
         structures: [], items: [] 
       },
       bathroom: { 
-        name: '浴室', originX: 4600, originY: 0, w: 2330, l: 1800, h: 2500, 
+        name: '浴室', originX: 5380, originY: 660, w: 2330, l: 1740, h: 2500, 
         door: { type: "door", face: "back", w: 770, h: 2000, x: 100, swingRadius: 770 }, 
         structures: [], items: [] 
       },
       fullHouse: {
-        name: '全屋坐標藍圖', originX: 0, originY: 0, w: 10500, l: 8500, h: 2500,
+        name: '全屋坐標藍圖', originX: 0, originY: 0, w: 12920, l: 7880, h: 2500,
         door: { type: "door", face: "back", w: 900, h: 2000, x: 2400, swingRadius: 900 },
-        // 🌟 12點封閉回路：零長方形盒子
+        // 🌟 15點圖紙尺寸鏈閉環回路：廚房閉合、儲物房凸位 660mm 精確收邊
         polygon: [
-          [0, 3000], [2400, 3000], [2400, 0], [10400, 0], [10400, 3240], 
-          [7520, 3240], [7520, 5420], [3900, 5420], [3900, 8400], 
-          [1800, 8400], [1800, 5180], [0, 5180]
+          [0, 3180], [2400, 3180], [2400, 1000], [3180, 1000], [3180, 0], 
+          [5380, 0], [5380, 660], [12920, 660], [12920, 3900], [10040, 3900], 
+          [10040, 5680], [5400, 5680], [5400, 7880], [2220, 7880], [2220, 3180]
         ],
         structures: [
-          { id: 601, type: 'pillar', name: '廚房客廳隔牆', w: 100, l: 1200, d: 2500, x: 2400, y: 4000, col: '#576574' },
-          { id: 602, type: 'pillar', name: '客廳睡房1分界牆', w: 100, l: 2420, d: 2500, x: 3900, y: 3000, col: '#576574' },
-          { id: 603, type: 'pillar', name: '睡房1房門隔牆', w: 1580, l: 100, d: 2500, x: 3900, y: 3000, col: '#576574' },
-          { id: 604, type: 'pillar', name: '兩睡房中隔牆', w: 100, l: 2420, d: 2500, x: 6220, y: 3000, col: '#576574' },
-          { id: 605, type: 'pillar', name: '兩睡房下外牆', w: 4640, l: 100, d: 2500, x: 3900, y: 5420, col: '#576574' },
-          { id: 606, type: 'pillar', name: '儲物房客廁隔牆', w: 100, l: 1800, d: 2500, x: 4600, y: 0, col: '#576574' },
-          { id: 607, type: 'pillar', name: '客廁套廁隔牆', w: 100, l: 1800, d: 2500, x: 6930, y: 0, col: '#576574' },
-          { id: 608, type: 'pillar', name: '套廁主人房分界牆', w: 100, l: 3240, d: 2500, x: 9260, y: 0, col: '#576574' },
-          { id: 609, type: 'beam', name: '走廊貫通頂樑', w: 5160, l: 80, d: 300, x: 4100, y: 1800, col: '#7f8c8d' }
+          { id: 601, type: 'pillar', name: '廚房客廳分界牆', w: 100, l: 1330, d: 2500, x: 2400, y: 1850, col: '#576574' },
+          { id: 602, type: 'pillar', name: '客廳睡房1分界牆', w: 100, l: 2420, d: 2500, x: 5400, y: 3260, col: '#576574' },
+          { id: 603, type: 'pillar', name: '睡房1走廊間隔牆', w: 1580, l: 100, d: 2500, x: 5400, y: 3260, col: '#576574' },
+          { id: 604, type: 'pillar', name: '睡房1與睡房2中隔牆', w: 100, l: 2420, d: 2500, x: 7720, y: 3260, col: '#576574' },
+          { id: 605, type: 'pillar', name: '兩睡房窗台下外牆', w: 4640, l: 100, d: 2500, x: 5400, y: 5680, col: '#576574' },
+          { id: 606, type: 'pillar', name: '儲物房與客廁隔牆', w: 100, l: 1740, d: 2500, x: 5380, y: 660, col: '#576574' },
+          { id: 607, type: 'pillar', name: '客廁與主人套廁隔牆', w: 100, l: 1660, d: 2500, x: 7710, y: 660, col: '#576574' },
+          { id: 608, type: 'pillar', name: '主人套廁與主人房隔牆', w: 100, l: 3240, d: 2500, x: 10040, y: 660, col: '#576574' },
+          { id: 609, type: 'beam', name: '全屋走廊貫通頂樑', w: 5160, l: 80, d: 300, x: 5180, y: 2400, col: '#7f8c8d' }
         ],
         items: []
       }
     };
     let rooms = JSON.parse(JSON.stringify(initialRoomsData));
 
-    // 🌟 一鍵重置解鎖：專醫舊緩存 Hang 機！
-    function resetToHuangpuDefault() {
+
+
+
+
+        function resetToHuangpuDefault() {
       rooms = JSON.parse(JSON.stringify(initialRoomsData));
       curRoomKey = 'fullHouse';
       saveToIndexedDB();
       loadCurRoomToUI();
-      alert("✅ 已成功解鎖並灌入黃埔花園全屋向量母表！");
+      alert("✅ 已成功解鎖並灌入基準牆尺寸鏈母表！");
     }
 
-    const SHARED_DB_NAME = "LayerKingDB_v68_vector";
+    const SHARED_DB_NAME = "LayerKingDB_v69_cad";
     const SHARED_STORE_NAME = "MediaStore";
     const ROOM_DATA_KEY = "cartridge_vector_room_data";
     let db;
@@ -416,7 +419,6 @@
             rooms = req.result.rooms;
             curRoomKey = req.result.curRoomKey || 'fullHouse';
           } else {
-            // 舊結構自動平滑轉移到新坐標母表
             rooms = JSON.parse(JSON.stringify(initialRoomsData));
             curRoomKey = 'fullHouse';
             saveToIndexedDB();
@@ -515,8 +517,8 @@
 
     function updateRoomDimensions() {
       const r = getCurRoom();
-      r.w = parseFloat(document.getElementById('rm-w').value) || 10500;
-      r.l = parseFloat(document.getElementById('rm-l').value) || 8500;
+      r.w = parseFloat(document.getElementById('rm-w').value) || 12920;
+      r.l = parseFloat(document.getElementById('rm-l').value) || 7880;
       r.h = parseFloat(document.getElementById('rm-h').value) || 2500;
       syncToTxtArea(); updateAll(); saveToIndexedDB();
     }
@@ -540,7 +542,6 @@
       if (area) area.value = txt;
     }
 
-    // 🌟 一按即開關抽屜，防止卡死
     function toggleTxtDrawer() {
       const d = document.getElementById('txt-drawer');
       if (!d) return;
@@ -549,10 +550,7 @@
       if (!isShow) syncToTxtArea();
     }
 
-
-
-
-          const container3D = document.getElementById('pane-3d');
+    const container3D = document.getElementById('pane-3d');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0d1017);
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50000);
@@ -600,7 +598,10 @@
       controls.update(); renderer.render(scene, camera);
     }
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+
+
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function onCategoryChange() {
@@ -853,7 +854,10 @@
     function removeStructure(id) { const r = getCurRoom(); r.structures = r.structures.filter(s => s.id !== id); syncToTxtArea(); updateAll(); saveToIndexedDB(); }
     function removeItem(id) { const r = getCurRoom(); r.items = r.items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; syncToTxtArea(); updateAll(); saveToIndexedDB(); }
 
-    function draw2D() {
+
+
+
+        function draw2D() {
       const ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, cv.width, cv.height);
       const r = getCurRoom();
@@ -868,7 +872,7 @@
         ctx.restore();
       }
 
-      // 🌟 2D 多邊形外牆回路：天然非長方形
+      // 🌟 2D 多邊形外牆回路：加入 Auto-Snap 自動吸附封閉
       if (r.polygon && curFace === 'floor') {
         ctx.beginPath();
         r.polygon.forEach((pt, i) => {
@@ -902,7 +906,7 @@
       });
     }
 
-    // 🌟 3D 多邊形外牆拉伸：THREE.Shape 零長方形
+    // 🌟 3D 多邊形拉伸：自動吸附起點，永遠 100% 封閉不漏風
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
@@ -926,6 +930,7 @@
           const pz = -L/2 + (pt[1]/1000);
           if (idx === 0) shape.moveTo(px, pz); else shape.lineTo(px, pz);
         });
+        shape.closePath();
 
         const floorGeom = new THREE.ShapeGeometry(shape);
         const fl = new THREE.Mesh(floorGeom, new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.5, side: THREE.DoubleSide }));
@@ -1099,7 +1104,5 @@
   </script>
 </body>
 </html>
-
-
 
 
