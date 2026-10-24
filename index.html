@@ -24,7 +24,6 @@
     .room-tab { background: #202636; color: #8892b0; padding: 3px 8px; border-radius: 10px; font-size: 10px; cursor: pointer; border: 1px solid #2d3748; flex-shrink: 0; }
     .room-tab.active { background: #0070f3; color: #fff; font-weight: 900; border-color: #00ffcc; box-shadow: 0 0 6px rgba(0,255,204,0.3); }
 
-    /* 單行橫向滑動工具櫃桶：釋放 2D 畫布垂直高度 */
     #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
     .input-group { display: flex; align-items: center; gap: 2px; font-size: 10px; flex-shrink: 0; }
     input { padding: 2px 4px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 10px; width: 44px; }
@@ -84,7 +83,6 @@
 </head>
 <body>
 
-  <!-- 頂部防遮字導航列 -->
   <div id="top-nav-bar">
     <div id="proj-row">
       <span>📍 物業:</span>
@@ -100,7 +98,6 @@
       </div>
     </div>
 
-    <!-- 空間選擇 Pills 列 -->
     <div id="room-bar">
       <div class="room-tab active" onclick="switchRoom('living')">🛋️ 客飯廳 (3.9x2.9m)</div>
       <div class="room-tab" onclick="switchRoom('masterBed')">🛏️ 大睡房 (2.8x4.5m)</div>
@@ -113,8 +110,7 @@
 
 
 
-    <!-- 單行橫向滑動工具櫃桶：左右滑動，省出垂直高度 -->
-  <div id="header">
+    <div id="header">
     <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="3970" onchange="updateRoomDimensions()"></div>
     <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2920" onchange="updateRoomDimensions()"></div>
     <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2376" onchange="updateRoomDimensions()"></div>
@@ -158,7 +154,6 @@
     <div class="tab-btn" onclick="switchFace('ceiling')">天花 (Ceiling)</div>
   </div>
 
-  <!-- 主工作區：2D 畫布重構大小防遮擋 -->
   <div id="workspace">
     <div id="pane-2d">
       <div id="face-tag" class="pane-tag">📐 當前空間: 地板 (實體防穿透中)</div>
@@ -174,7 +169,6 @@
       </div>
     </div>
     <div id="pane-3d">
-      <!-- 乾淨四大視點：無多餘標籤，按鈕即按即轉 -->
       <div id="cam-ctrl">
         <button id="btn-cam-left" onclick="set3DCameraMode('cut-left')">👁️ 穿左望右</button>
         <button id="btn-cam-right" onclick="set3DCameraMode('cut-right')">👁️ 穿右望左</button>
@@ -319,29 +313,30 @@
     let projectMeta = { estate: '彩園邨', block: '彩湖樓2', floor: '23', unit: '室' };
     let curRoomKey = 'living';
 
+    // 嚴格依照真實 Floor Plan C4439 (2376mm 樓底) 座標位移建立四個分區[span_3](start_span)[span_3](end_span)
     const initialRoomsData = {
       living: { 
         name: '客飯廳', w: 3970, l: 2920, h: 2376, 
-        door: { face: "left", w: 800, h: 2000, x: 200, swingRadius: 800 }, 
-        worldOffset: { x: 0, z: 0 },
+        door: { face: "left", w: 800, h: 2000, x: 1920, swingRadius: 800 }, 
+        worldOffset: { x: 0, z: 1600 }, // 位於全屋左下[span_4](start_span)[span_4](end_span)
         structures: [], items: [] 
       },
       masterBed: { 
         name: '大睡房', w: 2830, l: 4520, h: 2376, 
-        door: { face: "back", w: 750, h: 2000, x: 200, swingRadius: 750 }, 
-        worldOffset: { x: 3970, z: -1600 },
+        door: { face: "left", w: 2300, h: 2376, x: 0, swingRadius: 0 }, // 2300mm 開放式無門扇[span_5](start_span)[span_5](end_span)
+        worldOffset: { x: 3970, z: 0 }, // 位於全屋右側[span_6](start_span)[span_6](end_span)
         structures: [], items: [] 
       },
       kitchen: { 
         name: '廚房', w: 1510, l: 1500, h: 2376, 
-        door: { face: "back", w: 700, h: 2000, x: 100, swingRadius: 700 }, 
-        worldOffset: { x: 2460, z: -1500 },
+        door: { face: "back", w: 750, h: 2000, x: 0, swingRadius: 750 }, 
+        worldOffset: { x: 2460, z: 0 }, // 位於全屋左上方走廊右邊[span_7](start_span)[span_7](end_span)
         structures: [], items: [] 
       },
       bathroom: { 
         name: '浴室', w: 1020, l: 1500, h: 2376, 
-        door: { face: "back", w: 690, h: 2000, x: 50, swingRadius: 690 }, 
-        worldOffset: { x: 0, z: -1500 },
+        door: { face: "back", w: 690, h: 2000, x: 150, swingRadius: 690 }, 
+        worldOffset: { x: 0, z: 0 }, // 位於全屋左上角[span_8](start_span)[span_8](end_span)
         structures: [], items: [] 
       }
     };
@@ -401,7 +396,6 @@
       saveToIndexedDB();
     }
 
-    // 🌟 神級修復：切換主模式時強制重置相機長寬比與尺寸，杜絕 OrbitControls 一摸即黑！
     function switchMainViewMode(mode) {
       curMainMode = mode;
       document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
@@ -432,14 +426,10 @@
         return;
       }
       
-      // 確保 DOM 重新計算尺寸後即刻更新 WebGL
       setTimeout(() => {
         resizeRenderer();
-        if (mode === 'edit') {
-          set3DCameraMode(curViewMode);
-        } else {
-          draw3DUnified();
-        }
+        if (mode === 'edit') set3DCameraMode(curViewMode);
+        else draw3DUnified();
       }, 50);
       updateAll();
     }
@@ -478,7 +468,7 @@
 
     function syncToTxtArea() {
       const r = getCurRoom();
-      let txt = `房型: ${r.w} x ${r.l} x ${r.h}\n門口: 闊 ${r.door.w}, 距左邊 ${r.door.x}, 裝喺 後牆\n\n# 建築結構 (不可改動)\n`;
+      let txt = `房型: ${r.w} x ${r.l} x ${r.h}\n門口: 闊 ${r.door.w}, 距左邊 ${r.door.x}, 裝喺 ${r.door.face||'後牆'}\n\n# 建築結構 (不可改動)\n`;
       r.structures.forEach(s => {
         if (s.type === 'pillar') txt += `柱: ${s.name}, ${s.w} x ${s.l}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#576574'}\n`;
         else txt += `樑: ${s.name}, 闊 ${s.w}, 深 ${s.l}, 吊 ${s.d}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#7f8c8d'}\n`;
@@ -557,6 +547,7 @@
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
 
 
 
@@ -721,7 +712,7 @@
         });
         const doorLeft = r.door.x, doorRight = r.door.x + r.door.w;
         const doorTop = r.l - r.door.swingRadius;
-        if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) resY = doorTop - it.l;
+        if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft && r.door.swingRadius > 0) resY = doorTop - it.l;
 
         r.items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
           if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
@@ -905,7 +896,7 @@
       ctx.fillStyle = '#202636'; ctx.fillRect(ox, oy, maxDim * sc, r.l * sc);
       ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, maxDim * sc, r.l * sc);
 
-      if (curFace === 'floor') {
+      if (curFace === 'floor' && r.door.swingRadius > 0) {
         const doorX = ox + r.door.x * sc, doorY = oy + r.l * sc, doorW = r.door.w * sc;
         ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(doorX, doorY); ctx.lineTo(doorX, doorY - doorW); ctx.stroke();
@@ -933,7 +924,7 @@
       });
     }
 
-    // 🌟 核心修復：Box3 精確自動置中，全屋 4 個空間清晰對比現形
+    // 🌟 核心革新：彩園邨真實藍圖一體化實體空間建模（零拼湊、零黑畫面）[span_9](start_span)[span_9](end_span)
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
@@ -950,38 +941,56 @@
 
       if (curMainMode === 'combine') {
         const fullHouseGroup = new THREE.Group();
-        const roomPalette = { living: 0x4a5568, masterBed: 0x3b4252, kitchen: 0x2e3440, bathroom: 0x2b303c };
+        const H = 2.376; // 彩園邨實測 2376mm 樓底[span_10](start_span)[span_10](end_span)
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.6, side: THREE.DoubleSide });
 
+        // 1. 全屋整體一體化實體大地台（6.9m x 4.52m）[span_11](start_span)[span_11](end_span)
+        const mainFloor = new THREE.Mesh(new THREE.PlaneGeometry(6.9, 4.52), new THREE.MeshStandardMaterial({ color: 0x3d4452, roughness: 0.5 }));
+        mainFloor.rotation.x = -Math.PI / 2;
+        mainFloor.position.set(3.45, 0, 2.26);
+        fullHouseGroup.add(mainFloor);
+
+        // 2. 彩園邨外圍真實結構牆（按照圖紙尺寸實體封閉）[span_12](start_span)[span_12](end_span)
+        // 後外牆（長 6.9 米）[span_13](start_span)[span_13](end_span)
+        const bWall = new THREE.Mesh(new THREE.BoxGeometry(6.9, H, 0.08), wallMat);
+        bWall.position.set(3.45, H/2, 4.52); fullHouseGroup.add(bWall);
+
+        // 前外牆（廚廁＋大陣長 6.9 米）[span_14](start_span)[span_14](end_span)
+        const fWall = new THREE.Mesh(new THREE.BoxGeometry(6.9, H, 0.08), wallMat);
+        fWall.position.set(3.45, H/2, 0); fullHouseGroup.add(fWall);
+
+        // 右外牆（睡房 4.52 米實心牆）[span_15](start_span)[span_15](end_span)
+        const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 4.52), wallMat);
+        rWall.position.set(6.9, H/2, 2.26); fullHouseGroup.add(rWall);
+
+        // 左外牆連大門（廚廁 1.5 米 ＋ 客廳大門 0.8 米 ＋ 1.92 米實牆）[span_16](start_span)[span_16](end_span)
+        const lWallTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.5), wallMat);
+        lWallTop.position.set(0, H/2, 0.75); fullHouseGroup.add(lWallTop);
+        const lWallBtm = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.92), wallMat);
+        lWallBtm.position.set(0, H/2, 3.56); fullHouseGroup.add(lWallBtm);
+
+        // 3. 室內隔間硬牆（浴室 1020mm、廚房 1510mm，以及睡房 2300mm 開放式開口）[span_17](start_span)[span_17](end_span)
+        // 廚廁前部橫向隔間牆（深 1.5m 處，長 3.97 米）[span_18](start_span)[span_18](end_span)
+        const kitchenWall = new THREE.Mesh(new THREE.BoxGeometry(3.97, H, 0.08), wallMat);
+        kitchenWall.position.set(1.985, H/2, 1.5); fullHouseGroup.add(kitchenWall);
+
+        // 浴室與走廊縱向隔間牆（1020mm 處）[span_19](start_span)[span_19](end_span)
+        const bathDivider = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.5), wallMat);
+        bathDivider.position.set(1.02, H/2, 0.75); fullHouseGroup.add(bathDivider);
+
+        // 走廊與廚房隔間牆（2260mm 處）[span_20](start_span)[span_20](end_span)
+        const kitchenDivider = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 1.5), wallMat);
+        kitchenDivider.position.set(2.46, H/2, 0.75); fullHouseGroup.add(kitchenDivider);
+
+        // 客廳與大睡房之間 700mm 短牆（保留 2300mm 闊巨型開口）[span_21](start_span)[span_21](end_span)
+        const archWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, 0.7), wallMat);
+        archWall.position.set(3.97, H/2, 4.17); fullHouseGroup.add(archWall);
+
+        // 4. 所有房間的傢俬與結構實體咬合進大藍圖
         Object.keys(rooms).forEach(k => {
           const r = rooms[k];
-          const W = r.w/1000, L = r.l/1000, H = r.h/1000;
           const ox = r.worldOffset.x / 1000;
           const oz = r.worldOffset.z / 1000;
-
-          // 實用彩色地台，空間位置分明
-          const flMat = new THREE.MeshStandardMaterial({ color: roomPalette[k] || 0x444444, roughness: 0.6 });
-          const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), flMat);
-          fl.rotation.x = -Math.PI / 2;
-          fl.position.set(ox + W/2, 0, oz + L/2);
-          fullHouseGroup.add(fl);
-
-          // 實體半透明圍牆，輪廓分明
-          const wallMat = new THREE.MeshStandardMaterial({ color: 0x8892b0, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
-          const fWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
-          fWall.position.set(ox + W/2, H/2, oz);
-          fullHouseGroup.add(fWall);
-
-          const bWall = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), wallMat);
-          bWall.position.set(ox + W/2, H/2, oz + L);
-          fullHouseGroup.add(bWall);
-
-          const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
-          lWall.position.set(ox, H/2, oz + L/2);
-          fullHouseGroup.add(lWall);
-
-          const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, H, L), wallMat);
-          rWall.position.set(ox + W, H/2, oz + L/2);
-          fullHouseGroup.add(rWall);
 
           r.structures.forEach(s => {
             const sw = s.w/1000, sl = s.l/1000, sd = (s.d || 300)/1000;
@@ -1001,7 +1010,7 @@
           });
         });
 
-        // 🌟 神級破案：利用 Box3 精準取得全屋中心點並置於 (0,0,0)
+        // 🌟 自動取得全屋中心點咬死在原點 (0,0,0)，相機居中俯瞰[span_22](start_span)[span_22](end_span)
         const bbox = new THREE.Box3().setFromObject(fullHouseGroup);
         const center = new THREE.Vector3();
         bbox.getCenter(center);
@@ -1009,12 +1018,11 @@
         fullHouseGroup.position.z = -center.z;
         renderGroup.add(fullHouseGroup);
 
-        // 動態根據大屋尺寸計算安全俯瞰距離
         const size = new THREE.Vector3();
         bbox.getSize(size);
-        const maxDim = Math.max(size.x, size.z, 5.0);
+        const maxDim = Math.max(size.x, size.z, 6.0);
         
-        camera.position.set(0, maxDim * 1.3, maxDim * 1.4);
+        camera.position.set(0, maxDim * 1.3, maxDim * 1.35);
         controls.target.set(0, 0, 0);
         controls.update();
 
@@ -1200,3 +1208,6 @@
   </script>
 </body>
 </html>
+
+
+
