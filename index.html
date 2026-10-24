@@ -28,7 +28,7 @@
     #item-deck { padding: 4px 10px; background: #181818; display: flex; gap: 6px; overflow-x: auto; border-bottom: 1px solid #333; white-space: nowrap; }
     .chip { background: #2f3640; border: 1px solid #555; padding: 3px 8px; border-radius: 12px; font-size: 10px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
     .chip.active { border-color: #00d2d3; background: #34495e; font-weight: bold; }
-    .chip span.del { color: #ff6b6b; cursor: pointer; font-weight: bold; }
+    .chip span.del { color: #ff6b6b; cursor: pointer; font-weight: bold; padding: 0 3px; }
 
     #face-tabs { padding: 4px 10px; background: #202020; display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid #333; white-space: nowrap; }
     .tab-btn { background: #333; color: #aaa; padding: 3px 8px; border-radius: 10px; font-size: 10px; cursor: pointer; border: 1px solid #444; }
@@ -63,13 +63,12 @@
 
 
 
-
   <body>
 
   <div id="header">
-    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="2150" readonly></div>
-    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2650" readonly></div>
-    <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2600" readonly></div>
+    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="2150" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="2650" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2600" onchange="updateRoomDimensions()"></div>
     <div class="input-group" title="牆身乳膠漆顏色"><label>牆:</label><input type="color" id="col-wall" value="#efede6" onchange="updateAll()"></div>
     <div class="input-group" title="地板材質顏色"><label>地:</label><input type="color" id="col-floor" value="#555555" onchange="updateAll()"></div>
     <button class="btn-add" onclick="openModal('modal-struct')">🏛️ 加柱/樑</button>
@@ -139,8 +138,8 @@
       <b>🏛️ 新增建築結構 (硬實體)</b>
       <label>類型:
         <select id="st-type">
-          <option value="pillar">石屎柱 (由地到天)</option>
-          <option value="beam">頂陣/大樑 (吊掛天花)</option>
+          <option value="pillar">石屎柱 (直通地天防穿透)</option>
+          <option value="beam">頂陣/大樑 (吊天花不擋地)</option>
         </select>
       </label>
       <label>名稱: <input type="text" id="st-name" value="主力柱"></label>
@@ -219,7 +218,6 @@
 
 
 
-
       <script>
     let curCategory = 'item';
     let curFace = 'floor';
@@ -242,6 +240,19 @@
 傢俬: IKEA Malm 雙人床, 1560 x 2090 x 380, 擺喺 400, 0, 地板, 色彩 #d4a373
 傢俬: IKEA Billy 書櫃, 800 x 280 x 2020, 擺喺 1350, 0, 地板, 色彩 #f5f6fa
 傢俬: 13A雙位電掣, 146 x 25 x 86, 擺喺 500, 300, 前牆, 色彩 #e74c3c`;
+
+    function updateRoomDimensions() {
+      const W = parseFloat(document.getElementById('rm-w').value) || 2150;
+      const L = parseFloat(document.getElementById('rm-l').value) || 2650;
+      const H = parseFloat(document.getElementById('rm-h').value) || 2600;
+      // 限制傢俬不出新邊界
+      items.forEach(it => {
+        const v = resolveCollision(it, it.x, it.y);
+        it.x = v.x; it.y = v.y;
+      });
+      syncToTxtArea();
+      updateAll();
+    }
 
     function parseTxtBlueprint(text) {
       const lines = text.split('\n');
@@ -365,6 +376,8 @@
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    // 鏡頭旋轉時按需渲染，告別 GPU 空轉
+    controls.addEventListener('change', () => { renderer.render(scene, camera); });
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.85));
     const dLight = new THREE.DirectionalLight(0xffffff, 0.55);
@@ -379,10 +392,12 @@
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      renderer.render(scene, camera);
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
 
 
 
@@ -429,6 +444,7 @@
       });
       closeModal('modal-struct');
       switchCategory('struct');
+      syncToTxtArea();
       updateAll();
     }
 
@@ -451,6 +467,7 @@
       closeModal('modal-item');
       switchCategory('item');
       if (curFace !== fc) switchFace(fc);
+      syncToTxtArea();
       updateAll();
     }
 
@@ -458,6 +475,7 @@
       const it = items.find(i => i.id === selectedItemId);
       if (it) {
         it.col = col;
+        syncToTxtArea();
         updateAll();
       }
     }
@@ -487,6 +505,7 @@
       else if (mode === 'door') { camera.position.set(0, H*0.8, -L*1.1); controls.target.set(0, H/2, L/2); }
       else if (mode === 'ceiling') { camera.position.set(0, 0.4, 0); controls.target.set(0, H, 0); }
       controls.update();
+      renderer.render(scene, camera);
     }
 
     function rotateSelectedItem() {
@@ -497,18 +516,21 @@
       const validated = resolveCollision(it, it.x, it.y);
       it.x = validated.x; it.y = validated.y;
       it.rot = (it.rot + 90) % 360;
+      syncToTxtArea();
       updateAll();
     }
 
     function reset2DView() { viewZoom = 1.0; viewPanX = 0; viewPanY = 0; draw2D(); }
 
+    // 核心碰撞：頂大陣在天花底穿行合法，石屎柱與門口實體阻擋，座標鎖死在屋內
     function resolveCollision(it, targetX, targetY) {
       const W = parseFloat(document.getElementById('rm-w').value) || 2150;
       const L = parseFloat(document.getElementById('rm-l').value) || 2650;
-      let resX = Math.max(0, Math.min(targetX, W - it.w));
-      let resY = Math.max(0, Math.min(targetY, L - it.l));
+      let resX = Math.max(0, Math.min(targetX, Math.max(0, W - it.w)));
+      let resY = Math.max(0, Math.min(targetY, Math.max(0, L - it.l)));
 
       if (it.face === 'floor') {
+        // 只阻擋直通天地的石屎柱（頂陣 beam 不擋地面傢俬）
         structures.filter(s => s.type === 'pillar').forEach(p => {
           if (resX < p.x + p.w && resX + it.w > p.x && resY < p.y + p.l && resY + it.l > p.y) {
             const dL = p.x - (resX + it.w), dR = p.x + p.w - resX, dT = p.y - (resY + it.l), dB = p.y + p.l - resY;
@@ -520,12 +542,14 @@
           }
         });
 
+        // 門口開門弧線禁區
         const doorLeft = roomDoor.x, doorRight = roomDoor.x + roomDoor.w;
         const doorTop = L - roomDoor.swingRadius;
         if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) {
           resY = doorTop - it.l;
         }
 
+        // 傢俬相互阻擋
         items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
           if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
             const dL = other.x - (resX + it.w), dR = other.x + other.w - resX;
@@ -538,7 +562,10 @@
           }
         });
       }
-      return { x: Math.max(0, Math.round(resX)), y: Math.max(0, Math.round(resY)) };
+      // 保證永遠唔會被擠出負數或牆外
+      resX = Math.max(0, Math.min(resX, Math.max(0, W - it.w)));
+      resY = Math.max(0, Math.min(resY, Math.max(0, L - it.l)));
+      return { x: Math.round(resX), y: Math.round(resY) };
     }
 
 
@@ -581,7 +608,10 @@
       }
     });
 
-    window.addEventListener('pointerup', () => { isDragging = false; });
+    window.addEventListener('pointerup', () => { 
+      if (isDragging) syncToTxtArea();
+      isDragging = false; 
+    });
     cv.addEventListener('wheel', e => {
       e.preventDefault();
       viewZoom = Math.min(Math.max(0.6, viewZoom - e.deltaY * 0.001), 4.0);
@@ -594,12 +624,13 @@
       return (240 / Math.max(W, L)) * viewZoom;
     }
 
+    // 核心倒轉搜尋：優先判定最上層/最新加入的細小傢俬（如 Billy 櫃），不被大床遮擋
     function getHitItem(cx, cy) {
       const sc = getScale();
       const W = parseFloat(document.getElementById('rm-w').value) || 2150;
       const L = parseFloat(document.getElementById('rm-l').value) || 2650;
       const ox = (cv.width - W * sc) / 2 + viewPanX, oy = (cv.height - L * sc) / 2 + viewPanY;
-      return items.find(it => {
+      return items.slice().reverse().find(it => {
         if (it.face !== curFace) return false;
         const rx = ox + it.x * sc, ry = oy + it.y * sc, rw = it.w * sc, rh = it.l * sc;
         return cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh;
@@ -657,12 +688,12 @@
       if (curCategory === 'struct') {
         cont.innerHTML += `<div class="chip" style="border-color:#f39c12;">🚪 房門 (後牆)</div>`;
         structures.forEach(s => {
-          cont.innerHTML += `<div class="chip" style="border-color:${s.col};">🏛️ ${s.name} <span class="del" onclick="removeStructure(${s.id})">×</span></div>`;
+          cont.innerHTML += `<div class="chip" style="border-color:${s.col};">🏛️ ${s.name} <span class="del" onclick="event.stopPropagation(); removeStructure(${s.id})">×</span></div>`;
         });
       } else {
         items.forEach(i => {
           const isSel = i.id === selectedItemId;
-          cont.innerHTML += `<div class="chip ${isSel?'active':''}" style="border-left: 5px solid ${i.col};" onclick="selectItemFromChip(${i.id})">🛋️ ${i.name} (${i.face}) <span class="del" onclick="removeItem(${i.id})">×</span></div>`;
+          cont.innerHTML += `<div class="chip ${isSel?'active':''}" style="border-left: 5px solid ${i.col};" onclick="selectItemFromChip(${i.id})">🛋️ ${i.name} (${i.face}) <span class="del" onclick="event.stopPropagation(); removeItem(${i.id})">×</span></div>`;
         });
       }
     }
@@ -678,8 +709,8 @@
       }
     }
 
-    function removeStructure(id) { structures = structures.filter(s => s.id !== id); updateAll(); }
-    function removeItem(id) { items = items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; updateAll(); }
+    function removeStructure(id) { structures = structures.filter(s => s.id !== id); syncToTxtArea(); updateAll(); }
+    function removeItem(id) { items = items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; syncToTxtArea(); updateAll(); }
 
     function draw2D() {
       const ctx = cv.getContext('2d');
@@ -720,8 +751,18 @@
       });
     }
 
+    // 核心 GPU 清道夫：清場時徹底釋放幾何體與材質顯存
     function draw3D() {
-      while(roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
+      while(roomGroup.children.length > 0) {
+        const obj = roomGroup.children[0];
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+        roomGroup.remove(obj);
+      }
+
       const W = parseFloat(document.getElementById('rm-w').value)/1000;
       const L = parseFloat(document.getElementById('rm-l').value)/1000;
       const H = parseFloat(document.getElementById('rm-h').value)/1000;
@@ -789,11 +830,6 @@
       parseTxtBlueprint(defaultTxtBlueprint);
       resizeRenderer();
       updateAll();
-      (function anim() {
-        requestAnimationFrame(anim);
-        controls.update();
-        renderer.render(scene, camera);
-      })();
     };
     window.onresize = resizeRenderer;
   </script>
