@@ -2,57 +2,76 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>2D/3D 輕裝修鋪磚空間卡帶</title>
   <!-- 引入輕量 Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #1a1a1a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    #header { padding: 12px; background: #262626; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    input, button, select { padding: 8px 12px; border-radius: 6px; border: 1px solid #444; background: #333; color: #fff; }
-    button { background: #0070f3; cursor: pointer; border: none; font-weight: bold; }
-    button:active { opacity: 0.8; }
-    #workspace { display: flex; flex: 1; height: calc(100vh - 120px); }
-    #pane-2d { flex: 1; border-right: 2px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; }
-    #pane-3d { flex: 1; position: relative; }
-    #info-bar { padding: 10px 15px; background: #111; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; }
-    canvas#cv-2d { background: #2d2d2d; border: 2px solid #555; }
+    
+    /* 頂部操作欄 */
+    #header { padding: 10px 12px; background: #262626; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; z-index: 10; border-bottom: 1px solid #333; }
+    .input-group { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    input, select { padding: 6px 8px; border-radius: 6px; border: 1px solid #444; background: #333; color: #fff; font-size: 13px; }
+    input { width: 68px; }
+    button { padding: 7px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
+    #btn-calc { background: #0070f3; color: #fff; }
+    #btn-calc:active { opacity: 0.8; }
+
+    /* 主工作區：預設左右排，手機螢幕轉為上下排 */
+    #workspace { display: flex; flex: 1; min-height: 0; width: 100%; position: relative; }
+    @media (max-width: 768px) {
+      #workspace { flex-direction: column; }
+    }
+
+    #pane-2d { flex: 1; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; overflow: hidden; }
+    #pane-3d { flex: 1; position: relative; overflow: hidden; width: 100%; height: 100%; }
+    
+    .pane-tag { position: absolute; top: 8px; left: 8px; color: #aaa; font-size: 11px; z-index: 5; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; pointer-events: none; }
+    canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; max-width: 90%; max-height: 90%; }
+
+    /* 底部資訊列 */
+    #info-bar { padding: 8px 12px; background: #111; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; gap: 10px; }
+    #stat-text { flex: 1; line-height: 1.4; color: #ddd; }
+    #stat-text b { color: #fff; }
+    #btn-wa { background: #25D366; color: #fff; white-space: nowrap; }
   </style>
 </head>
 <body>
 
   <!-- 控制面板 -->
   <div id="header">
-    <label>闊(W mm): <input type="number" id="rm-w" value="3000" style="width:75px;"></label>
-    <label>長(L mm): <input type="number" id="rm-l" value="4000" style="width:75px;"></label>
-    <label>高(H mm): <input type="number" id="rm-h" value="2600" style="width:75px;"></label>
-    <label>地磚: 
+    <div class="input-group"><label>闊(W):</label><input type="number" id="rm-w" value="3000"></div>
+    <div class="input-group"><label>長(L):</label><input type="number" id="rm-l" value="4000"></div>
+    <div class="input-group"><label>高(H):</label><input type="number" id="rm-h" value="2600"></div>
+    <div class="input-group">
+      <label>磚:</label>
       <select id="tile-sz">
-        <option value="600">600 x 600 mm (標準大磚)</option>
-        <option value="300">300 x 300 mm (細磚/浴室)</option>
-        <option value="800">800 x 800 mm (豪宅大板)</option>
+        <option value="600">600mm (標準磚)</option>
+        <option value="300">300mm (浴室磚)</option>
+        <option value="800">800mm (大板磚)</option>
       </select>
-    </label>
-    <button onclick="updateAll()">🔄 重新計算並生成 3D</button>
+    </div>
+    <button id="btn-calc" onclick="updateAll()">🔄 計算生成</button>
   </div>
 
-  <!-- 主操作區：左 2D 俯瞰，右 3D 空間 -->
+  <!-- 主操作區 -->
   <div id="workspace">
     <div id="pane-2d">
-      <div style="position: absolute; top: 10px; left: 10px; color: #888; font-size: 12px;">📐 2D 俯瞰網格排磚</div>
-      <canvas id="cv-2d" width="350" height="350"></canvas>
+      <div class="pane-tag">📐 2D 俯瞰排磚</div>
+      <canvas id="cv-2d" width="320" height="320"></canvas>
     </div>
     <div id="pane-3d">
-      <div style="position: absolute; top: 10px; left: 10px; color: #888; font-size: 12px; z-index: 10;">🧊 3D 空間視角（手指拖曳旋轉 / 滾輪縮放）</div>
+      <div class="pane-tag">🧊 3D 空間（拖曳旋轉 / 雙指縮放）</div>
     </div>
   </div>
 
-  <!-- 下方實質用量核算 -->
+  <!-- 底部核算 -->
   <div id="info-bar">
-    <div id="stat-text">面積：12 平方米 (約 129 呎) | 估算磚數：34 塊 (加 10% 耗損約 38 塊)</div>
-    <button style="background: #25D366;" onclick="exportWhatsApp()">📲 匯出報價單</button>
+    <div id="stat-text">計算中...</div>
+    <button id="btn-wa" onclick="exportWhatsApp()">📲 匯出 WhatsApp</button>
   </div>
 
   <script>
@@ -61,16 +80,17 @@
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x181818);
 
-    const camera = new THREE.PerspectiveCamera(45, container3D.clientWidth / container3D.clientHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container3D.clientWidth, container3D.clientHeight);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container3D.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
 
     // 燈光
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(5, 10, 7);
@@ -79,6 +99,16 @@
     let roomGroup = new THREE.Group();
     scene.add(roomGroup);
 
+    // 校正渲染器尺寸
+    function resizeRenderer() {
+      const width = container3D.clientWidth;
+      const height = container3D.clientHeight;
+      if (width === 0 || height === 0) return;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }
+
     // 2. 核心計算與同步渲染
     function updateAll() {
       const W = parseFloat(document.getElementById('rm-w').value) || 3000;
@@ -86,67 +116,60 @@
       const H = parseFloat(document.getElementById('rm-h').value) || 2600;
       const T = parseFloat(document.getElementById('tile-sz').value) || 600;
 
-      // 算面積與磚數
+      // 面積與磚數
       const areaM2 = (W * L) / 1000000;
       const areaFt2 = areaM2 * 10.764;
       const tilesX = Math.ceil(W / T);
       const tilesZ = Math.ceil(L / T);
       const totalRawTiles = tilesX * tilesZ;
-      const totalOrderTiles = Math.ceil(totalRawTiles * 1.1); // 加 10% 耗損
+      const totalOrderTiles = Math.ceil(totalRawTiles * 1.1);
 
-      // 更新文字
       document.getElementById('stat-text').innerHTML = 
-        `面積：<b>${areaM2.toFixed(1)}</b> ㎡ (約 <b>${areaFt2.toFixed(0)}</b> 呎) | 排磚：<b>${tilesX} × ${tilesZ}</b> | 預算：<b>${totalRawTiles}</b> 塊 (連10%損耗建議 <b>${totalOrderTiles}</b> 塊)`;
+        `面積：<b>${areaM2.toFixed(1)}</b>㎡ (${areaFt2.toFixed(0)}呎) | 排磚：<b>${tilesX}×${tilesZ}</b> | 預算：<b>${totalRawTiles}</b>塊 (連損耗建議 <b>${totalOrderTiles}</b>塊)`;
 
-      // 畫 2D
-      draw2D(W, L, T, tilesX, tilesZ);
-
-      // 畫 3D
+      draw2D(W, L, T);
       draw3D(W, L, H, T, tilesX, tilesZ);
     }
 
     // 3. 繪製 2D 俯瞰
-    function draw2D(W, L, T, tx, tz) {
+    function draw2D(W, L, T) {
       const cv = document.getElementById('cv-2d');
       const ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, cv.width, cv.height);
 
       const maxDim = Math.max(W, L);
-      const scale = 280 / maxDim;
+      const scale = 240 / maxDim;
       const drawW = W * scale;
       const drawL = L * scale;
       const ox = (cv.width - drawW) / 2;
       const oy = (cv.height - drawL) / 2;
 
-      // 畫地台
-      ctx.fillStyle = '#444';
+      ctx.fillStyle = '#3a3a3a';
       ctx.fillRect(ox, oy, drawW, drawL);
 
-      // 畫地磚格仔
-      ctx.strokeStyle = '#666';
+      ctx.strokeStyle = '#555';
       ctx.lineWidth = 1;
       const step = T * scale;
-      for (let x = ox; x <= ox + drawW; x += step) {
+      for (let x = ox; x <= ox + drawW + 0.1; x += step) {
         ctx.beginPath(); ctx.moveTo(x, oy); ctx.lineTo(x, oy + drawL); ctx.stroke();
       }
-      for (let y = oy; y <= oy + drawL; y += step) {
+      for (let y = oy; y <= oy + drawL + 0.1; y += step) {
         ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + drawW, y); ctx.stroke();
       }
 
-      // 外外框與尺寸標記
       ctx.strokeStyle = '#0070f3';
       ctx.lineWidth = 2;
       ctx.strokeRect(ox, oy, drawW, drawL);
+
       ctx.fillStyle = '#aaa';
-      ctx.font = '12px sans-serif';
-      ctx.fillText(`${W} mm`, ox + drawW/2 - 25, oy - 8);
-      ctx.fillText(`${L} mm`, ox + drawW + 6, oy + drawL/2);
+      ctx.font = '11px sans-serif';
+      ctx.fillText(`${W}mm`, ox + drawW / 2 - 20, oy - 6);
+      ctx.fillText(`${L}mm`, ox + drawW + 6, oy + drawL / 2 + 4);
     }
 
-    // 4. 繪製 3D 空間 (Three.js)
+    // 4. 繪製 3D 空間
     function draw3D(W, L, H, T, tx, tz) {
-      // 清空舊模型
-      while(roomGroup.children.length > 0){ 
+      while(roomGroup.children.length > 0) { 
         roomGroup.remove(roomGroup.children[0]); 
       }
 
@@ -154,49 +177,51 @@
       const sL = L / 1000;
       const sH = H / 1000;
 
-      // 生成動態格仔貼圖 (純代碼生成，零外部圖片)
+      // 地磚材質紋理
       const canvasTex = document.createElement('canvas');
       canvasTex.width = 128; canvasTex.height = 128;
       const tctx = canvasTex.getContext('2d');
       tctx.fillStyle = '#dcdde1'; tctx.fillRect(0, 0, 128, 128);
       tctx.strokeStyle = '#718093'; tctx.lineWidth = 4;
       tctx.strokeRect(0, 0, 128, 128);
+      
       const floorTex = new THREE.CanvasTexture(canvasTex);
       floorTex.wrapS = THREE.RepeatWrapping;
       floorTex.wrapT = THREE.RepeatWrapping;
       floorTex.repeat.set(tx, tz);
 
-      // 地板
-      const floorGeo = new THREE.PlaneGeometry(sW, sL);
-      const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.4 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
+      // 地面
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(sW, sL),
+        new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.3 })
+      );
       floor.rotation.x = -Math.PI / 2;
       roomGroup.add(floor);
 
-      // 牆壁 (留出前、右兩面牆，形成通透展示角)
+      // 牆壁
       const wallMat = new THREE.MeshStandardMaterial({ color: 0xefede6, roughness: 0.8 });
-      // 背牆
       const backWall = new THREE.Mesh(new THREE.BoxGeometry(sW, sH, 0.05), wallMat);
       backWall.position.set(0, sH / 2, -sL / 2);
       roomGroup.add(backWall);
-      // 左牆
+
       const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.05, sH, sL), wallMat);
       leftWall.position.set(-sW / 2, sH / 2, 0);
       roomGroup.add(leftWall);
 
-      // 擺一張示意床（長方體傢俬）
+      // 示意傢俬
       const bedMat = new THREE.MeshStandardMaterial({ color: 0x8c7ae6 });
       const bed = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.45, 1.9), bedMat);
-      bed.position.set(-sW/2 + 0.85, 0.45/2, -sL/2 + 1.05);
+      bed.position.set(-sW / 2 + 0.85, 0.45 / 2, -sL / 2 + 1.05);
       roomGroup.add(bed);
 
-      // 調整相機位置對準房間
-      camera.position.set(sW * 1.5, sH * 1.5, sL * 1.5);
+      // 相機定位
+      camera.position.set(sW * 1.3, sH * 1.4, sL * 1.5);
       controls.target.set(0, sH / 3, 0);
       controls.update();
+      resizeRenderer();
     }
 
-    // 5. 匯出 WhatsApp 文字
+    // 5. 匯出 WhatsApp
     function exportWhatsApp() {
       const W = document.getElementById('rm-w').value;
       const L = document.getElementById('rm-l').value;
@@ -206,7 +231,6 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
     }
 
-    // 動畫迴圈
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
@@ -214,14 +238,13 @@
     }
 
     window.onload = () => {
+      resizeRenderer();
       updateAll();
       animate();
     };
 
     window.onresize = () => {
-      camera.aspect = container3D.clientWidth / container3D.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container3D.clientWidth, container3D.clientHeight);
+      resizeRenderer();
     };
   </script>
 </body>
