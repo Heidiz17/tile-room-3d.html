@@ -6,6 +6,8 @@
   <title>圖層王 - 實體防穿透空間卡帶</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- 引入全屋 IKEA 卡帶庫 -->
+  <script src="ikea_catalog.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #1a1a1a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -44,8 +46,10 @@
     #cam-ctrl button { background: rgba(0,0,0,0.65); color: #fff; border: 1px solid #666; font-size: 10px; padding: 3px 6px; }
     canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; }
     
-    #float-ctrl { position: absolute; bottom: 8px; right: 8px; display: none; gap: 6px; z-index: 20; background: rgba(0,0,0,0.7); padding: 5px 8px; border-radius: 8px; align-items: center; }
-    #float-ctrl button { background: #e67e22; color: #fff; padding: 5px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); font-weight: bold; }
+    /* 懸浮控制列：顯示實體尺寸 ＋ 編輯長闊高 ＋ 換色 ＋ 旋轉 */
+    #float-ctrl { position: absolute; bottom: 8px; right: 8px; display: none; gap: 6px; z-index: 20; background: rgba(0,0,0,0.85); padding: 6px 10px; border-radius: 8px; align-items: center; border: 1px solid #555; }
+    #float-dim { font-size: 11px; color: #00ffcc; font-family: monospace; font-weight: bold; }
+    #float-ctrl button { background: #e67e22; color: #fff; padding: 4px 8px; font-weight: bold; border-radius: 4px; }
 
     #info-bar { padding: 6px 10px; background: #111; font-size: 11px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; gap: 8px; }
     #stat-text { flex: 1; line-height: 1.3; color: #ddd; }
@@ -53,12 +57,13 @@
     #btn-wa { background: #25D366; color: #fff; white-space: nowrap; }
 
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 99; justify-content: center; align-items: center; }
-    .modal-content { background: #2c3e50; padding: 14px; border-radius: 8px; width: 88%; max-width: 330px; font-size: 12px; display: flex; flex-direction: column; gap: 7px; }
+    .modal-content { background: #2c3e50; padding: 14px; border-radius: 8px; width: 88%; max-width: 340px; font-size: 12px; display: flex; flex-direction: column; gap: 7px; max-height: 90vh; overflow-y: auto; }
     .modal-content label { display: flex; justify-content: space-between; align-items: center; }
-    .modal-content input, .modal-content select { width: 120px; }
+    .modal-content input, .modal-content select { width: 140px; }
     .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid #3d566e; }
   </style>
 </head>
+
 
 
 
@@ -81,7 +86,7 @@
 
   <div id="txt-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:11px; color:#aaa;">📝 自然語言手帳 (直接改字 ➔ 撳套用)</span>
+      <span style="font-size:11px; color:#aaa;">📝 自然語言手帳 (只入房型結構 ➔ 撳套用)</span>
       <div style="display:flex; gap:6px;">
         <button style="background:#27ae60; padding:3px 8px;" onclick="applyTxtBlueprint()">⚡ 套用手帳</button>
         <button style="background:#7f8c8d; padding:3px 8px;" onclick="toggleTxtDrawer()">收起</button>
@@ -93,7 +98,7 @@
   <div id="cat-bar">
     <button id="cat-btn-struct" class="btn-cat" onclick="switchCategory('struct')">🏛️ 建築結構 (<span id="count-struct">0</span>)</button>
     <button id="cat-btn-item" class="btn-cat active" onclick="switchCategory('item')">🛋️ 傢俬與設備 (<span id="count-item">0</span>)</button>
-    <span style="margin-left:auto; font-size:10px; color:#aaa;">單指推移 / 點選換色</span>
+    <span style="margin-left:auto; font-size:10px; color:#aaa;">單指推移 / 點選檢視尺寸</span>
   </div>
 
   <div id="item-deck">
@@ -114,8 +119,10 @@
       <div id="face-tag" class="pane-tag">📐 當前視點: 地板 (實體防穿透中)</div>
       <canvas id="cv-2d" width="320" height="320"></canvas>
       <div id="float-ctrl">
-        <label style="font-size:10px; display:flex; align-items:center; gap:3px;">🎨 自訂色: <input type="color" id="float-color-picker" onchange="changeSelectedItemColor(this.value)"></label>
-        <button onclick="rotateSelectedItem()">🔄 旋轉 90°</button>
+        <span id="float-dim">📐 尺寸</span>
+        <button style="background:#2980b9;" onclick="openEditDimModal()">✏️ 改尺寸</button>
+        <label style="font-size:10px; display:flex; align-items:center; gap:2px;">🎨 <input type="color" id="float-color-picker" onchange="changeSelectedItemColor(this.value)"></label>
+        <button onclick="rotateSelectedItem()">🔄 旋轉</button>
       </div>
     </div>
     <div id="pane-3d">
@@ -133,6 +140,7 @@
     <button id="btn-wa" onclick="exportWhatsApp()">📲 出單</button>
   </div>
 
+  <!-- Modal 1: 加結構 -->
   <div id="modal-struct" class="modal">
     <div class="modal-content">
       <b>🏛️ 新增建築結構 (硬實體)</b>
@@ -154,21 +162,16 @@
     </div>
   </div>
 
+  <!-- Modal 2: 加傢俬 (由 JS 卡帶自動生成下拉選單) -->
   <div id="modal-item" class="modal">
     <div class="modal-content">
-      <b>🛋️ 新增傢俬設備</b>
-      <label>IKEA 目錄:
+      <b>🛋️ 新增傢俬設備 (全屋卡帶庫)</b>
+      <label>空間分類選物:
         <select id="item-tpl" onchange="applyItemTpl()">
-          <option value="custom">-- 自訂淘寶件 --</option>
-          <option value="ikea-malm">IKEA Malm 4呎半床 (橡木色)</option>
-          <option value="ikea-billy">IKEA Billy 書櫃 (純白色)</option>
-          <option value="ikea-kallax">IKEA Kallax 四格架 (原木色)</option>
-          <option value="ikea-pax">IKEA Pax 趟門大衣櫃 (深灰)</option>
-          <option value="socket">🔌 86型標準電掣 (亮紅色)</option>
-          <option value="ceiling-light">💡 吸頂風扇燈 (青藍色)</option>
+          <!-- JS 自動灌入全屋清單 -->
         </select>
       </label>
-      <label>名稱: <input type="text" id="it-name" value="IKEA Malm 雙人床"></label>
+      <label>名稱: <input type="text" id="it-name" value="雙人床"></label>
       <label>所屬平面:
         <select id="it-face">
           <option value="floor">地板 (Floor)</option>
@@ -180,7 +183,7 @@
         </select>
       </label>
       <label>闊(W mm): <input type="number" id="it-w" value="1560"></label>
-      <label>長/厚(L mm): <input type="number" id="it-l" value="2090"></label>
+      <label>長/深(L mm): <input type="number" id="it-l" value="2090"></label>
       <label>高(H mm): <input type="number" id="it-h" value="380"></label>
       <label>自訂色彩: <input type="color" id="it-col" value="#d4a373"></label>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:5px;">
@@ -190,6 +193,21 @@
     </div>
   </div>
 
+  <!-- Modal 3: 即時修改傢俬尺寸 (自由自訂) -->
+  <div id="modal-edit-dim" class="modal">
+    <div class="modal-content">
+      <b>✏️ 自由自訂傢俬尺寸 (毫米 mm)</b>
+      <label>闊度 (W mm): <input type="number" id="edit-w"></label>
+      <label>長度/深度 (L mm): <input type="number" id="edit-l"></label>
+      <label>高度 (H mm): <input type="number" id="edit-h"></label>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:5px;">
+        <button onclick="closeModal('modal-edit-dim')">取消</button>
+        <button style="background:#27ae60;" onclick="saveItemDim()">確定套用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: 點料算料 -->
   <div id="modal-material" class="modal">
     <div class="modal-content">
       <b>📊 裝修工程用料詳細清算 (以實用呎數為準)</b>
@@ -218,16 +236,18 @@
 
 
 
+
       <script>
     let curCategory = 'item';
     let curFace = 'floor';
-    let selectedItemId = 101;
+    let selectedItemId = null;
     let viewZoom = 1.0, viewPanX = 0, viewPanY = 0;
 
     let roomDoor = { face: "back", w: 750, h: 2000, x: 200, swingRadius: 750 };
     let structures = [];
     let items = [];
 
+    // 人類手帳真正純化：淨係負責房型結構，預設零傢俬吉房！
     const defaultTxtBlueprint = 
 `房型: 2150 x 2650 x 2600
 門口: 闊 750, 距左邊 200, 裝喺 後牆
@@ -236,16 +256,12 @@
 柱: 左上角柱, 350 x 350, 擺喺 0, 0, 色彩 #576574
 樑: 窗台大陣, 闊 2150, 深 300, 吊 350, 擺喺 0, 0, 色彩 #7f8c8d
 
-# IKEA / 淘寶傢俬設備
-傢俬: IKEA Malm 雙人床, 1560 x 2090 x 380, 擺喺 400, 0, 地板, 色彩 #d4a373
-傢俬: IKEA Billy 書櫃, 800 x 280 x 2020, 擺喺 1350, 0, 地板, 色彩 #f5f6fa
-傢俬: 13A雙位電掣, 146 x 25 x 86, 擺喺 500, 300, 前牆, 色彩 #e74c3c`;
+# 傢俬請使用上方「加傢俬」從卡帶庫加入`;
 
     function updateRoomDimensions() {
       const W = parseFloat(document.getElementById('rm-w').value) || 2150;
       const L = parseFloat(document.getElementById('rm-l').value) || 2650;
       const H = parseFloat(document.getElementById('rm-h').value) || 2600;
-      // 限制傢俬不出新邊界
       items.forEach(it => {
         const v = resolveCollision(it, it.x, it.y);
         it.x = v.x; it.y = v.y;
@@ -254,6 +270,7 @@
       updateAll();
     }
 
+    // 完美修復高度解析：讀取 sz[3]，絕不再將書櫃壓扁成 400
     function parseTxtBlueprint(text) {
       const lines = text.split('\n');
       let newW = 2150, newL = 2650, newH = 2600;
@@ -298,7 +315,7 @@
           });
         } else if (line.startsWith('傢俬:')) {
           const name = line.replace('傢俬:', '').split(',')[0].trim();
-          const sz = line.match(/(\d+)\s*x\s*(\d+)/i);
+          const sz = line.match(/(\d+)\s*x\s*(\d+)(?:\s*x\s*(\d+))?/i);
           const pos = line.match(/擺喺\s*(\d+)\s*,\s*(\d+)/);
           const colM = line.match(/色彩\s*(#[a-fA-F0-9]{6})/);
           let face = 'floor';
@@ -312,7 +329,7 @@
             const defCol = name.includes('電掣') ? '#e74c3c' : (face === 'ceiling' ? '#00d2d3' : '#d4a373');
             newItems.push({
               id: Date.now() + idx, name: name, face: face,
-              w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: 400,
+              w: parseFloat(sz[1]), l: parseFloat(sz[2]), h: parseFloat(sz[3] || 400),
               x: parseFloat(pos[1]), y: parseFloat(pos[2]), rot: 0,
               col: colM ? colM[1] : defCol
             });
@@ -326,7 +343,7 @@
       roomDoor = newDoor;
       structures = newStructures;
       items = newItems;
-      if (items.length) selectedItemId = items[0].id;
+      selectedItemId = items.length ? items[0].id : null;
     }
 
     function syncToTxtArea() {
@@ -338,7 +355,7 @@
         if (s.type === 'pillar') txt += `柱: ${s.name}, ${s.w} x ${s.l}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#576574'}\n`;
         else txt += `樑: ${s.name}, 闊 ${s.w}, 深 ${s.l}, 吊 ${s.d}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col||'#7f8c8d'}\n`;
       });
-      txt += `\n# IKEA / 淘寶傢俬設備\n`;
+      txt += `\n# 現有傢俬設備 (亦可於卡帶選單加入)\n`;
       const faceMap = { floor:'地板', front:'前牆', back:'後牆', left:'左牆', right:'右牆', ceiling:'天花' };
       items.forEach(i => {
         txt += `傢俬: ${i.name}, ${i.w} x ${i.l} x ${i.h}, 擺喺 ${i.x}, ${i.y}, ${faceMap[i.face]||'地板'}, 色彩 ${i.col||'#d4a373'}\n`;
@@ -359,7 +376,7 @@
     }
 
     function newBlankRoom() {
-      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# IKEA / 淘寶傢俬設備 (請在上方撳「加傢俬」)`;
+      const blankTxt = `房型: 2150 x 2650 x 2600\n門口: 闊 750, 距左邊 200, 裝喺 後牆\n\n# 建築結構 (請在上方撳「加柱/樑」)\n\n# 傢俬請在上方撳「加傢俬」選品`;
       document.getElementById('txt-area').value = blankTxt;
       parseTxtBlueprint(blankTxt);
       updateAll();
@@ -376,7 +393,6 @@
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    // 鏡頭旋轉時按需渲染，告別 GPU 空轉
     controls.addEventListener('change', () => { renderer.render(scene, camera); });
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.85));
@@ -402,32 +418,69 @@
 
 
 
-            function applyItemTpl() {
+            // 自動由 ikea_catalog.js 灌入全屋五大分區選單
+    function populateIkeaDropdown() {
+      const select = document.getElementById('item-tpl');
+      if (!select || typeof IKEA_CATALOG === 'undefined') return;
+      select.innerHTML = '<option value="custom">-- 自訂尺寸 (自訂長闊高) --</option>';
+
+      const categoryLabels = {
+        bedroom: "🛏️ 睡房空間 (Bedroom)",
+        living: "🛋️ 客廳空間 (Living)",
+        dining: "🍽️ 飯廳空間 (Dining)",
+        kitchen: "🍳 廚房設備 (Kitchen)",
+        bathroom: "🚿 浴室設備 (Bathroom)",
+        fixtures: "🔌 電掣開關 (Fixtures)"
+      };
+
+      Object.keys(IKEA_CATALOG).forEach(catKey => {
+        const optGroup = document.createElement('optgroup');
+        optGroup.label = categoryLabels[catKey] || catKey;
+        IKEA_CATALOG[catKey].forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id;
+          const badge = item.face === 'floor' ? '【地】' : (item.face === 'ceiling' ? '【天】' : '【牆】');
+          opt.innerText = `${badge} ${item.name}`;
+          optGroup.appendChild(opt);
+        });
+        select.appendChild(optGroup);
+      });
+    }
+
+    function applyItemTpl() {
       const v = document.getElementById('item-tpl').value;
-      if (v === 'ikea-malm') {
-        document.getElementById('it-name').value = "IKEA Malm 雙人床"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 1560; document.getElementById('it-l').value = 2090; document.getElementById('it-h').value = 380;
-        document.getElementById('it-col').value = "#d4a373";
-      } else if (v === 'ikea-billy') {
-        document.getElementById('it-name').value = "IKEA Billy 書櫃"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 800; document.getElementById('it-l').value = 280; document.getElementById('it-h').value = 2020;
-        document.getElementById('it-col').value = "#f5f6fa";
-      } else if (v === 'ikea-kallax') {
-        document.getElementById('it-name').value = "IKEA Kallax 四格架"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 770; document.getElementById('it-l').value = 390; document.getElementById('it-h').value = 770;
-        document.getElementById('it-col').value = "#e0a96d";
-      } else if (v === 'ikea-pax') {
-        document.getElementById('it-name').value = "IKEA Pax 趟門衣櫃"; document.getElementById('it-face').value = "floor";
-        document.getElementById('it-w').value = 1500; document.getElementById('it-l').value = 660; document.getElementById('it-h').value = 2360;
-        document.getElementById('it-col').value = "#3d3d3d";
-      } else if (v === 'ceiling-light') {
-        document.getElementById('it-name').value = "吸頂風扇燈"; document.getElementById('it-face').value = "ceiling";
-        document.getElementById('it-w').value = 500; document.getElementById('it-l').value = 500; document.getElementById('it-h').value = 250;
-        document.getElementById('it-col').value = "#00d2d3";
-      } else if (v === 'socket') {
-        document.getElementById('it-name').value = "13A雙位電掣"; document.getElementById('it-face').value = "front";
-        document.getElementById('it-w').value = 146; document.getElementById('it-l').value = 25; document.getElementById('it-h').value = 86;
-        document.getElementById('it-col').value = "#e74c3c";
+      if (v === 'custom') return;
+      const found = getFlatIkeaCatalog().find(i => i.id === v);
+      if (found) {
+        document.getElementById('it-name').value = found.name.split(' (')[0].replace(/【.*?】\s*/, '');
+        document.getElementById('it-face').value = found.face;
+        document.getElementById('it-w').value = found.w;
+        document.getElementById('it-l').value = found.l;
+        document.getElementById('it-h').value = found.h;
+        document.getElementById('it-col').value = found.col;
+      }
+    }
+
+    function openEditDimModal() {
+      const it = items.find(i => i.id === selectedItemId);
+      if (!it) return;
+      document.getElementById('edit-w').value = it.w;
+      document.getElementById('edit-l').value = it.l;
+      document.getElementById('edit-h').value = it.h;
+      openModal('modal-edit-dim');
+    }
+
+    function saveItemDim() {
+      const it = items.find(i => i.id === selectedItemId);
+      if (it) {
+        it.w = parseFloat(document.getElementById('edit-w').value) || it.w;
+        it.l = parseFloat(document.getElementById('edit-l').value) || it.l;
+        it.h = parseFloat(document.getElementById('edit-h').value) || it.h;
+        const validated = resolveCollision(it, it.x, it.y);
+        it.x = validated.x; it.y = validated.y;
+        closeModal('modal-edit-dim');
+        syncToTxtArea();
+        updateAll();
       }
     }
 
@@ -522,7 +575,6 @@
 
     function reset2DView() { viewZoom = 1.0; viewPanX = 0; viewPanY = 0; draw2D(); }
 
-    // 核心碰撞：頂大陣在天花底穿行合法，石屎柱與門口實體阻擋，座標鎖死在屋內
     function resolveCollision(it, targetX, targetY) {
       const W = parseFloat(document.getElementById('rm-w').value) || 2150;
       const L = parseFloat(document.getElementById('rm-l').value) || 2650;
@@ -530,7 +582,6 @@
       let resY = Math.max(0, Math.min(targetY, Math.max(0, L - it.l)));
 
       if (it.face === 'floor') {
-        // 只阻擋直通天地的石屎柱（頂陣 beam 不擋地面傢俬）
         structures.filter(s => s.type === 'pillar').forEach(p => {
           if (resX < p.x + p.w && resX + it.w > p.x && resY < p.y + p.l && resY + it.l > p.y) {
             const dL = p.x - (resX + it.w), dR = p.x + p.w - resX, dT = p.y - (resY + it.l), dB = p.y + p.l - resY;
@@ -542,14 +593,12 @@
           }
         });
 
-        // 門口開門弧線禁區
         const doorLeft = roomDoor.x, doorRight = roomDoor.x + roomDoor.w;
         const doorTop = L - roomDoor.swingRadius;
         if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) {
           resY = doorTop - it.l;
         }
 
-        // 傢俬相互阻擋
         items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
           if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
             const dL = other.x - (resX + it.w), dR = other.x + other.w - resX;
@@ -562,11 +611,11 @@
           }
         });
       }
-      // 保證永遠唔會被擠出負數或牆外
       resX = Math.max(0, Math.min(resX, Math.max(0, W - it.w)));
       resY = Math.max(0, Math.min(resY, Math.max(0, L - it.l)));
       return { x: Math.round(resX), y: Math.round(resY) };
     }
+
 
 
 
@@ -583,8 +632,7 @@
         isDragging = true;
         dragStartX = clickX; dragStartY = clickY;
         itemOrigX = hit.x; itemOrigY = hit.y;
-        document.getElementById('float-ctrl').style.display = 'flex';
-        document.getElementById('float-color-picker').value = hit.col || '#d4a373';
+        showFloatCtrl(hit);
       } else {
         selectedItemId = null;
         document.getElementById('float-ctrl').style.display = 'none';
@@ -612,6 +660,7 @@
       if (isDragging) syncToTxtArea();
       isDragging = false; 
     });
+
     cv.addEventListener('wheel', e => {
       e.preventDefault();
       viewZoom = Math.min(Math.max(0.6, viewZoom - e.deltaY * 0.001), 4.0);
@@ -624,7 +673,7 @@
       return (240 / Math.max(W, L)) * viewZoom;
     }
 
-    // 核心倒轉搜尋：優先判定最上層/最新加入的細小傢俬（如 Billy 櫃），不被大床遮擋
+    // 倒轉搜尋：細傢俬（如 Billy 櫃）優先於大床被選取
     function getHitItem(cx, cy) {
       const sc = getScale();
       const W = parseFloat(document.getElementById('rm-w').value) || 2150;
@@ -635,6 +684,12 @@
         const rx = ox + it.x * sc, ry = oy + it.y * sc, rw = it.w * sc, rh = it.l * sc;
         return cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh;
       });
+    }
+
+    function showFloatCtrl(it) {
+      document.getElementById('float-ctrl').style.display = 'flex';
+      document.getElementById('float-dim').innerText = `📐 ${it.name}: ${it.w}x${it.l}x${it.h}mm`;
+      document.getElementById('float-color-picker').value = it.col || '#d4a373';
     }
 
     function updateAll() {
@@ -703,8 +758,7 @@
       const it = items.find(i => i.id === id);
       if (it) {
         if (it.face !== curFace) switchFace(it.face);
-        document.getElementById('float-ctrl').style.display = 'flex';
-        document.getElementById('float-color-picker').value = it.col || '#d4a373';
+        showFloatCtrl(it);
         updateAll();
       }
     }
@@ -751,7 +805,7 @@
       });
     }
 
-    // 核心 GPU 清道夫：清場時徹底釋放幾何體與材質顯存
+    // 每次清場徹底釋放幾何與材質顯存，保持低溫 0 洩漏
     function draw3D() {
       while(roomGroup.children.length > 0) {
         const obj = roomGroup.children[0];
@@ -821,11 +875,12 @@
 
     function exportWhatsApp() {
       const stat = document.getElementById('stat-text').innerText;
-      const msg = `【圖層王香港房型報價單】\n${stat}\n傢俬清單：\n${items.map(i => `- ${i.name} (${i.face})`).join('\n')}`;
+      const msg = `【圖層王香港房型報價單】\n${stat}\n傢俬清單：\n${items.map(i => `- ${i.name} (${i.face}) [${i.w}x${i.l}x${i.h}mm]`).join('\n')}`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
     }
 
     window.onload = () => {
+      populateIkeaDropdown();
       document.getElementById('txt-area').value = defaultTxtBlueprint;
       parseTxtBlueprint(defaultTxtBlueprint);
       resizeRenderer();
