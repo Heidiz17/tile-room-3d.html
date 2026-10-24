@@ -114,6 +114,10 @@
     <!-- 🌟 新增：載入底圖、定標與透明度滑桿 -->
     <input type="file" id="inp-blueprint-file" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
     <button style="background:#16a085;" onclick="document.getElementById('inp-blueprint-file').click()">🖼️ 載入底圖</button>
+
+    <button style="background:#c0392b;" onclick="clearBlueprintImage()">🗑️ 剷底圖</button>
+
+    
     <button id="btn-calibrate" style="background:#d35400;" onclick="startCalibration()">📏 對尺校準</button>
     <div class="input-group" title="底圖透明度"><label>透:</label><input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.45" style="width:40px;" oninput="draw2D()"></div>
 
@@ -434,6 +438,15 @@
       };
       reader.readAsDataURL(file);
     }
+
+
+        function clearBlueprintImage() {
+      blueprintImg = null;
+      document.getElementById('inp-blueprint-file').value = '';
+      draw2D();
+      alert("🗑️ 已清空 2D 底圖！");
+    }
+
 
     function startCalibration() {
       if (!blueprintImg) { alert("請先撳「🖼️ 載入底圖」揀張平面圖相片！"); return; }
