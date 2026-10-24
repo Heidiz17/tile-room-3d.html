@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>2D/3D 輕裝修鋪磚空間卡帶</title>
-  <!-- 引入輕量 Three.js -->
+  <title>圖層王 - 2D驅動3D空間卡帶</title>
+  <!-- 引入輕量 Three.js 與手勢軌道控制器 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
@@ -12,15 +12,21 @@
     body { background: #1a1a1a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     
     /* 頂部操作欄 */
-    #header { padding: 10px 12px; background: #262626; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; z-index: 10; border-bottom: 1px solid #333; }
-    .input-group { display: flex; align-items: center; gap: 4px; font-size: 13px; }
-    input, select { padding: 6px 8px; border-radius: 6px; border: 1px solid #444; background: #333; color: #fff; font-size: 13px; }
-    input { width: 68px; }
-    button { padding: 7px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
+    #header { padding: 8px 10px; background: #262626; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; z-index: 10; border-bottom: 1px solid #333; }
+    .input-group { display: flex; align-items: center; gap: 3px; font-size: 12px; }
+    input, select { padding: 4px 6px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 12px; }
+    input { width: 58px; }
+    button { padding: 6px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
     #btn-calc { background: #0070f3; color: #fff; }
     #btn-calc:active { opacity: 0.8; }
 
-    /* 主工作區：預設左右排，手機螢幕轉為上下排 */
+    /* 中間 JSON 擴充面板（可收合） */
+    #json-bar { padding: 6px 10px; background: #202020; display: flex; gap: 8px; border-bottom: 1px solid #333; }
+    .json-box { flex: 1; display: flex; flex-direction: column; }
+    .json-box label { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+    textarea { height: 50px; background: #111; color: #00ffcc; border: 1px solid #444; border-radius: 4px; padding: 4px; font-family: monospace; font-size: 10px; resize: none; }
+
+    /* 主工作區：手機直屏上下分欄，闊屏左右分欄 */
     #workspace { display: flex; flex: 1; min-height: 0; width: 100%; position: relative; }
     @media (max-width: 768px) {
       #workspace { flex-direction: column; }
@@ -29,11 +35,11 @@
     #pane-2d { flex: 1; border-right: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; overflow: hidden; }
     #pane-3d { flex: 1; position: relative; overflow: hidden; width: 100%; height: 100%; }
     
-    .pane-tag { position: absolute; top: 8px; left: 8px; color: #aaa; font-size: 11px; z-index: 5; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; pointer-events: none; }
+    .pane-tag { position: absolute; top: 8px; left: 8px; color: #aaa; font-size: 11px; z-index: 5; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; pointer-events: none; }
     canvas#cv-2d { background: #2d2d2d; border: 1px solid #444; border-radius: 4px; max-width: 90%; max-height: 90%; }
 
     /* 底部資訊列 */
-    #info-bar { padding: 8px 12px; background: #111; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; gap: 10px; }
+    #info-bar { padding: 8px 12px; background: #111; font-size: 12px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; gap: 10px; }
     #stat-text { flex: 1; line-height: 1.4; color: #ddd; }
     #stat-text b { color: #fff; }
     #btn-wa { background: #25D366; color: #fff; white-space: nowrap; }
@@ -43,39 +49,64 @@
 
   <!-- 控制面板 -->
   <div id="header">
-    <div class="input-group"><label>闊(W):</label><input type="number" id="rm-w" value="3000"></div>
-    <div class="input-group"><label>長(L):</label><input type="number" id="rm-l" value="4000"></div>
+    <div class="input-group"><label>闊(W):</label><input type="number" id="rm-w" value="3200"></div>
+    <div class="input-group"><label>長(L):</label><input type="number" id="rm-l" value="3800"></div>
     <div class="input-group"><label>高(H):</label><input type="number" id="rm-h" value="2600"></div>
     <div class="input-group">
-      <label>磚:</label>
+      <label>地磚:</label>
       <select id="tile-sz">
         <option value="600">600mm (標準磚)</option>
         <option value="300">300mm (浴室磚)</option>
         <option value="800">800mm (大板磚)</option>
       </select>
     </div>
-    <button id="btn-calc" onclick="updateAll()">🔄 計算生成</button>
+    <button id="btn-calc" onclick="updateAll()">🔄 2D/3D 同步計算</button>
   </div>
 
-  <!-- 主操作區 -->
+  <!-- 雙軌數據 JSON 控制區（香港樓宇避柱 + IKEA/淘寶傢俬庫） -->
+  <div id="json-bar">
+    <div class="json-box">
+      <label>🏛️ 香港房型結構 (石屎柱/陣位 mm)</label>
+      <textarea id="inp-room"></textarea>
+    </div>
+    <div class="json-box">
+      <label>🛋️ IKEA/淘寶模組 (onFloor/onWall/onCeiling)</label>
+      <textarea id="inp-items"></textarea>
+    </div>
+  </div>
+
+  <!-- 主操作區：上 2D 俯瞰，下 3D 空間 -->
   <div id="workspace">
     <div id="pane-2d">
-      <div class="pane-tag">📐 2D 俯瞰排磚</div>
+      <div class="pane-tag">📐 2D 俯瞰（紅=石屎柱, 藍/紫=傢俬, 綠=天花）</div>
       <canvas id="cv-2d" width="320" height="320"></canvas>
     </div>
     <div id="pane-3d">
-      <div class="pane-tag">🧊 3D 空間（拖曳旋轉 / 雙指縮放）</div>
+      <div class="pane-tag">🧊 3D 空間（支援拖曳旋轉 / 雙指縮放）</div>
     </div>
   </div>
 
-  <!-- 底部核算 -->
+  <!-- 底部核算與 WhatsApp 出單 -->
   <div id="info-bar">
     <div id="stat-text">計算中...</div>
-    <button id="btn-wa" onclick="exportWhatsApp()">📲 匯出 WhatsApp</button>
+    <button id="btn-wa" onclick="exportWhatsApp()">📲 匯出報價單</button>
   </div>
 
   <script>
-    // 1. 初始化 3D 環境
+    // 預設香港標準樓宇結構（帶石屎柱）及 IKEA/淘寶三態模組
+    const defPillars = [
+      { name: "主力柱1", x: 0, y: 0, w: 400, l: 400 }
+    ];
+    const defItems = [
+      { name: "IKEA標準雙人床", w: 1500, l: 2000, h: 450, x: 400, y: 0, mount: "onFloor", col: 0x8c7ae6 },
+      { name: "淘寶訂造吊櫃", w: 1200, l: 350, h: 600, x: 2000, y: 0, zOff: 1700, mount: "onWall", col: 0xe1b12c },
+      { name: "天花吸頂風扇燈", w: 500, l: 500, h: 250, x: 1600, y: 1900, mount: "onCeiling", col: 0x00d2d3 }
+    ];
+
+    document.getElementById('inp-room').value = JSON.stringify(defPillars, null, 1);
+    document.getElementById('inp-items').value = JSON.stringify(defItems, null, 1);
+
+    // 1. 初始化 Three.js 3D 環境
     const container3D = document.getElementById('pane-3d');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x181818);
@@ -89,17 +120,16 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
-    // 燈光
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    // 燈光設置
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(5, 10, 7);
+    dirLight.position.set(6, 12, 8);
     scene.add(dirLight);
 
     let roomGroup = new THREE.Group();
     scene.add(roomGroup);
 
-    // 校正渲染器尺寸
     function resizeRenderer() {
       const width = container3D.clientWidth;
       const height = container3D.clientHeight;
@@ -109,30 +139,44 @@
       renderer.setSize(width, height);
     }
 
-    // 2. 核心計算與同步渲染
+    // 2. 核心同步計算與渲染
     function updateAll() {
-      const W = parseFloat(document.getElementById('rm-w').value) || 3000;
-      const L = parseFloat(document.getElementById('rm-l').value) || 4000;
+      const W = parseFloat(document.getElementById('rm-w').value) || 3200;
+      const L = parseFloat(document.getElementById('rm-l').value) || 3800;
       const H = parseFloat(document.getElementById('rm-h').value) || 2600;
       const T = parseFloat(document.getElementById('tile-sz').value) || 600;
 
-      // 面積與磚數
+      let pillars = [], items = [];
+      try {
+        pillars = JSON.parse(document.getElementById('inp-room').value);
+        items = JSON.parse(document.getElementById('inp-items').value);
+      } catch(e) {
+        alert("JSON 語法有誤，請檢查括號與逗號！");
+        return;
+      }
+
+      // 裝修料量閉環計算
       const areaM2 = (W * L) / 1000000;
       const areaFt2 = areaM2 * 10.764;
       const tilesX = Math.ceil(W / T);
       const tilesZ = Math.ceil(L / T);
       const totalRawTiles = tilesX * tilesZ;
-      const totalOrderTiles = Math.ceil(totalRawTiles * 1.1);
+      const totalOrderTiles = Math.ceil(totalRawTiles * 1.1); // 加 10% 損耗
+      const wallPaintArea = (((W + L) * 2 * H) / 1000000).toFixed(1); // 四幅牆塗刷面積
+      const volumeM3 = ((W * L * H) / 1000000000).toFixed(1); // 空間立方米
 
       document.getElementById('stat-text').innerHTML = 
-        `面積：<b>${areaM2.toFixed(1)}</b>㎡ (${areaFt2.toFixed(0)}呎) | 排磚：<b>${tilesX}×${tilesZ}</b> | 預算：<b>${totalRawTiles}</b>塊 (連損耗建議 <b>${totalOrderTiles}</b>塊)`;
+        `面積：<b>${areaM2.toFixed(1)}</b>㎡ (${areaFt2.toFixed(0)}呎) | 地磚：<b>${totalOrderTiles}</b>塊(+10%損耗) | 牆身漆：<b>${wallPaintArea}</b>㎡ | 體積：<b>${volumeM3}</b>m³`;
 
-      draw2D(W, L, T);
-      draw3D(W, L, H, T, tilesX, tilesZ);
+      // 2D 驅動繪製
+      draw2D(W, L, T, pillars, items);
+
+      // 3D 渲染映射
+      draw3D(W, L, H, T, tilesX, tilesZ, pillars, items);
     }
 
-    // 3. 繪製 2D 俯瞰
-    function draw2D(W, L, T) {
+    // 3. 2D 俯瞰視點繪製
+    function draw2D(W, L, T, pillars, items) {
       const cv = document.getElementById('cv-2d');
       const ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, cv.width, cv.height);
@@ -144,10 +188,12 @@
       const ox = (cv.width - drawW) / 2;
       const oy = (cv.height - drawL) / 2;
 
-      ctx.fillStyle = '#3a3a3a';
+      // 畫地台
+      ctx.fillStyle = '#333333';
       ctx.fillRect(ox, oy, drawW, drawL);
 
-      ctx.strokeStyle = '#555';
+      // 畫地磚格線
+      ctx.strokeStyle = '#4f4f4f';
       ctx.lineWidth = 1;
       const step = T * scale;
       for (let x = ox; x <= ox + drawW + 0.1; x += step) {
@@ -157,18 +203,38 @@
         ctx.beginPath(); ctx.moveTo(ox, y); ctx.lineTo(ox + drawW, y); ctx.stroke();
       }
 
+      // 畫石屎柱（避柱主力牆 - 紅色警示）
+      pillars.forEach(p => {
+        ctx.fillStyle = '#eb4d4b';
+        ctx.fillRect(ox + p.x * scale, oy + p.y * scale, p.w * scale, p.l * scale);
+        ctx.strokeStyle = '#ff7979';
+        ctx.strokeRect(ox + p.x * scale, oy + p.y * scale, p.w * scale, p.l * scale);
+      });
+
+      // 畫傢俬模組
+      items.forEach(it => {
+        if (it.mount === 'onCeiling') ctx.fillStyle = 'rgba(0, 210, 211, 0.6)';
+        else if (it.mount === 'onWall') ctx.fillStyle = 'rgba(225, 177, 44, 0.7)';
+        else ctx.fillStyle = 'rgba(140, 122, 230, 0.8)';
+
+        ctx.fillRect(ox + it.x * scale, oy + it.y * scale, it.w * scale, it.l * scale);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(ox + it.x * scale, oy + it.y * scale, it.w * scale, it.l * scale);
+      });
+
+      // 尺寸標籤外框
       ctx.strokeStyle = '#0070f3';
       ctx.lineWidth = 2;
       ctx.strokeRect(ox, oy, drawW, drawL);
-
       ctx.fillStyle = '#aaa';
       ctx.font = '11px sans-serif';
       ctx.fillText(`${W}mm`, ox + drawW / 2 - 20, oy - 6);
       ctx.fillText(`${L}mm`, ox + drawW + 6, oy + drawL / 2 + 4);
     }
 
-    // 4. 繪製 3D 空間
-    function draw3D(W, L, H, T, tx, tz) {
+    // 4. 3D 空間投影（純由 2D 數據渲染）
+    function draw3D(W, L, H, T, tx, tz, pillars, items) {
       while(roomGroup.children.length > 0) { 
         roomGroup.remove(roomGroup.children[0]); 
       }
@@ -177,7 +243,7 @@
       const sL = L / 1000;
       const sH = H / 1000;
 
-      // 地磚材質紋理
+      // 原裝地磚動態 Texture 生成器
       const canvasTex = document.createElement('canvas');
       canvasTex.width = 128; canvasTex.height = 128;
       const tctx = canvasTex.getContext('2d');
@@ -190,7 +256,7 @@
       floorTex.wrapT = THREE.RepeatWrapping;
       floorTex.repeat.set(tx, tz);
 
-      // 地面
+      // 地板
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(sW, sL),
         new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.3 })
@@ -198,7 +264,7 @@
       floor.rotation.x = -Math.PI / 2;
       roomGroup.add(floor);
 
-      // 牆壁
+      // 兩幅主牆體（通透視角）
       const wallMat = new THREE.MeshStandardMaterial({ color: 0xefede6, roughness: 0.8 });
       const backWall = new THREE.Mesh(new THREE.BoxGeometry(sW, sH, 0.05), wallMat);
       backWall.position.set(0, sH / 2, -sL / 2);
@@ -208,26 +274,50 @@
       leftWall.position.set(-sW / 2, sH / 2, 0);
       roomGroup.add(leftWall);
 
-      // 示意傢俬
-      const bedMat = new THREE.MeshStandardMaterial({ color: 0x8c7ae6 });
-      const bed = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.45, 1.9), bedMat);
-      bed.position.set(-sW / 2 + 0.85, 0.45 / 2, -sL / 2 + 1.05);
-      roomGroup.add(bed);
+      // 石屎主力柱（不可改動結構）
+      const pillarMat = new THREE.MeshStandardMaterial({ color: 0x576574 });
+      pillars.forEach(p => {
+        const pw = p.w / 1000, pl = p.l / 1000;
+        const colMesh = new THREE.Mesh(new THREE.BoxGeometry(pw, sH, pl), pillarMat);
+        colMesh.position.set(-sW / 2 + (p.x / 1000) + pw / 2, sH / 2, -sL / 2 + (p.y / 1000) + pl / 2);
+        roomGroup.add(colMesh);
+      });
 
-      // 相機定位
+      // 傢俬物件映射（依據 onFloor / onWall / onCeiling）
+      items.forEach(it => {
+        const iw = it.w / 1000, il = it.l / 1000, ih = it.h / 1000;
+        let py = ih / 2; // onFloor 預設貼地
+
+        if (it.mount === "onWall") {
+          py = ((it.zOff || 1500) / 1000) + ih / 2;
+        } else if (it.mount === "onCeiling") {
+          py = sH - (ih / 2);
+        }
+
+        const meshMat = new THREE.MeshStandardMaterial({ color: it.col || 0x8c7ae6, roughness: 0.5 });
+        const itemMesh = new THREE.Mesh(new THREE.BoxGeometry(iw, ih, il), meshMat);
+        itemMesh.position.set(-sW / 2 + (it.x / 1000) + iw / 2, py, -sL / 2 + (it.y / 1000) + il / 2);
+        roomGroup.add(itemMesh);
+      });
+
+      // 相機定位與更新
       camera.position.set(sW * 1.3, sH * 1.4, sL * 1.5);
       controls.target.set(0, sH / 3, 0);
       controls.update();
       resizeRenderer();
     }
 
-    // 5. 匯出 WhatsApp
+    // 5. 匯出 WhatsApp 訂單閉環
     function exportWhatsApp() {
       const W = document.getElementById('rm-w').value;
       const L = document.getElementById('rm-l').value;
+      const H = document.getElementById('rm-h').value;
       const T = document.getElementById('tile-sz').value;
       const stat = document.getElementById('stat-text').innerText;
-      const msg = `【裝修鋪磚尺寸詢價】\n規格：長 ${L}mm x 闊 ${W}mm\n選磚：${T}x${T}mm\n${stat}\n請問包工包料報價如何？`;
+      const items = JSON.parse(document.getElementById('inp-items').value);
+      const itemList = items.map(i => `- ${i.name} (${i.w}x${i.l}x${i.h}mm, ${i.mount})`).join('\n');
+
+      const msg = `【圖層王裝修與傢俬訂造單】\n房型尺寸：長 ${L}mm x 闊 ${W}mm x 高 ${H}mm\n選磚：${T}x${T}mm\n${stat}\n\n預計進場傢俬：\n${itemList}\n\n請問全套物料連工包料報價如何？`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
     }
 
