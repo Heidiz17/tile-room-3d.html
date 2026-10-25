@@ -166,16 +166,30 @@
     <div class="tab-btn" onclick="switchFace('ceiling')">天花 (Ceiling)</div>
   </div>
 
-  <div id="workspace">
-    <!-- 第一層：原裝平面圖對照貨架 -->
-    <div id="pane-ref">
-      <div class="pane-tag" style="color:#ffd700; border-color:#ffd700;">🖼️ 第一層：原裝 Floor Plan 對照架 (撳「🖼️ 載入底圖」入相片)</div>
-      <img id="ref-img-view" src="" alt="請撳頂部「🖼️ 載入底圖」揀選平面圖相片">
+    <!-- 🌟 衝出 200% 垂直滾動三聯流水線 -->
+  <div id="workspace" style="display:flex; flex:1; min-height:0; width:100%; position:relative; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    
+    <!-- 第一層：原裝平面圖對照貨架 (高 55vh) -->
+    <div id="pane-ref" style="display:none; height:55vh; min-height:320px; border-bottom:2px solid #ffd700; background:#fff; position:relative; overflow:hidden; align-items:center; justify-content:center; flex-shrink:0;">
+      <div class="pane-tag" style="color:#ffd700; border-color:#ffd700;">🖼️ 第一層：原裝 Floor Plan 對照架</div>
+      <img id="ref-img-view" src="" style="width:100%; height:100%; object-fit:contain;" alt="請載入平面圖">
     </div>
-    <!-- 第二層：2D 向量精準畫布 -->
-    <div id="pane-2d">
-      <div id="face-tag" class="pane-tag">📐 第二層：當前空間 地板 (實體防穿透中)</div>
-      <canvas id="cv-2d" width="300" height="300"></canvas>
+
+    <!-- 第二層：2D 向量精準畫布 + 四推桿 HUD (高 70vh) -->
+    <div id="pane-2d" style="height:70vh; min-height:420px; border-bottom:2px solid #333; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1a1e29; position:relative; overflow:hidden; touch-action:none; padding:2px; flex-shrink:0;">
+      <div id="face-tag" class="pane-tag">📐 第二層：2D 向量空間 (黃金坐標)</div>
+      
+      <!-- 🌟 四推桿旗艦 HUD (透 + Z + X + Y + 鎖) -->
+      <div id="bp-hud" style="position:absolute; top:28px; left:4px; z-index:30; background:rgba(18,20,26,0.92); border:1.5px solid #ffd700; border-radius:6px; padding:3px 6px; display:flex; gap:6px; align-items:center; font-size:9.5px; flex-wrap:wrap; max-width:96%;">
+        <span style="color:#ffd700; font-weight:bold;">🖼️ 底圖校準:</span>
+        <label>透:<input type="range" id="bp-op" min="0" max="1" step="0.05" value="0.5" style="width:36px;" oninput="updateBpTransform()"></label>
+        <label>Z:<input type="range" id="bp-scale" min="0.3" max="3.0" step="0.005" value="1.0" style="width:42px;" oninput="updateBpTransform()"></label>
+        <label>X:<input type="range" id="bp-x" min="-300" max="300" step="1" value="0" style="width:45px;" oninput="updateBpTransform()"></label>
+        <label>Y:<input type="range" id="bp-y" min="-300" max="300" step="1" value="0" style="width:45px;" oninput="updateBpTransform()"></label>
+        <button id="btn-bp-lock" style="background:#27ae60; color:#fff; font-weight:bold; padding:2px 6px; border-radius:4px; border:none; font-size:9.5px; cursor:pointer;" onclick="toggleBpLock()">🔓 未鎖</button>
+      </div>
+
+      <canvas id="cv-2d" width="360" height="360"></canvas>
       <div id="float-ctrl">
         <span id="float-dim">📐 尺寸</span>
         <button style="background:#2980b9;" onclick="openEditDimModal()">✏️ 改尺寸</button>
@@ -186,8 +200,9 @@
         <button onclick="rotateSelectedItem()">🔄 旋轉</button>
       </div>
     </div>
-    <!-- 第三層：3D 實體模型 -->
-    <div id="pane-3d">
+
+    <!-- 第三層：3D 實體模型 (高 70vh) -->
+    <div id="pane-3d" style="height:70vh; min-height:420px; position:relative; overflow:hidden; width:100%; background:#0d1017; flex-shrink:0;">
       <div class="pane-tag" style="color:#00a8ff;">🧊 第三層：3D 實體模型</div>
       <div id="cam-ctrl">
         <button id="btn-cam-left" onclick="set3DCameraMode('cut-left')">👁️ 穿左望右</button>
@@ -197,6 +212,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- 🌟 全屏 JSON / 手帳巨型工作台 Modal -->
   <div id="modal-full-json" class="modal">
@@ -950,6 +966,28 @@
     function removeStructure(id) { const r = getCurRoom(); r.structures = r.structures.filter(s => s.id !== id); syncToTxtArea(); updateAll(); saveToIndexedDB(); }
     function removeItem(id) { const r = getCurRoom(); r.items = r.items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; syncToTxtArea(); updateAll(); saveToIndexedDB(); }
 
+        let bpTransform = { locked: false };
+
+    function updateBpTransform() {
+      if (bpTransform.locked) return;
+      draw2D();
+    }
+
+    function toggleBpLock() {
+      bpTransform.locked = !bpTransform.locked;
+      const btn = document.getElementById('btn-bp-lock');
+      const sliders = ['bp-op', 'bp-scale', 'bp-x', 'bp-y'];
+      if (bpTransform.locked) {
+        btn.innerText = "🔒 已鎖定";
+        btn.style.background = "#e74c3c";
+        sliders.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+      } else {
+        btn.innerText = "🔓 未鎖";
+        btn.style.background = "#27ae60";
+        sliders.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
+      }
+    }
+
     function draw2D() {
       const ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, cv.width, cv.height);
@@ -959,9 +997,23 @@
       const ox = (cv.width - maxDim * sc) / 2 + viewPanX, oy = (cv.height - r.l * sc) / 2 + viewPanY;
 
       if (blueprintImg && curFace === 'floor') {
-        const op = parseFloat(document.getElementById('bg-opacity')?.value) || 0.45;
-        ctx.save(); ctx.globalAlpha = op;
-        ctx.drawImage(blueprintImg, ox, oy, maxDim * sc, r.l * sc);
+        const op = parseFloat(document.getElementById('bp-op')?.value || 0.5);
+        const zScale = parseFloat(document.getElementById('bp-scale')?.value || 1.0);
+        const shiftX = parseFloat(document.getElementById('bp-x')?.value || 0);
+        const shiftY = parseFloat(document.getElementById('bp-y')?.value || 0);
+
+        ctx.save();
+        ctx.globalAlpha = op;
+        const imgAspect = blueprintImg.width / blueprintImg.height;
+        let baseW = maxDim * sc;
+        let baseH = baseW / imgAspect;
+
+        const drawW = baseW * zScale;
+        const drawH = baseH * zScale;
+        const drawX = ox + shiftX;
+        const drawY = oy + shiftY;
+
+        ctx.drawImage(blueprintImg, drawX, drawY, drawW, drawH);
         ctx.restore();
       }
 
@@ -972,11 +1024,17 @@
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         });
         ctx.closePath();
-        ctx.fillStyle = blueprintImg ? 'rgba(32, 38, 54, 0.65)' : '#202636'; ctx.fill();
-        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.fillStyle = blueprintImg ? 'rgba(32, 38, 54, 0.45)' : '#202636';
+        ctx.fill();
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
       } else {
-        ctx.fillStyle = '#202636'; ctx.fillRect(ox, oy, maxDim * sc, r.l * sc);
-        ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, maxDim * sc, r.l * sc);
+        ctx.fillStyle = '#202636';
+        ctx.fillRect(ox, oy, maxDim * sc, r.l * sc);
+        ctx.strokeStyle = '#0070f3';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ox, oy, maxDim * sc, r.l * sc);
       }
 
       if (curFace === 'floor' || curFace === 'ceiling') {
@@ -993,11 +1051,13 @@
         ctx.strokeStyle = isSel ? '#00ffcc' : '#ffffff';
         ctx.lineWidth = isSel ? 2 : 1;
         ctx.strokeRect(ox + it.x * sc, oy + it.y * sc, it.w * sc, it.l * sc);
-        ctx.fillStyle = '#fff'; ctx.font = '9.5px sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.font = '9.5px sans-serif';
         ctx.fillText(it.name, ox + it.x * sc + 2, oy + it.y * sc + 11);
       });
     }
 
+    
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
