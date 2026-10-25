@@ -35,7 +35,7 @@
     .btn-add { background: #27ae60; color: #fff; }
 
     #txt-drawer { display: none; padding: 6px 8px; background: #1c2130; border-bottom: 2px solid #00ffcc; flex-direction: column; gap: 4px; flex-shrink: 0; z-index: 90; }
-    #txt-area { width: 100%; height: 95px; background: #0d1017; color: #00ffcc; border: 1px solid #3b4674; border-radius: 4px; padding: 4px; font-family: monospace; font-size: 10.5px; line-height: 1.35; resize: none; }
+    #txt-area { width: 100%; height: 100px; background: #0d1017; color: #00ffcc; border: 1px solid #3b4674; border-radius: 4px; padding: 4px; font-family: monospace; font-size: 10.5px; line-height: 1.35; resize: none; }
     
     #cat-bar { padding: 3px 8px; background: #161a24; display: flex; gap: 5px; border-bottom: 1px solid #2d3748; align-items: center; flex-shrink: 0; font-size: 9.5px; }
     .btn-cat { background: #242c3d; color: #aaa; padding: 2px 6px; border-radius: 10px; font-size: 9.5px; }
@@ -131,13 +131,13 @@
 
   <div id="txt-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:10.5px; color:#aaa;">📝 自然語言坐標手帳 (角點圖論連線 ➔ 撳套用)</span>
+      <span style="font-size:10.5px; color:#aaa;">📝 支援 JSON 數據包直接套用 或 自然語言手帳</span>
       <div style="display:flex; gap:5px;">
         <button style="background:#27ae60; padding:2px 6px;" onclick="applyTxtBlueprint()">⚡ 套用手帳</button>
         <button style="background:#7f8c8d; padding:2px 6px;" onclick="toggleTxtDrawer()">收起</button>
       </div>
     </div>
-    <textarea id="txt-area" spellcheck="false"></textarea>
+    <textarea id="txt-area" spellcheck="false" placeholder="貼入 JSON 或 自然語言坐標手帳"></textarea>
   </div>
 
   <div id="cat-bar">
@@ -315,7 +315,6 @@
     let calibPoints = [];
 
     // 🌟 GitHub 工業級角點圖論：共用牆自動推導 (Corner-Wall Graph)
-    // 儲物房與客廁共用縱向 X=5380，凸出量 = 2450 - 1790 = 660mm 自動咬合！
     const huangpuCorners = {
       C01: [0, 3180],     C02: [2400, 3180],   C03: [2400, 1000],  C04: [3180, 1000],
       C05: [3180, 0],     C06: [5380, 0],      C07: [5380, 660],   C08: [12920, 660],
@@ -323,7 +322,7 @@
       C13: [5400, 7880],  C14: [2220, 7880],   C15: [2220, 3180]
     };
 
-    // 依序串連外牆輪廓，保證 100% 閉環
+    // 15 點封閉迴圈，起點與終點自然咬合
     const huangpuPerimeterLoop = [
       huangpuCorners.C01, huangpuCorners.C02, huangpuCorners.C03, huangpuCorners.C04,
       huangpuCorners.C05, huangpuCorners.C06, huangpuCorners.C07, huangpuCorners.C08,
@@ -386,15 +385,17 @@
 
 
 
-        function resetToHuangpuDefault() {
+        // 🌟 一鍵重置：主動觸發 UI 與三維空間重繪，永不假死！
+    function resetToHuangpuDefault() {
       rooms = JSON.parse(JSON.stringify(initialRoomsData));
       curRoomKey = 'fullHouse';
       saveToIndexedDB();
       loadCurRoomToUI();
+      updateAll();
       alert("✅ 已成功灌入角點共用圖論母表！");
     }
 
-    const SHARED_DB_NAME = "LayerKingDB_v70_graph";
+    const SHARED_DB_NAME = "LayerKingDB_v71_hybrid";
     const SHARED_STORE_NAME = "MediaStore";
     const ROOM_DATA_KEY = "cartridge_vector_room_data";
     let db;
@@ -553,12 +554,16 @@
       if (area) area.value = txt;
     }
 
+    // 🌟 修復核心：移除反向覆蓋使用者輸入的 Bug，開關抽屜絕不洗走資料！
     function toggleTxtDrawer() {
       const d = document.getElementById('txt-drawer');
       if (!d) return;
       const isShow = (d.style.display === 'flex');
       d.style.display = isShow ? 'none' : 'flex';
-      if (!isShow) syncToTxtArea();
+      const area = document.getElementById('txt-area');
+      if (!isShow && area && area.value.trim() === '') {
+        syncToTxtArea();
+      }
     }
 
     const container3D = document.getElementById('pane-3d');
@@ -606,8 +611,8 @@
       } else if (mode === 'ceiling') {
         camera.position.set(0, 0.25, 0); controls.target.set(0, H, 0);
       }
-      controls.update(); renderer.render(scene, camera);
-    }
+      controls.update(); renderer.render(scene, camera);}
+
 
 
 
@@ -997,8 +1002,44 @@
       draw3DUnified();
     }
 
+    // 🌟 核心雙模解析器：既支援 JSON 直接解析，亦相容自然語言手帳（不需要火車軌亦自動識別）！
     function parseTxtBlueprint(text) {
+      const clean = text.trim();
+
+      // 1. 如果輸入係標準 JSON，直接快速解析
+      if (clean.startsWith('{') && clean.endsWith('}')) {
+        try {
+          const data = JSON.parse(clean);
+          const r = getCurRoom();
+          if (data.rooms) {
+            rooms = Object.assign(rooms, data.rooms);
+          }
+          if (data.corners && data.perimeter_loop) {
+            r.polygon = data.perimeter_loop.map(cId => data.corners[cId]);
+          }
+          if (data.interior_walls) {
+            r.structures = data.interior_walls;
+          }
+          if (data.project) {
+            projectMeta.estate = data.project.estate || projectMeta.estate;
+            projectMeta.block = data.project.block || projectMeta.block;
+            document.getElementById('p-estate').value = projectMeta.estate;
+            document.getElementById('p-block').value = projectMeta.block;
+          }
+          saveToIndexedDB();
+          updateAll();
+          alert("✅ 成功解析並套用 JSON 工程母表！");
+          return;
+        } catch (err) {
+          alert("❌ JSON 格式有語法錯誤，請檢查！");
+          return;
+        }
+      }
+
+      // 2. 如果包含分房標頭
       if (text.includes('=== 空間:')) { parseFullHouseBlueprint(text); return; }
+
+      // 3. 自然語言解析（無需火車軌，只要有回路或牆即時咬合）
       const r = getCurRoom();
       const lines = text.split('\n');
       let newW = r.w, newL = r.l, newH = r.h;
@@ -1026,8 +1067,12 @@
         }
       });
 
-      r.w = newW; r.l = newL; r.h = newH; r.structures = newStructures; r.items = newItems;
-      document.getElementById('rm-w').value = newW; document.getElementById('rm-l').value = newL; document.getElementById('rm-h').value = newH;
+      r.w = newW; r.l = newL; r.h = newH; 
+      if (newStructures.length > 0) r.structures = newStructures; 
+      if (newItems.length > 0) r.items = newItems;
+      document.getElementById('rm-w').value = newW; 
+      document.getElementById('rm-l').value = newL; 
+      document.getElementById('rm-h').value = newH;
       saveToIndexedDB();
     }
 
@@ -1047,7 +1092,7 @@
       curRoomKey = 'fullHouse';
       loadCurRoomToUI();
       saveToIndexedDB();
-      alert("✅ 已成功灌入角點圖論全屋藍圖！");
+      alert("✅ 已成功灌入坐標化全屋藍圖！");
     }
 
     function applyTxtBlueprint() { 
@@ -1115,3 +1160,14 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+      
