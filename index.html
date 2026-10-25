@@ -314,59 +314,28 @@
     let isCalibrating = false;
     let calibPoints = [];
 
-    // 🌟 GitHub 工業級角點圖論：共用牆自動推導 (Corner-Wall Graph)
-    const huangpuCorners = {
-      C01: [0, 3180],     C02: [2400, 3180],   C03: [2400, 1000],  C04: [3180, 1000],
-      C05: [3180, 0],     C06: [5380, 0],      C07: [5380, 660],   C08: [12920, 660],
-      C09: [12920, 3900], C10: [10040, 3900],  C11: [10040, 5680], C12: [5400, 5680],
-      C13: [5400, 7880],  C14: [2220, 7880],   C15: [2220, 3180]
-    };
-
-    // 15 點封閉迴圈，起點與終點自然咬合
+    // 🌟 核心修正：真 16 點 CAD 閉環回路！
+    // 補齊廚房左外牆 [0, 5360] -> [0, 3180]，徹底根除左邊突出天線！
     const huangpuPerimeterLoop = [
-      huangpuCorners.C01, huangpuCorners.C02, huangpuCorners.C03, huangpuCorners.C04,
-      huangpuCorners.C05, huangpuCorners.C06, huangpuCorners.C07, huangpuCorners.C08,
-      huangpuCorners.C09, huangpuCorners.C10, huangpuCorners.C11, huangpuCorners.C12,
-      huangpuCorners.C13, huangpuCorners.C14, huangpuCorners.C15
+      [0, 5360],    [0, 3180],    [2400, 3180],  [2400, 2520],
+      [3180, 2520], [3180, 0],    [5380, 0],     [5380, 660],
+      [12920, 660], [12920, 3900],[10040, 3900], [10040, 5680],
+      [5400, 5680], [5400, 7880], [2220, 7880],  [2220, 5360]
     ];
 
     const initialRoomsData = {
-      living: { 
-        name: '客飯廳', originX: 2220, originY: 3180, w: 3180, l: 4700, h: 2500, 
-        door: { type: "door", face: "back", w: 900, h: 2000, x: 600, swingRadius: 900 }, 
-        structures: [], items: [] 
-      },
-      masterBed: { 
-        name: '主人房', originX: 10040, originY: 660, w: 2880, l: 3240, h: 2500, 
-        door: { type: "door", face: "left", w: 800, h: 2000, x: 200, swingRadius: 800 }, 
-        structures: [], items: [] 
-      },
-      bed1: { 
-        name: '睡房 1', originX: 5400, originY: 3260, w: 2320, l: 2420, h: 2500, 
-        door: { type: "door", face: "back", w: 800, h: 2000, x: 100, swingRadius: 800 }, 
-        structures: [], items: [] 
-      },
-      bed2: { 
-        name: '睡房 2', originX: 7720, originY: 3260, w: 2320, l: 2420, h: 2500, 
-        door: { type: "door", face: "back", w: 800, h: 2000, x: 100, swingRadius: 800 }, 
-        structures: [], items: [] 
-      },
-      kitchen: { 
-        name: '廚房', originX: 0, originY: 1000, w: 2400, l: 2180, h: 2500, 
-        door: { type: "door", face: "left", w: 850, h: 2000, x: 100, swingRadius: 850 }, 
-        structures: [], items: [] 
-      },
-      bathroom: { 
-        name: '浴室', originX: 5380, originY: 660, w: 2330, l: 1740, h: 2500, 
-        door: { type: "door", face: "back", w: 770, h: 2000, x: 100, swingRadius: 770 }, 
-        structures: [], items: [] 
-      },
+      living: { name: '客飯廳', originX: 2220, originY: 3180, w: 3180, l: 4700, h: 2500, door: { type: "door", face: "back", w: 900, h: 2000, x: 600 }, structures: [], items: [] },
+      masterBed: { name: '主人房', originX: 10040, originY: 660, w: 2880, l: 3240, h: 2500, door: { type: "door", face: "left", w: 800, h: 2000, x: 200 }, structures: [], items: [] },
+      bed1: { name: '睡房 1', originX: 5400, originY: 3260, w: 2320, l: 2420, h: 2500, door: { type: "door", face: "back", w: 800, h: 2000, x: 100 }, structures: [], items: [] },
+      bed2: { name: '睡房 2', originX: 7720, originY: 3260, w: 2320, l: 2420, h: 2500, door: { type: "door", face: "back", w: 800, h: 2000, x: 100 }, structures: [], items: [] },
+      kitchen: { name: '廚房', originX: 0, originY: 3180, w: 2400, l: 2180, h: 2500, door: { type: "door", face: "left", w: 850, h: 2000, x: 100 }, structures: [], items: [] },
+      bathroom: { name: '浴室', originX: 5380, originY: 660, w: 2330, l: 1740, h: 2500, door: { type: "door", face: "back", w: 770, h: 2000, x: 100 }, structures: [], items: [] },
       fullHouse: {
         name: '全屋坐標藍圖', originX: 0, originY: 0, w: 12920, l: 7880, h: 2500,
-        door: { type: "door", face: "back", w: 900, h: 2000, x: 2400, swingRadius: 900 },
+        door: { type: "door", face: "back", w: 900, h: 2000, x: 2400 },
         polygon: huangpuPerimeterLoop,
         structures: [
-          { id: 601, type: 'pillar', name: '廚房客廳分界牆', w: 100, l: 1330, d: 2500, x: 2400, y: 1850, col: '#576574' },
+          { id: 601, type: 'pillar', name: '廚房客廳分界牆', w: 100, l: 1330, d: 2500, x: 2400, y: 3960, col: '#576574' },
           { id: 602, type: 'pillar', name: '客廳睡房1分界牆', w: 100, l: 2420, d: 2500, x: 5400, y: 3260, col: '#576574' },
           { id: 603, type: 'pillar', name: '睡房1走廊間隔牆', w: 1580, l: 100, d: 2500, x: 5400, y: 3260, col: '#576574' },
           { id: 604, type: 'pillar', name: '睡房1與睡房2中隔牆', w: 100, l: 2420, d: 2500, x: 7720, y: 3260, col: '#576574' },
@@ -392,10 +361,11 @@
       saveToIndexedDB();
       loadCurRoomToUI();
       updateAll();
-      alert("✅ 已成功灌入角點共用圖論母表！");
+      alert("✅ 已徹底消滅外伸假線，100% 閉環母表灌入成功！");
     }
 
-    const SHARED_DB_NAME = "LayerKingDB_v71_hybrid";
+    // 🌟 升級資料庫名稱，徹底切斷瀏覽器舊快取綁架
+    const SHARED_DB_NAME = "LayerKingDB_v88_cad_fixed";
     const SHARED_STORE_NAME = "MediaStore";
     const ROOM_DATA_KEY = "cartridge_vector_room_data";
     let db;
@@ -426,7 +396,7 @@
         const store = tx.objectStore(SHARED_STORE_NAME);
         const req = store.get(ROOM_DATA_KEY);
         req.onsuccess = () => {
-          if (req.result && req.result.rooms && req.result.rooms.fullHouse && req.result.rooms.fullHouse.polygon) {
+          if (req.result && req.result.rooms && req.result.rooms.fullHouse && req.result.rooms.fullHouse.polygon && req.result.rooms.fullHouse.polygon.length >= 15) {
             projectMeta = req.result.meta || projectMeta;
             rooms = req.result.rooms;
             curRoomKey = req.result.curRoomKey || 'fullHouse';
@@ -554,7 +524,7 @@
       if (area) area.value = txt;
     }
 
-    // 🌟 修復核心：移除反向覆蓋使用者輸入的 Bug，開關抽屜絕不洗走資料！
+    // 🌟 修正抽屜反向洗走資料 Bug
     function toggleTxtDrawer() {
       const d = document.getElementById('txt-drawer');
       if (!d) return;
@@ -611,7 +581,9 @@
       } else if (mode === 'ceiling') {
         camera.position.set(0, 0.25, 0); controls.target.set(0, H, 0);
       }
-      controls.update(); renderer.render(scene, camera);}
+      controls.update(); renderer.render(scene, camera);
+    }
+
 
 
 
@@ -1002,24 +974,22 @@
       draw3DUnified();
     }
 
-    // 🌟 核心雙模解析器：既支援 JSON 直接解析，亦相容自然語言手帳（不需要火車軌亦自動識別）！
+    // 🌟 核心雙模解析器：JSON + 自然語言手帳零衝突
     function parseTxtBlueprint(text) {
       const clean = text.trim();
+      const r = getCurRoom();
 
-      // 1. 如果輸入係標準 JSON，直接快速解析
+      // 1. 如果輸入包含 JSON 物件
       if (clean.startsWith('{') && clean.endsWith('}')) {
         try {
           const data = JSON.parse(clean);
-          const r = getCurRoom();
-          if (data.rooms) {
-            rooms = Object.assign(rooms, data.rooms);
-          }
+          if (data.width) { r.w = data.width; document.getElementById('rm-w').value = data.width; }
+          if (data.length) { r.l = data.length; document.getElementById('rm-l').value = data.length; }
+          if (data.rooms) rooms = Object.assign(rooms, data.rooms);
           if (data.corners && data.perimeter_loop) {
             r.polygon = data.perimeter_loop.map(cId => data.corners[cId]);
           }
-          if (data.interior_walls) {
-            r.structures = data.interior_walls;
-          }
+          if (data.interior_walls) r.structures = data.interior_walls;
           if (data.project) {
             projectMeta.estate = data.project.estate || projectMeta.estate;
             projectMeta.block = data.project.block || projectMeta.block;
@@ -1039,8 +1009,7 @@
       // 2. 如果包含分房標頭
       if (text.includes('=== 空間:')) { parseFullHouseBlueprint(text); return; }
 
-      // 3. 自然語言解析（無需火車軌，只要有回路或牆即時咬合）
-      const r = getCurRoom();
+      // 3. 自然語言解析
       const lines = text.split('\n');
       let newW = r.w, newL = r.l, newH = r.h;
       let newStructures = [], newItems = [];
@@ -1165,9 +1134,3 @@
 
 
 
-
-
-
-
-
-      
