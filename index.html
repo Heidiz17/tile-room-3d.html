@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>圖層王 - 工業級角點共用向量空間引擎</title>
+  <title>圖層王 四代目完全版 - 原圖2D3D三聯對比與全屏JSON引擎</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="ikea_catalog.js"></script>
@@ -24,7 +24,7 @@
     .room-tab.active { background: #0070f3; color: #fff; font-weight: 900; border-color: #00ffcc; box-shadow: 0 0 6px rgba(0,255,204,0.3); }
     .room-tab.full-active { background: #8e44ad; color: #fff; font-weight: 900; border-color: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.4); }
 
-    #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
+    #header { padding: 3px 8px; background: #1c2130; display: flex; gap: 5px; align-items: center; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #2d3748; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
     .input-group { display: flex; align-items: center; gap: 2px; font-size: 10px; flex-shrink: 0; }
     input { padding: 2px 4px; border-radius: 4px; border: 1px solid #444; background: #333; color: #fff; font-size: 10px; width: 44px; }
     input[type="color"] { width: 18px; height: 18px; padding: 0; border: none; cursor: pointer; border-radius: 50%; }
@@ -36,7 +36,7 @@
 
     #txt-drawer { display: none; padding: 6px 8px; background: #1c2130; border-bottom: 2px solid #00ffcc; flex-direction: column; gap: 4px; flex-shrink: 0; z-index: 90; }
     #txt-area { width: 100%; height: 100px; background: #0d1017; color: #00ffcc; border: 1px solid #3b4674; border-radius: 4px; padding: 4px; font-family: monospace; font-size: 10.5px; line-height: 1.35; resize: none; }
-    
+
     #cat-bar { padding: 3px 8px; background: #161a24; display: flex; gap: 5px; border-bottom: 1px solid #2d3748; align-items: center; flex-shrink: 0; font-size: 9.5px; }
     .btn-cat { background: #242c3d; color: #aaa; padding: 2px 6px; border-radius: 10px; font-size: 9.5px; }
     .btn-cat.active { background: #2980b9; color: #fff; font-weight: bold; }
@@ -49,12 +49,15 @@
     .tab-btn { background: #242c3d; color: #aaa; padding: 2px 6px; border-radius: 8px; font-size: 9.5px; cursor: pointer; border: 1px solid #3b4674; }
     .tab-btn.active { background: #0070f3; color: #fff; border-color: #00a8ff; font-weight: bold; }
 
+    /* 🌟 四代目三聯貨架：原圖 Floor Plan ➔ 2D ➔ 3D 即時同屏對照 */
     #workspace { display: flex; flex: 1; min-height: 0; width: 100%; position: relative; flex-direction: column; }
     @media (min-width: 769px) { #workspace { flex-direction: row; } }
-    #pane-2d { flex: 1; border-bottom: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1e29; position: relative; overflow: hidden; touch-action: none; padding: 4px; }
+    #pane-ref { display: none; flex: 0.85; border-bottom: 1.5px solid #ffd700; background: #fff; position: relative; overflow: hidden; align-items: center; justify-content: center; }
+    #pane-ref img { width: 100%; height: 100%; object-fit: contain; }
+    #pane-2d { flex: 1; border-bottom: 1px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1e29; position: relative; overflow: hidden; touch-action: none; padding: 2px; }
     #pane-3d { flex: 1; position: relative; overflow: hidden; width: 100%; height: 100%; background: #0d1017; }
     
-    .pane-tag { position: absolute; top: 4px; left: 4px; color: #00ffcc; font-size: 9.5px; z-index: 5; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; pointer-events: none; border: 1px solid #3b4674; }
+    .pane-tag { position: absolute; top: 4px; left: 4px; color: #00ffcc; font-size: 9.5px; z-index: 5; background: rgba(0,0,0,0.75); padding: 2px 6px; border-radius: 4px; pointer-events: none; border: 1px solid #3b4674; }
     
     #cam-ctrl { position: absolute; top: 4px; right: 4px; z-index: 10; display: flex; gap: 3px; }
     #cam-ctrl button { background: rgba(0,0,0,0.75); color: #fff; border: 1px solid #3b4674; font-size: 9px; padding: 2px 5px; border-radius: 4px; }
@@ -74,11 +77,13 @@
     #stat-text b { color: #00ffcc; }
     #btn-wa { background: #25D366; color: #fff; white-space: nowrap; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 900; }
 
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9500; justify-content: center; align-items: center; }
-    .modal-content { background: #1f2638; padding: 14px; border-radius: 8px; width: 88%; max-width: 320px; font-size: 11.5px; display: flex; flex-direction: column; gap: 6px; max-height: 90vh; overflow-y: auto; border: 1.5px solid #3b4674; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9500; justify-content: center; align-items: center; }
+    .modal-content { background: #1f2638; padding: 14px; border-radius: 8px; width: 90%; max-width: 340px; font-size: 11.5px; display: flex; flex-direction: column; gap: 6px; max-height: 90vh; overflow-y: auto; border: 1.5px solid #3b4674; }
+    .modal-full { width: 96% !important; max-width: 800px !important; height: 90vh !important; display: flex; flex-direction: column; }
     .modal-content label { display: flex; justify-content: space-between; align-items: center; }
     .modal-content input, .modal-content select { width: 130px; }
     .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; border-bottom: 1px solid #2d3748; }
+    #full-json-area { flex: 1; width: 100%; background: #0b0e14; color: #00ffcc; border: 1.5px solid #0070f3; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 11.5px; line-height: 1.4; resize: none; }
   </style>
 </head>
 <body>
@@ -108,25 +113,29 @@
     </div>
   </div>
 
-  <div id="header">
-    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="12920" onchange="updateRoomDimensions()"></div>
-    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="7880" onchange="updateRoomDimensions()"></div>
-    <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2500" onchange="updateRoomDimensions()"></div>
-    
+
+
+
+
+    <div id="header">
+    <button style="background:#f39c12; color:#000; font-weight:900;" onclick="toggleRefShelf()">📐 1.原圖貨架</button>
     <input type="file" id="inp-blueprint-file" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
     <button style="background:#16a085;" onclick="document.getElementById('inp-blueprint-file').click()">🖼️ 載入底圖</button>
     <button style="background:#c0392b;" onclick="clearBlueprintImage()">🗑️ 剷底圖</button>
     <button id="btn-calibrate" style="background:#d35400;" onclick="startCalibration()">📏 借牆校準</button>
-    <div class="input-group" title="底圖透明度"><label>透:</label><input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.45" style="width:40px;" oninput="draw2D()"></div>
-
-    <div class="input-group" title="牆身顏色"><label>牆:</label><input type="color" id="col-wall" value="#efede6" onchange="updateAll()"></div>
-    <div class="input-group" title="地板顏色"><label>地:</label><input type="color" id="col-floor" value="#3d4452" onchange="updateAll()"></div>
+    <button class="btn-txt" onclick="openFullJsonEditor()">📋 2.全屏JSON</button>
+    <button class="btn-txt" onclick="toggleTxtDrawer()">📝 手帳抽屜</button>
+    <button style="background:#8e44ad;" onclick="resetToHuangpuDefault()">⚡ 3.重置黃金坐標</button>
+    <button class="btn-action" onclick="reset2DView()">🔍 居中</button>
     <button class="btn-add" onclick="openModal('modal-struct')">🏛️ 加間隔牆/柱</button>
     <button class="btn-add" onclick="openModal('modal-item')">🛋️ 加傢俬</button>
-    <button class="btn-txt" onclick="toggleTxtDrawer()">📝 手帳TXT</button>
     <button class="btn-calc" onclick="openModal('modal-material')">📊 點料</button>
-    <button style="background:#8e44ad;" onclick="resetToHuangpuDefault()">⚡ 重置全屋坐標</button>
-    <button class="btn-action" onclick="reset2DView()">🔍 居中</button>
+    <div class="input-group" title="底圖透明度"><label>透:</label><input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.45" style="width:40px;" oninput="draw2D()"></div>
+    <div class="input-group"><label>闊:</label><input type="number" id="rm-w" value="12920" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>長:</label><input type="number" id="rm-l" value="8190" onchange="updateRoomDimensions()"></div>
+    <div class="input-group"><label>高:</label><input type="number" id="rm-h" value="2500" onchange="updateRoomDimensions()"></div>
+    <div class="input-group" title="牆身顏色"><label>牆:</label><input type="color" id="col-wall" value="#efede6" onchange="updateAll()"></div>
+    <div class="input-group" title="地板顏色"><label>地:</label><input type="color" id="col-floor" value="#3d4452" onchange="updateAll()"></div>
   </div>
 
   <div id="txt-drawer">
@@ -143,7 +152,7 @@
   <div id="cat-bar">
     <button id="cat-btn-struct" class="btn-cat" onclick="switchCategory('struct')">🏛️ 建築結構 (<span id="count-struct">0</span>)</button>
     <button id="cat-btn-item" class="btn-cat active" onclick="switchCategory('item')">🛋️ 傢俬與設備 (<span id="count-item">0</span>)</button>
-    <span style="margin-left:auto; font-size:9.5px; color:#aaa;">單指推移 / 點選檢視尺寸</span>
+    <span style="margin-left:auto; font-size:9.5px; color:#00ffcc;">💡 單指推移傢俬 / 撳「📐 1.原圖貨架」三層同屏對比</span>
   </div>
 
   <div id="item-deck"><div id="chips-container" style="display:inline-flex; gap:5px;"></div></div>
@@ -158,8 +167,14 @@
   </div>
 
   <div id="workspace">
+    <!-- 第一層：原裝平面圖對照貨架 -->
+    <div id="pane-ref">
+      <div class="pane-tag" style="color:#ffd700; border-color:#ffd700;">🖼️ 第一層：原裝 Floor Plan 對照架 (撳「🖼️ 載入底圖」入相片)</div>
+      <img id="ref-img-view" src="" alt="請撳頂部「🖼️ 載入底圖」揀選平面圖相片">
+    </div>
+    <!-- 第二層：2D 向量精準畫布 -->
     <div id="pane-2d">
-      <div id="face-tag" class="pane-tag">📐 當前空間: 地板 (實體防穿透中)</div>
+      <div id="face-tag" class="pane-tag">📐 第二層：當前空間 地板 (實體防穿透中)</div>
       <canvas id="cv-2d" width="300" height="300"></canvas>
       <div id="float-ctrl">
         <span id="float-dim">📐 尺寸</span>
@@ -171,12 +186,34 @@
         <button onclick="rotateSelectedItem()">🔄 旋轉</button>
       </div>
     </div>
+    <!-- 第三層：3D 實體模型 -->
     <div id="pane-3d">
+      <div class="pane-tag" style="color:#00a8ff;">🧊 第三層：3D 實體模型</div>
       <div id="cam-ctrl">
         <button id="btn-cam-left" onclick="set3DCameraMode('cut-left')">👁️ 穿左望右</button>
         <button id="btn-cam-right" onclick="set3DCameraMode('cut-right')">👁️ 穿右望左</button>
         <button id="btn-cam-box" class="active" onclick="set3DCameraMode('box')">📦 兩邊實體牆</button>
         <button id="btn-cam-ceiling" onclick="set3DCameraMode('ceiling')">☝️ 仰視天花</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🌟 全屏 JSON / 手帳巨型工作台 Modal -->
+  <div id="modal-full-json" class="modal">
+    <div class="modal-content modal-full">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b style="color:#00ffcc; font-size:13px;">📋 四代目全屏 JSON / 坐標工作台 (自動修復手機標點錯誤)</b>
+        <button style="background:#e74c3c; color:#fff;" onclick="closeModal('modal-full-json')">✖ 關閉</button>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button style="background:#8e44ad; color:#fff;" onclick="loadStandardJsonToEditor()">📥 載入標準 JSON 模板</button>
+        <button style="background:#2980b9; color:#fff;" onclick="loadTxtToEditor()">📝 轉換為自然語言格式</button>
+        <button style="background:#d35400; color:#fff;" onclick="document.getElementById('full-json-area').value=''">🗑️ 清空方便貼上</button>
+      </div>
+      <textarea id="full-json-area" spellcheck="false" placeholder="在此貼入完整 JSON 或自然語言坐標..."></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button onclick="closeModal('modal-full-json')">取消</button>
+        <button style="background:#27ae60; color:#fff; padding:6px 14px; font-size:12px;" onclick="applyFullJsonEditor()">⚡ 立即套用並重繪 2D/3D</button>
       </div>
     </div>
   </div>
@@ -314,61 +351,118 @@
     let isCalibrating = false;
     let calibPoints = [];
 
-    // 🌟 核心修正：真 16 點 CAD 閉環回路！
-    // 補齊廚房左外牆 [0, 5360] -> [0, 3180]，徹底根除左邊突出天線！
-    const huangpuPerimeterLoop = [
-      [0, 5360],    [0, 3180],    [2400, 3180],  [2400, 2520],
-      [3180, 2520], [3180, 0],    [5380, 0],     [5380, 660],
-      [12920, 660], [12920, 3900],[10040, 3900], [10040, 5680],
-      [5400, 5680], [5400, 7880], [2220, 7880],  [2220, 5360]
-    ];
+    // 🌟 四代目黃金比例坐標：完全按照原圖縱向尺寸鏈推導！
+    // 儲物房頂 Y=0 ➔ 廁所基準窗 Y=660 ➔ 玄關頂 Y=860 (+660凹位) ➔ 廚房頂 Y=1520 (+2180深) ➔ 廚房底 Y=3700 (+4490客廳長牆) ➔ 客廳底 Y=8190！
+    const huangpuGoldenCorners = {
+      C01: [0, 3700],     // 廚房左下角
+      C02: [0, 1520],     // 廚房左上角 (高 2180)
+      C03: [2400, 1520],  // 廚房右上角 (闊 2400)
+      C04: [2400, 860],   // 大門玄關凹位向上 660
+      C05: [3180, 860],   // 玄關頂橫牆向右 780
+      C06: [3180, 0],     // 儲物房左牆向上 860 到頂
+      C07: [5380, 0],     // 儲物房頂牆向右 2200
+      C08: [5380, 660],   // 儲物房右牆向下 660 接基準線
+      C09: [12920, 660],  // 客廁+套廁+主人房頂大窗 (2330+2330+2880)
+      C10: [12920, 3900], // 主人房右牆向下 3240
+      C11: [10040, 3900], // 主人房底牆向左 2880
+      C12: [10040, 5700], // 睡房2右牆向下 1800
+      C13: [5400, 5700],  // 睡房1+睡房2底窗向左 4640
+      C14: [5400, 8190],  // 客廳右下牆向下 2490 (總高8190)
+      C15: [2220, 8190],  // 客廳底窗向左 3180
+      C16: [2220, 3700]   // 客廳左下長牆向上 4490 接回廚房底！
+    };
 
-    const initialRoomsData = {
-      living: { name: '客飯廳', originX: 2220, originY: 3180, w: 3180, l: 4700, h: 2500, door: { type: "door", face: "back", w: 900, h: 2000, x: 600 }, structures: [], items: [] },
+    const huangpuPerimeterLoop = Object.values(huangpuGoldenCorners);
+
+
+
+
+
+        const initialRoomsData = {
+      living: { name: '客飯廳', originX: 2220, originY: 3700, w: 3180, l: 4490, h: 2500, door: { type: "door", face: "back", w: 900, h: 2000, x: 600 }, structures: [], items: [] },
       masterBed: { name: '主人房', originX: 10040, originY: 660, w: 2880, l: 3240, h: 2500, door: { type: "door", face: "left", w: 800, h: 2000, x: 200 }, structures: [], items: [] },
-      bed1: { name: '睡房 1', originX: 5400, originY: 3260, w: 2320, l: 2420, h: 2500, door: { type: "door", face: "back", w: 800, h: 2000, x: 100 }, structures: [], items: [] },
-      bed2: { name: '睡房 2', originX: 7720, originY: 3260, w: 2320, l: 2420, h: 2500, door: { type: "door", face: "back", w: 800, h: 2000, x: 100 }, structures: [], items: [] },
-      kitchen: { name: '廚房', originX: 0, originY: 3180, w: 2400, l: 2180, h: 2500, door: { type: "door", face: "left", w: 850, h: 2000, x: 100 }, structures: [], items: [] },
+      bed1: { name: '睡房 1', originX: 5400, originY: 3280, w: 2320, l: 2420, h: 2500, door: { type: "door", face: "back", w: 800, h: 2000, x: 100 }, structures: [], items: [] },
+      bed2: { name: '睡房 2', originX: 7720, originY: 3280, w: 2320, l: 2420, h: 2500, door: { type: "door", face: "back", w: 800, h: 2000, x: 100 }, structures: [], items: [] },
+      kitchen: { name: '廚房', originX: 0, originY: 1520, w: 2400, l: 2180, h: 2500, door: { type: "door", face: "left", w: 850, h: 2000, x: 100 }, structures: [], items: [] },
       bathroom: { name: '浴室', originX: 5380, originY: 660, w: 2330, l: 1740, h: 2500, door: { type: "door", face: "back", w: 770, h: 2000, x: 100 }, structures: [], items: [] },
       fullHouse: {
-        name: '全屋坐標藍圖', originX: 0, originY: 0, w: 12920, l: 7880, h: 2500,
+        name: '全屋坐標藍圖', originX: 0, originY: 0, w: 12920, l: 8190, h: 2500,
         door: { type: "door", face: "back", w: 900, h: 2000, x: 2400 },
         polygon: huangpuPerimeterLoop,
         structures: [
-          { id: 601, type: 'pillar', name: '廚房客廳分界牆', w: 100, l: 1330, d: 2500, x: 2400, y: 3960, col: '#576574' },
-          { id: 602, type: 'pillar', name: '客廳睡房1分界牆', w: 100, l: 2420, d: 2500, x: 5400, y: 3260, col: '#576574' },
-          { id: 603, type: 'pillar', name: '睡房1走廊間隔牆', w: 1580, l: 100, d: 2500, x: 5400, y: 3260, col: '#576574' },
-          { id: 604, type: 'pillar', name: '睡房1與睡房2中隔牆', w: 100, l: 2420, d: 2500, x: 7720, y: 3260, col: '#576574' },
-          { id: 605, type: 'pillar', name: '兩睡房窗台下外牆', w: 4640, l: 100, d: 2500, x: 5400, y: 5680, col: '#576574' },
-          { id: 606, type: 'pillar', name: '儲物房與客廁隔牆', w: 100, l: 1740, d: 2500, x: 5380, y: 660, col: '#576574' },
-          { id: 607, type: 'pillar', name: '客廁與主人套廁隔牆', w: 100, l: 1660, d: 2500, x: 7710, y: 660, col: '#576574' },
-          { id: 608, type: 'pillar', name: '主人套廁與主人房隔牆', w: 100, l: 3240, d: 2500, x: 10040, y: 660, col: '#576574' },
-          { id: 609, type: 'beam', name: '全屋走廊貫通頂樑', w: 5160, l: 80, d: 300, x: 5180, y: 2400, col: '#7f8c8d' }
+          { id: 601, type: 'pillar', name: '廚房客廳分界牆', w: 100, l: 1330, d: 2500, x: 2400, y: 2370, col: '#576574' },
+          { id: 602, type: 'pillar', name: '儲物房底橫牆', w: 1400, l: 100, d: 2500, x: 3180, y: 2400, col: '#576574' },
+          { id: 603, type: 'pillar', name: '儲物房與客廁隔牆', w: 100, l: 1740, d: 2500, x: 5380, y: 660, col: '#576574' },
+          { id: 604, type: 'pillar', name: '客廁與主人套廁隔牆', w: 100, l: 1740, d: 2500, x: 7710, y: 660, col: '#576574' },
+          { id: 605, type: 'pillar', name: '主人套廁與主人房隔牆', w: 100, l: 1740, d: 2500, x: 10040, y: 660, col: '#576574' },
+          { id: 606, type: 'pillar', name: '走廊北面分界牆', w: 4660, l: 100, d: 2500, x: 5380, y: 2400, col: '#576574' },
+          { id: 607, type: 'pillar', name: '睡房1走廊間隔牆', w: 1580, l: 100, d: 2500, x: 5400, y: 3280, col: '#576574' },
+          { id: 608, type: 'pillar', name: '客廳與睡房1分界牆', w: 100, l: 2420, d: 2500, x: 5400, y: 3280, col: '#576574' },
+          { id: 609, type: 'pillar', name: '睡房1與睡房2中隔牆', w: 100, l: 2420, d: 2500, x: 7720, y: 3280, col: '#576574' },
+          { id: 610, type: 'pillar', name: '睡房2走廊頂牆', w: 1480, l: 100, d: 2500, x: 8560, y: 3280, col: '#576574' }
         ],
         items: []
       }
     };
     let rooms = JSON.parse(JSON.stringify(initialRoomsData));
 
+    const SHARED_DB_NAME = "LayerKingDB_v401_full";
+    const SHARED_STORE_NAME = "MediaStore";
+    const ROOM_DATA_KEY = "cartridge_vector_room_data";
+    let db;
 
+    function toggleRefShelf() {
+      const refPane = document.getElementById('pane-ref');
+      const isShow = (refPane.style.display === 'flex');
+      refPane.style.display = isShow ? 'none' : 'flex';
+      resizeRenderer();
+    }
 
+    function openFullJsonEditor() {
+      loadStandardJsonToEditor();
+      openModal('modal-full-json');
+    }
 
+    function loadStandardJsonToEditor() {
+      const r = getCurRoom();
+      const cornersObj = {};
+      (r.polygon || []).forEach((pt, i) => {
+        const key = 'C' + String(i + 1).padStart(2, '0');
+        cornersObj[key] = pt;
+      });
+      const stdJson = {
+        project: projectMeta,
+        width: r.w,
+        length: r.l,
+        height: r.h,
+        corners: cornersObj,
+        perimeter_loop: Object.keys(cornersObj),
+        interior_walls: r.structures,
+        rooms: rooms
+      };
+      document.getElementById('full-json-area').value = JSON.stringify(stdJson, null, 2);
+    }
 
-        // 🌟 一鍵重置：主動觸發 UI 與三維空間重繪，永不假死！
+    function loadTxtToEditor() {
+      syncToTxtArea();
+      document.getElementById('full-json-area').value = document.getElementById('txt-area').value;
+    }
+
+    function applyFullJsonEditor() {
+      const raw = document.getElementById('full-json-area').value;
+      parseTxtBlueprint(raw);
+      updateAll();
+      closeModal('modal-full-json');
+    }
+
     function resetToHuangpuDefault() {
       rooms = JSON.parse(JSON.stringify(initialRoomsData));
       curRoomKey = 'fullHouse';
       saveToIndexedDB();
       loadCurRoomToUI();
       updateAll();
-      alert("✅ 已徹底消滅外伸假線，100% 閉環母表灌入成功！");
+      alert("✅ 四代目黃金比例坐標（廚房頂 Y=1520、客廳長牆 4490mm）已完美對齊！");
     }
-
-    // 🌟 升級資料庫名稱，徹底切斷瀏覽器舊快取綁架
-    const SHARED_DB_NAME = "LayerKingDB_v88_cad_fixed";
-    const SHARED_STORE_NAME = "MediaStore";
-    const ROOM_DATA_KEY = "cartridge_vector_room_data";
-    let db;
 
     function initDB(callback) {
       const req = indexedDB.open(SHARED_DB_NAME, 1);
@@ -425,7 +519,13 @@
       const reader = new FileReader();
       reader.onload = evt => {
         blueprintImg = new Image();
-        blueprintImg.onload = () => { draw2D(); alert("✅ 2D 底圖已成功墊底！"); };
+        blueprintImg.onload = () => {
+          document.getElementById('ref-img-view').src = evt.target.result;
+          document.getElementById('pane-ref').style.display = 'flex';
+          resizeRenderer();
+          draw2D();
+          alert("✅ 原裝平面圖已同時放入頂部對比貨架及 2D 底圖！");
+        };
         blueprintImg.src = evt.target.result;
       };
       reader.readAsDataURL(file);
@@ -434,8 +534,11 @@
     function clearBlueprintImage() {
       blueprintImg = null;
       document.getElementById('inp-blueprint-file').value = '';
+      document.getElementById('ref-img-view').src = '';
+      document.getElementById('pane-ref').style.display = 'none';
+      resizeRenderer();
       draw2D();
-      alert("🗑️ 已清空 2D 底圖！");
+      alert("🗑️ 已清空底圖及對比貨架！");
     }
 
     function startCalibration() {
@@ -444,7 +547,11 @@
       alert("📐 請喺 2D 畫布底圖上，點擊某幅牆嘅左右兩端！");
     }
 
-    function switchMainViewMode(mode) {
+
+
+
+
+        function switchMainViewMode(mode) {
       curMainMode = mode;
       document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
       document.getElementById('btn-mode-report').classList.toggle('active', mode === 'report');
@@ -500,7 +607,7 @@
     function updateRoomDimensions() {
       const r = getCurRoom();
       r.w = parseFloat(document.getElementById('rm-w').value) || 12920;
-      r.l = parseFloat(document.getElementById('rm-l').value) || 7880;
+      r.l = parseFloat(document.getElementById('rm-l').value) || 8190;
       r.h = parseFloat(document.getElementById('rm-h').value) || 2500;
       syncToTxtArea(); updateAll(); saveToIndexedDB();
     }
@@ -524,7 +631,6 @@
       if (area) area.value = txt;
     }
 
-    // 🌟 修正抽屜反向洗走資料 Bug
     function toggleTxtDrawer() {
       const d = document.getElementById('txt-drawer');
       if (!d) return;
@@ -584,11 +690,7 @@
       controls.update(); renderer.render(scene, camera);
     }
 
-
-
-
-
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function onCategoryChange() {
@@ -703,9 +805,9 @@
     function switchFace(face) {
       curFace = face;
       document.querySelectorAll('#face-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
+      if (event && event.target) event.target.classList.add('active');
       const names = { floor: "地板 (Floor)", front: "前牆 (主景牆)", back: "後牆 (門口牆)", left: "左牆", right: "右牆", ceiling: "天花 (Ceiling)" };
-      document.getElementById('face-tag').innerText = `📐 當前空間: ${names[face]} (實體防穿透中)`;
+      document.getElementById('face-tag').innerText = `📐 第二層：當前空間 ${names[face]} (實體防穿透中)`;
       reset2DView(); updateAll();
     }
 
@@ -721,6 +823,7 @@
 
     function reset2DView() { viewZoom = 1.0; viewPanX = 0; viewPanY = 0; draw2D(); }
 
+    // 🌟 100% 完整保留：單指拖拉傢俬與滾輪縮放！
     const cv = document.getElementById('cv-2d');
     let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
     
@@ -788,7 +891,11 @@
       document.getElementById('float-hex-input').value = it.col || '#d4a373';
     }
 
-    function calcAllMaterials() {
+
+
+
+
+        function calcAllMaterials() {
       const r = getCurRoom();
       const rawFloorM2 = (r.w * r.l) / 1000000;
       let pillarAreaM2 = 0;
@@ -811,6 +918,8 @@
       document.getElementById('mat-floor-cost').innerText = `HK$ ${floorTotalCost.toLocaleString()}`;
       document.getElementById('mat-paint-sqft').innerText = `${netPaintSqft.toFixed(1)} 呎`;
       document.getElementById('mat-paint-cost').innerText = `HK$ ${paintTotalCost.toLocaleString()}`;
+      const volEl = document.getElementById('mat-vol');
+      if (volEl) volEl.innerText = `${((r.w * r.l * r.h)/1e9).toFixed(1)} m³`;
     }
 
     function renderChips() {
@@ -841,11 +950,7 @@
     function removeStructure(id) { const r = getCurRoom(); r.structures = r.structures.filter(s => s.id !== id); syncToTxtArea(); updateAll(); saveToIndexedDB(); }
     function removeItem(id) { const r = getCurRoom(); r.items = r.items.filter(i => i.id !== id); selectedItemId = null; document.getElementById('float-ctrl').style.display = 'none'; syncToTxtArea(); updateAll(); saveToIndexedDB(); }
 
-
-
-
-
-        function draw2D() {
+    function draw2D() {
       const ctx = cv.getContext('2d');
       ctx.clearRect(0, 0, cv.width, cv.height);
       const r = getCurRoom();
@@ -860,7 +965,6 @@
         ctx.restore();
       }
 
-      // 🌟 2D 向量多邊形：嚴格閉合連線
       if (r.polygon && curFace === 'floor') {
         ctx.beginPath();
         r.polygon.forEach((pt, i) => {
@@ -868,7 +972,7 @@
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         });
         ctx.closePath();
-        ctx.fillStyle = '#202636'; ctx.fill();
+        ctx.fillStyle = blueprintImg ? 'rgba(32, 38, 54, 0.65)' : '#202636'; ctx.fill();
         ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.stroke();
       } else {
         ctx.fillStyle = '#202636'; ctx.fillRect(ox, oy, maxDim * sc, r.l * sc);
@@ -894,7 +998,6 @@
       });
     }
 
-    // 🌟 3D 多邊形拉伸：自動吸附起點，永遠 100% 封閉不漏風
     function draw3DUnified() {
       while(renderGroup.children.length > 0) {
         const obj = renderGroup.children[0];
@@ -974,12 +1077,14 @@
       draw3DUnified();
     }
 
-    // 🌟 核心雙模解析器：JSON + 自然語言手帳零衝突
+    // 🌟 四代目防錯雙模解析器：支援自動修復手機標點的 JSON + 自然語言手帳！
     function parseTxtBlueprint(text) {
-      const clean = text.trim();
+      let clean = text.trim()
+        .replace(/[“”]/g, '"')
+        .replace(/(\d+)\.\s*\n/g, '$1,\n')
+        .replace(/,\s*([}\]])/g, '$1');
       const r = getCurRoom();
 
-      // 1. 如果輸入包含 JSON 物件
       if (clean.startsWith('{') && clean.endsWith('}')) {
         try {
           const data = JSON.parse(clean);
@@ -999,17 +1104,15 @@
           saveToIndexedDB();
           updateAll();
           alert("✅ 成功解析並套用 JSON 工程母表！");
-          return;
+          return true;
         } catch (err) {
-          alert("❌ JSON 格式有語法錯誤，請檢查！");
-          return;
+          alert("❌ JSON 語法錯誤：" + err.message);
+          return false;
         }
       }
 
-      // 2. 如果包含分房標頭
-      if (text.includes('=== 空間:')) { parseFullHouseBlueprint(text); return; }
+      if (text.includes('=== 空間:')) { parseFullHouseBlueprint(text); return true; }
 
-      // 3. 自然語言解析
       const lines = text.split('\n');
       let newW = r.w, newL = r.l, newH = r.h;
       let newStructures = [], newItems = [];
@@ -1043,6 +1146,7 @@
       document.getElementById('rm-l').value = newL; 
       document.getElementById('rm-h').value = newH;
       saveToIndexedDB();
+      return true;
     }
 
     function parseFullHouseBlueprint(fullText) {
@@ -1129,8 +1233,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
