@@ -854,7 +854,8 @@
   let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
   let panOrigX = 0, panOrigY = 0;
 
-  cv.addEventListener('pointerdown', e => {
+    cv.addEventListener('pointerdown', e => {
+    cv.setPointerCapture(e.pointerId);
     const rect = cv.getBoundingClientRect();
     const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
     const hit = getHitItem(clickX, clickY);
@@ -880,7 +881,7 @@
     renderChips();
   });
 
-  window.addEventListener('pointermove', e => {
+  cv.addEventListener('pointermove', e => {
     const rect = cv.getBoundingClientRect();
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
 
@@ -898,14 +899,16 @@
         updateItem3DTransformFast(it);
       }
     } else if (isPanningCanvas) {
-      // 🌟 自由拖動畫布，上下左右隨意微調，徹底唔會鎖死畫面！
       viewPanX = panOrigX + (curX - dragStartX);
       viewPanY = panOrigY + (curY - dragStartY);
       draw2D();
     }
   });
 
-  window.addEventListener('pointerup', () => {
+  const stopCanvasDrag = e => {
+    if (cv.hasPointerCapture && cv.hasPointerCapture(e.pointerId)) {
+      cv.releasePointerCapture(e.pointerId);
+    }
     if (isDragging) {
       syncToTxtArea();
       calcAllMaterials();
@@ -913,7 +916,12 @@
     }
     isDragging = false;
     isPanningCanvas = false;
-  });
+  };
+
+  cv.addEventListener('pointerup', stopCanvasDrag);
+  cv.addEventListener('pointercancel', stopCanvasDrag);
+
+        
 
   cv.addEventListener('wheel', e => {
     e.preventDefault();
