@@ -1,13 +1,13 @@
 <!-- ========================================================================= -->
-<!-- 📍 【方塊 1 / 共 5 塊】HTML 骨架、36px 經典超肥滑軌與極限休眠 CSS -->
-<!-- 💡 秘書備註：捲軸加闊 50%（36px）、徹底支援按需渲染、雙聯視窗對照架構 -->
+<!-- 📍 【方塊 1 / 共 5 塊】HTML 骨架、36vh 雙紅框縮小卡片、36px 肥滑軌與 CSS -->
+<!-- 💡 秘書備註：卡片縮至 36vh 剛好同屏雙覽、保留自由滾動、36px 肥滑軌 -->
 <!-- ========================================================================= -->
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>圖層王 旗艦省電版 - 按需即時渲染與36px超肥滑軌</title>
+  <title>圖層王 旗艦省電版 - 雙紅框同屏對照與按需即時渲染</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="ikea_catalog.js"></script>
@@ -56,7 +56,7 @@
     .color-input-badge input[type="color"] { width: 18px; height: 18px; border: none; background: none; cursor: pointer; border-radius: 50%; }
     .color-input-badge input[type="text"] { width: 56px; font-family: monospace; font-size: 9.5px; background: #0b0e14; border: 1px solid #3b4674; color: #fff; padding: 1px 3px; border-radius: 4px; }
 
-    /* 🎪 中間：大舞台垂直自由滾動區 */
+    /* 🎪 中間：大舞台垂直自由滾動區（保留上下碌，但縮小卡片使兩者同屏） */
     #stage-scroll-wrapper {
       flex: 1;
       width: 100%;
@@ -68,7 +68,7 @@
       position: relative;
     }
     
-    /* 🌟 升級 36px 經典超肥滑軌（粗多50%）：手指一放即中，滑行阻尼極致流暢！ */
+    /* 🌟 36px 經典超肥滑軌（粗多50%）：手指一放即中，滑行動能極致敏銳 */
     #stage-scroll-wrapper::-webkit-scrollbar { width: 36px; }
     #stage-scroll-wrapper::-webkit-scrollbar-track { background: rgba(10, 13, 23, 0.98); border-left: 2px solid #252d48; }
     #stage-scroll-wrapper::-webkit-scrollbar-thumb {
@@ -78,15 +78,15 @@
       box-shadow: 0 0 12px rgba(0,240,255,0.7);
     }
 
-    /* 雙聯畫面排版：上下緊湊，告別空位留白 */
+    /* 🌟 雙紅框縮小卡片：由 65vh 縮至 36vh，剛好同屏雙覽，兩幅圖都睇得晒 */
     .pane-card { width: 100%; position: relative; flex-shrink: 0; box-sizing: border-box; }
-    #pane-ref { display: none; height: 42vh; min-height: 250px; background: #fff; border-bottom: 2px solid #ffd700; align-items: center; justify-content: center; overflow: hidden; }
+    #pane-ref { display: none; height: 36vh; min-height: 230px; background: #fff; border-bottom: 2px solid #ffd700; align-items: center; justify-content: center; overflow: hidden; }
     #pane-ref img { width: 100%; height: 100%; object-fit: contain; }
     
-    #pane-2d { height: 48vh; min-height: 300px; background: #141824; border-bottom: 2px solid #252d42; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; touch-action: pan-y; }
-    #pane-3d { height: 48vh; min-height: 300px; background: #090c15; position: relative; overflow: hidden; }
+    #pane-2d { height: 36vh; min-height: 230px; background: #141824; border-bottom: 2px solid #252d42; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; touch-action: pan-y; }
+    #pane-3d { height: 36vh; min-height: 230px; background: #090c15; border-bottom: 2px solid #252d42; position: relative; overflow: hidden; }
 
-    /* 🌟 2D 畫布角位微型快充掣與標註常駐開關 */
+    /* 🌟 2D 畫布角位常駐操作按鈕條 (擺傢俬 + 標註開關) */
     .pane-top-bar {
       position: absolute;
       top: 6px;
@@ -111,7 +111,7 @@
     #cam-ctrl button { background: rgba(14,18,30,0.85); color: #fff; border: 1px solid #3b4674; font-size: 9.5px; padding: 3px 6px; border-radius: 4px; font-weight: bold; cursor: pointer; }
     #cam-ctrl button.active { background: #0070f3; border-color: #00ffcc; }
 
-    canvas#cv-2d { background: #1c2235; border: 1.5px solid #2f3b5c; border-radius: 8px; }
+    canvas#cv-2d { background: #1c2235; border: 1.5px solid #2f3b5c; border-radius: 6px; }
 
     /* 🛋️ 晶片卡槽樣式 */
     #cat-bar { padding: 4px 8px; background: #121622; display: flex; gap: 6px; border-bottom: 1px solid #23293d; align-items: center; flex-shrink: 0; font-size: 9.5px; }
@@ -133,10 +133,10 @@
     #bottom-scroll-panel {
       flex: none;
       width: 100%;
-      height: 150px;
+      height: 140px;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 6px 10px 16px 10px;
+      padding: 6px 10px 14px 10px;
       box-sizing: border-box;
       background: #090c16;
       border-top: 2px solid #00f0ff;
@@ -212,6 +212,7 @@
 
 
 
+
   <!-- ========================================================================= -->
 <!-- 📍 【方塊 2 / 共 5 塊】HTML 本體：常駐標註列、無假門舞台與可摺疊控制台 -->
 <!-- 💡 秘書備註：常駐 [標註/擺傢俬] 於畫布角位、剷除客廳假門、控制台一鍵伸縮 -->
@@ -280,7 +281,7 @@
     </div>
   </div>
 
-  <!-- 🎪 2. 中間：大舞台垂直自由滾動區（36px 超肥滑軌） -->
+  <!-- 🎪 2. 中間：大舞台垂直自由滾動區（36px 超肥滑軌，雙卡片 36vh 剛好同屏雙覽） -->
   <div id="stage-scroll-wrapper">
     
     <!-- 第一層：原裝 Floor Plan 對照架 -->
@@ -296,7 +297,7 @@
         <button class="btn-pane-action" onclick="toggleRefShelf()">🖼️ 原圖架</button>
       </div>
 
-      <canvas id="cv-2d" width="360" height="360"></canvas>
+      <canvas id="cv-2d" width="360" height="230"></canvas>
       
       <!-- 傢俬點選浮動微調條 -->
       <div id="float-ctrl" style="position:absolute; bottom:8px; right:8px; display:none; gap:5px; z-index:20; background:rgba(13,16,23,0.92); padding:5px 9px; border-radius:6px; align-items:center; border:1.5px solid #00ffcc;">
@@ -506,7 +507,7 @@
     <label style="display:flex; justify-content:space-between; align-items:center;">名稱: <input type="text" id="st-name" value="新間隔牆" style="width:130px; background:#0b0e14; border:1px solid #3b4674; color:#fff; padding:3px; border-radius:4px;"></label>
     <label style="display:flex; justify-content:space-between; align-items:center;">闊 (X mm): <input type="number" id="st-w" value="85" style="width:130px; background:#0b0e14; border:1px solid #3b4674; color:#fff; padding:3px; border-radius:4px;"></label>
     <label style="display:flex; justify-content:space-between; align-items:center;">長 (Y mm): <input type="number" id="st-l" value="1685" style="width:130px; background:#0b0e14; border:1px solid #3b4674; color:#fff; padding:3px; border-radius:4px;"></label>
-    <label style="display:flex; justify-content:space-between; align-items:center;">吊深 (mm): <input type="number" id="st-d" value="2500" style="width:130px; background:#0b0e14; border:1px solid #3b4674; color:#fff; padding:3px; border-radius:4px;"></label>
+    <label style="display:flex; justify-content:space-between; align-items:center;">吊深 (mm): <input type="number" id="st-d" value="2400" style="width:130px; background:#0b0e14; border:1px solid #3b4674; color:#fff; padding:3px; border-radius:4px;"></label>
     <label style="display:flex; justify-content:space-between; align-items:center;">色彩: <input type="color" id="st-col" value="#576574" style="width:40px; height:24px; border:none; background:none; cursor:pointer;"></label>
     <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:5px;">
       <button style="background:#4b5563; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="closeModal('modal-struct')">取消</button>
@@ -914,10 +915,9 @@
 
 
 
-
   <!-- ========================================================================= -->
 <!-- 📍 【方塊 5 / 共 5 塊】按需零空跑渲染、微秒級傢俬推移與開機生命週期 -->
-<!-- 💡 秘書備註：消除客廳假門、僅在轉角加垂直結構骨線、推拉時 0ms 更新 Mesh -->
+<!-- 💡 秘書備註：消除怪異彩色牆、樓底校準2400mm、還原立體光暗角、絕無假門 -->
 <!-- ========================================================================= -->
 <script>
   // 🌟 18 號室則師軸線黃金數據 (自洽閉合外胚層)
@@ -932,46 +932,46 @@
     [0, 6000]
   ];
 
-  // 🌟 嚴格遵照圖紙：客飯廳無假門，廚房無門，浴室先有實體門
+  // 🌟 嚴格遵照圖紙：樓底淨高 2400mm，客廳廚房無假門，結構牆統一水泥清水灰
   const initialRoomsData = {
     living: { 
-      name: '客飯廳', originX: 0, originY: 0, w: 2350, l: 6000, h: 2500, 
+      name: '客飯廳', originX: 0, originY: 0, w: 2350, l: 6000, h: 2400, 
       door: { type: "none", face: "none", w: 0, h: 0, x: 0, swingRadius: 0 },
       structures: [], items: [] 
     },
     masterBed: { 
-      name: '主人房', originX: 0, originY: 0, w: 2880, l: 3240, h: 2500, 
+      name: '主人房', originX: 0, originY: 0, w: 2880, l: 3240, h: 2400, 
       door: { type: "door", face: "left", w: 750, h: 2000, x: 200, swingRadius: 750 },
       structures: [], items: [] 
     },
     bed1: { 
-      name: '睡房 1', originX: 0, originY: 0, w: 2320, l: 2420, h: 2500, 
+      name: '睡房 1', originX: 0, originY: 0, w: 2320, l: 2420, h: 2400, 
       door: { type: "door", face: "back", w: 750, h: 2000, x: 150, swingRadius: 750 },
       structures: [], items: [] 
     },
     bed2: { 
-      name: '睡房 2', originX: 0, originY: 0, w: 2320, l: 2420, h: 2500, 
+      name: '睡房 2', originX: 0, originY: 0, w: 2320, l: 2420, h: 2400, 
       door: { type: "door", face: "back", w: 750, h: 2000, x: 150, swingRadius: 750 },
       structures: [], items: [] 
     },
     kitchen: { 
-      name: '廚房', originX: 2435, originY: 1675, w: 1415, l: 1685, h: 2500, 
+      name: '廚房', originX: 2435, originY: 1675, w: 1415, l: 1685, h: 2400, 
       door: { type: "none", face: "none", w: 0, h: 0, x: 0, swingRadius: 0 },
       structures: [], items: [] 
     },
     bathroom: { 
-      name: '浴室', originX: 3555, originY: 0, w: 1580, l: 1675, h: 2500, 
+      name: '浴室', originX: 3555, originY: 0, w: 1580, l: 1675, h: 2400, 
       door: { type: "door", face: "back", w: 690, h: 2000, x: 100, swingRadius: 690 },
       structures: [], items: [] 
     },
     fullHouse: {
-      name: '18號室則師藍圖', originX: 0, originY: 0, w: 5135, l: 6000, h: 2500,
+      name: '18號室則師藍圖', originX: 0, originY: 0, w: 5135, l: 6000, h: 2400,
       polygon: unit18ArchitectPolygon,
       door: { type: "none", face: "none", w: 0, h: 0, x: 0, swingRadius: 0 },
       structures: [
-        { id: 1801, type: 'pillar', name: '客廚分界牆 (85mm)', w: 85, l: 1685, d: 2500, x: 2350, y: 1675, col: '#e8590c' },
-        { id: 1802, type: 'pillar', name: '廚廁橫牆 (155mm)', w: 1415, l: 155, d: 2500, x: 2435, y: 1520, col: '#2f9e44' },
-        { id: 1803, type: 'pillar', name: '玄關浴室隔牆 (85mm)', w: 85, l: 1675, d: 2500, x: 3470, y: 0, col: '#7048e8' }
+        { id: 1801, type: 'pillar', name: '客廚分界牆 (85mm)', w: 85, l: 1685, d: 2400, x: 2350, y: 1675, col: '#576574' },
+        { id: 1802, type: 'pillar', name: '廚廁橫牆 (155mm)', w: 1415, l: 155, d: 2400, x: 2435, y: 1520, col: '#576574' },
+        { id: 1803, type: 'pillar', name: '玄關浴室隔牆 (85mm)', w: 85, l: 1675, d: 2400, x: 3470, y: 0, col: '#576574' }
       ],
       items: []
     }
@@ -980,9 +980,10 @@
   let rooms = JSON.parse(JSON.stringify(initialRoomsData));
   function getCurRoom() { return rooms[curRoomKey] || rooms['fullHouse']; }
 
+  // 🌟 自動配對 230px 畫布高度，保證全相置中不切邊
   function getScale() {
     const r = getCurRoom();
-    return (240 / Math.max(r.w, r.l)) * viewZoom;
+    return (200 / Math.max(r.w, r.l)) * viewZoom;
   }
 
   function getHitItem(cx, cy) {
@@ -1105,7 +1106,7 @@
   const container3D = document.getElementById('pane-3d');
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x090c15);
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50000);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50000);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   container3D.appendChild(renderer.domElement);
@@ -1114,9 +1115,15 @@
   controls.enableDamping = false;
   controls.addEventListener('change', () => { renderer.render(scene, camera); });
 
-  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-  const dLight1 = new THREE.DirectionalLight(0xffffff, 0.8); dLight1.position.set(20, 40, 30); scene.add(dLight1);
-  const dLight2 = new THREE.DirectionalLight(0xffffff, 0.5); dLight2.position.set(-20, -30, -20); scene.add(dLight2);
+  // 🌟 還原 10月24日立體漫反射光暗質感：底光柔和，主光斜射自然明暗，徹底告別死白
+  scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  const dLight1 = new THREE.DirectionalLight(0xffffff, 0.75);
+  dLight1.position.set(6, 14, 8);
+  scene.add(dLight1);
+
+  const dLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+  dLight2.position.set(-8, -6, -8);
+  scene.add(dLight2);
 
   let renderGroup = new THREE.Group();
   scene.add(renderGroup);
@@ -1137,35 +1144,24 @@
     ['left', 'right', 'box', 'ceiling'].forEach(m => {
       document.getElementById('btn-cam-' + m)?.classList.toggle('active', mode === m || (m === 'left' && mode === 'cut-left') || (m === 'right' && mode === 'cut-right'));
     });
-    if (mode === 'cut-left') { camera.position.set(-W * 1.5, H * 1.2, 0); controls.target.set(0, H * 0.35, 0); }
-    else if (mode === 'cut-right') { camera.position.set(W * 1.5, H * 1.2, 0); controls.target.set(0, H * 0.35, 0); }
-    else if (mode === 'box') { camera.position.set(W * 1.2, H * 1.6, L * 1.4); controls.target.set(0, H * 0.35, 0); }
+    // 🌟 鏡頭拉遠 20%，消除廣角垂直拉扯變形，立體比例極致協調
+    if (mode === 'cut-left') { camera.position.set(-W * 1.8, H * 1.3, 0); controls.target.set(0, H * 0.4, 0); }
+    else if (mode === 'cut-right') { camera.position.set(W * 1.8, H * 1.3, 0); controls.target.set(0, H * 0.4, 0); }
+    else if (mode === 'box') { camera.position.set(W * 1.45, H * 1.8, L * 1.6); controls.target.set(0, H * 0.35, 0); }
     else if (mode === 'ceiling') { camera.position.set(0, 0.25, 0); controls.target.set(0, H, 0); }
     controls.update(); draw3DUnified();
   }
 
-  // 🌟 只在 L 型轉角與拼合垂直處加入一條清晰結構線，拒絕全身多餘雜線
-  function addWallWithCornerLine(geom, mat, x, y, z, rotY = 0) {
+  // 🌟 實體牆：只靠 Lambert 漫反射陰影展現立體角，剷除所有假黑線
+  function addSolidWall(geom, mat, x, y, z, rotY = 0) {
     const mesh = new THREE.Mesh(geom, mat);
     mesh.position.set(x, y, z);
     if (rotY) mesh.rotation.y = rotY;
     renderGroup.add(mesh);
-
-    const cornerGeom = new THREE.BufferGeometry();
-    const halfH = (geom.parameters.height || 2.5) / 2;
-    const halfW = (geom.parameters.width || 0.1) / 2;
-    cornerGeom.setAttribute('position', new THREE.Float32BufferAttribute([
-      halfW, -halfH, 0,
-      halfW,  halfH, 0
-    ], 3));
-    const line = new THREE.LineSegments(cornerGeom, new THREE.LineBasicMaterial({ color: 0x1e2738, linewidth: 1.5 }));
-    line.position.copy(mesh.position);
-    line.rotation.copy(mesh.rotation);
-    renderGroup.add(line);
     return mesh;
   }
 
-  // 🌟 極限省電按需繪畫：重新建構場景 Mesh
+  // 🌟 極限省電按需繪畫：重現場景 Mesh，絕無假門，結構色乾淨整齊
   function draw3DUnified() {
     itemMeshesMap.clear();
     while (renderGroup.children.length > 0) {
@@ -1179,8 +1175,8 @@
     
     const wallHex = document.getElementById('col-wall')?.value || '#efede6';
     const floorHex = document.getElementById('col-floor')?.value || '#3d4452';
-    const wallMat = new THREE.MeshStandardMaterial({ color: wallHex, roughness: 0.8 });
-    const floorMat = new THREE.MeshStandardMaterial({ color: floorHex, roughness: 0.5, side: THREE.DoubleSide });
+    const wallMat = new THREE.MeshLambertMaterial({ color: wallHex });
+    const floorMat = new THREE.MeshLambertMaterial({ color: floorHex, side: THREE.DoubleSide });
 
     if (r.polygon && r.polygon.length > 2) {
       const shape = new THREE.Shape();
@@ -1193,29 +1189,29 @@
         const p1 = r.polygon[i], p2 = r.polygon[(i + 1) % r.polygon.length];
         const x1 = -W / 2 + p1[0] / 1000, z1 = -L / 2 + p1[1] / 1000, x2 = -W / 2 + p2[0] / 1000, z2 = -L / 2 + p2[1] / 1000;
         const dx = x2 - x1, dz = z2 - z1;
-        const geom = new THREE.BoxGeometry(Math.hypot(dx, dz), H, 0.1);
-        addWallWithCornerLine(geom, wallMat, (x1 + x2) / 2, H / 2, (z1 + z2) / 2, -Math.atan2(dz, dx));
+        const geom = new THREE.BoxGeometry(Math.hypot(dx, dz), H, 0.15); // 外牆厚度 150mm
+        addSolidWall(geom, wallMat, (x1 + x2) / 2, H / 2, (z1 + z2) / 2, -Math.atan2(dz, dx));
       }
     } else {
       const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), floorMat);
       fl.rotation.x = -Math.PI / 2; renderGroup.add(fl);
       
-      // 🌟 徹底杜絕假門：連續實體外牆構造
+      // 🌟 徹底杜絕假門：平整連續外牆
       const walls = [
-        { geom: new THREE.BoxGeometry(W, H, 0.1), x: 0, y: H / 2, z: L / 2, cut: 'front' },
-        { geom: new THREE.BoxGeometry(W, H, 0.1), x: 0, y: H / 2, z: -L / 2, cut: 'back' },
-        { geom: new THREE.BoxGeometry(0.1, H, L), x: -W / 2, y: H / 2, z: 0, cut: 'cut-left' },
-        { geom: new THREE.BoxGeometry(0.1, H, L), x: W / 2, y: H / 2, z: 0, cut: 'cut-right' }
+        { geom: new THREE.BoxGeometry(W, H, 0.15), x: 0, y: H / 2, z: L / 2, cut: 'front' },
+        { geom: new THREE.BoxGeometry(W, H, 0.15), x: 0, y: H / 2, z: -L / 2, cut: 'back' },
+        { geom: new THREE.BoxGeometry(0.15, H, L), x: -W / 2, y: H / 2, z: 0, cut: 'cut-left' },
+        { geom: new THREE.BoxGeometry(0.15, H, L), x: W / 2, y: H / 2, z: 0, cut: 'cut-right' }
       ];
       walls.forEach(wl => {
         if (curViewMode === wl.cut) return;
-        addWallWithCornerLine(wl.geom, wallMat, wl.x, wl.y, wl.z);
+        addSolidWall(wl.geom, wallMat, wl.x, wl.y, wl.z);
       });
     }
 
     r.structures.forEach(s => {
-      const sw = s.w / 1000, sl = s.l / 1000, sd = (s.d || 2500) / 1000;
-      const structMat = new THREE.MeshStandardMaterial({ color: s.col || 0x576574 });
+      const sw = s.w / 1000, sl = s.l / 1000, sd = (s.d || 2400) / 1000;
+      const structMat = new THREE.MeshLambertMaterial({ color: s.col || 0x576574 });
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(sw, sd, sl), structMat);
       mesh.position.set(-W / 2 + (s.x / 1000) + sw / 2, sd / 2, -L / 2 + (s.y / 1000) + sl / 2);
       renderGroup.add(mesh);
@@ -1234,7 +1230,7 @@
       else if (it.face === 'right') { geom = new THREE.BoxGeometry(il, ih, iw); px = W / 2 - il / 2 - 0.05; py = H * 0.5; pz = -L / 2 + (it.x / 1000) + iw / 2; }
       else if (it.face === 'ceiling') { py = H - ih / 2; }
 
-      const itemMat = new THREE.MeshStandardMaterial({ color: it.col || 0xd4a373, roughness: 0.4 });
+      const itemMat = new THREE.MeshLambertMaterial({ color: it.col || 0xd4a373 });
       const mesh = new THREE.Mesh(geom, itemMat);
       mesh.position.set(px, py, pz);
       renderGroup.add(mesh);
@@ -1285,7 +1281,7 @@
 
   function syncToTxtArea() {
     const r = getCurRoom();
-    let txt = `【${r.name} 軸線手帳】\n客廳南窗闊: ${r.w}\n空間總深: ${r.l}\n`;
+    let txt = `【${r.name} 軸線手帳】\n客廳南窗闊: ${r.w}\n空間總深: ${r.l}\n樓底淨高: ${r.h}\n`;
     if (r.polygon) txt += `外胚層頂點: ` + r.polygon.map(p => `[${p[0]}, ${p[1]}]`).join(', ') + `\n`;
     txt += `\n# 間隔牆\n`;
     r.structures.forEach(s => { txt += `牆: ${s.name}, ${s.w}x${s.l}, 擺喺 ${s.x}, ${s.y}, 色彩 ${s.col || '#576574'}\n`; });
@@ -1300,7 +1296,7 @@
     if (clean.startsWith('{') && clean.endsWith('}')) {
       try {
         const data = JSON.parse(clean);
-        if (data.width) r.w = data.width; if (data.length) r.l = data.length;
+        if (data.width) r.w = data.width; if (data.length) r.l = data.length; if (data.height) r.h = data.height;
         if (data.polygon) r.polygon = data.polygon; if (data.structures) r.structures = data.structures;
         updateAll(); alert("✅ JSON 工程母表解析成功！"); return true;
       } catch (err) { alert("❌ JSON 語法錯誤：" + err.message); return false; }
@@ -1327,10 +1323,10 @@
   function applyTxtBlueprint() { parseTxtBlueprint(document.getElementById('txt-area').value); toggleDrawer('drawer-txt'); }
 
   function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-  function closeModal(id) { document.getElementById(id).style.display = 'none';  }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
   function openFullJsonEditor() {
     const r = getCurRoom();
-    document.getElementById('full-json-area').value = JSON.stringify({ project: projectMeta, unit: r.name, width: r.w, length: r.l, polygon: r.polygon, structures: r.structures, items: r.items }, null, 2);
+    document.getElementById('full-json-area').value = JSON.stringify({ project: projectMeta, unit: r.name, width: r.w, length: r.l, height: r.h, polygon: r.polygon, structures: r.structures, items: r.items }, null, 2);
     openModal('modal-full-json');
   }
   function loadTxtToEditor() { syncToTxtArea(); document.getElementById('full-json-area').value = document.getElementById('txt-area').value; }
@@ -1342,7 +1338,7 @@
     r.structures.push({
       id: Date.now(), type: document.getElementById('st-type').value, name: document.getElementById('st-name').value,
       w: parseFloat(document.getElementById('st-w').value) || 85, l: parseFloat(document.getElementById('st-l').value) || 1685,
-      d: parseFloat(document.getElementById('st-d').value) || 2500, x: 2350, y: 1675, col: document.getElementById('st-col').value || "#576574"
+      d: parseFloat(document.getElementById('st-d').value) || 2400, x: 2350, y: 1675, col: document.getElementById('st-col').value || "#576574"
     });
     closeModal('modal-struct'); switchCategory('struct'); syncToTxtArea(); updateAll();
   }
@@ -1496,3 +1492,4 @@
 
 
 
+   
