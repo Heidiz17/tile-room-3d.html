@@ -861,19 +861,17 @@
   }
 
   
-      // 🌟 2D 畫布鎖定：畫布底圖絕對唔會飛走，手指只用於選取及拖拉傢俬
-    const cv = document.getElementById('cv-2d');
-
+  // 🌟 手機專用精準推拉：徹底解鎖傢俬，推拉順滑如絲
+  const cv = document.getElementById('cv-2d');
   let isDragging = false;
   let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
 
-    cv.addEventListener('pointerdown', e => {
+  cv.addEventListener('pointerdown', e => {
     const rect = cv.getBoundingClientRect();
     const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
     const hit = getHitItem(clickX, clickY);
 
     if (hit) {
-      e.preventDefault(); // 🌟 摸中傢俬即刻鎖定，唔畀頁面搶走碌上下
       cv.setPointerCapture(e.pointerId);
       selectedItemId = hit.id;
       isDragging = true;
@@ -895,7 +893,6 @@
 
   cv.addEventListener('pointermove', e => {
     if (!isDragging || !selectedItemId) return;
-    e.preventDefault(); // 🌟 拖緊傢俬嗰陣，堅決唔畀頁面上下滾動
 
     const rect = cv.getBoundingClientRect();
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
@@ -906,9 +903,23 @@
       const sc = getScale();
       const targetX = itemOrigX + (curX - dragStartX) / sc;
       const targetY = itemOrigY + (curY - dragStartY) / sc;
-      const resolved = resolveCollision(it, targetX, targetY);
-      it.x = resolved.x;
-      it.y = resolved.y;
+
+      // 邊界防出界保護 (保證長闊深度齊全)
+      const depth = it.l || it.h || 600;
+      const width = it.w || 800;
+      let finalX = Math.max(50, Math.min(targetX, r.w - width - 50));
+      let finalY = Math.max(50, Math.min(targetY, r.l - depth - 50));
+
+      // 凹天井防越界保護 (通用坐標限制)
+      if (r.polygon && r.polygon.length >= 6) {
+        if (finalX + width > 2350 && finalY + depth > 1675) {
+          finalX = Math.min(finalX, 2350 - width);
+        }
+      }
+
+      it.x = Math.round(finalX);
+      it.y = Math.round(finalY);
+
       draw2D();
       updateItem3DTransformFast(it);
     }
@@ -916,7 +927,7 @@
 
   const stopCanvasDrag = e => {
     if (cv.hasPointerCapture && cv.hasPointerCapture(e.pointerId)) {
-      cv.releasePointerCapture(e.pointerId);
+      try { cv.releasePointerCapture(e.pointerId); } catch(err) {}
     }
     if (isDragging) {
       syncToTxtArea();
@@ -930,7 +941,6 @@
   cv.addEventListener('pointercancel', stopCanvasDrag);
 
 
-        
 
   cv.addEventListener('wheel', e => {
     e.preventDefault();
