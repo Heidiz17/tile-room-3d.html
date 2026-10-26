@@ -565,9 +565,10 @@
   </div>
 </div>
 
+
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 5 塊】JS 核心：防穿透、雙指全景縮放平移、局部推拉連動 -->
-<!-- 💡 秘書備註：雙指自由縮放兼平移(Pinch & Pan)、單指空白移畫布、單指推傢俬 -->
+<!-- 📍 【方塊 4 / 共 5 塊】JS 核心：防穿透、選中即鎖定模式、胖判定推拉 -->
+<!-- 💡 秘書備註：選中傢俬出調色框即鎖死底圖、全屏手指直接推傢俬、防薄件誤觸 -->
 <!-- ========================================================================= -->
 <script>
   let activeDrawerId = null;
@@ -851,72 +852,64 @@
     }
   }
 
-  // 🌟 手機專用：精準推拉傢俬 + 自由縮放/平移畫布（支援雙指與單指畫布拖移）
+  // 🌟 手機專用精準推拉：選中鎖定模式 + 胖手指命中補償
   const cv = document.getElementById('cv-2d');
-  let isDraggingItem = false;
-  let isPanningCanvas = false;
+  let isDragging = false;
   let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
-  let panStartX = 0, panStartY = 0, origPanX = 0, origPanY = 0;
+  let hasMovedSignificantly = false;
 
   const activePointers = new Map();
   let initialPinchDist = null;
   let initialZoom = 1.0;
-  let initialCenter = null;
-  let initialPan = { x: 0, y: 0 };
 
   function getPinchDistance(p1, p2) {
     return Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
   }
 
-  function getPinchCenter(p1, p2) {
-    return { x: (p1.clientX + p2.clientX) / 2, y: (p1.clientY + p2.clientY) / 2 };
-  }
-
   cv.addEventListener('pointerdown', e => {
     activePointers.set(e.pointerId, e);
+    hasMovedSignificantly = false;
 
-    // ✌️ 雙指觸碰：進入縮放兼平移模式
+    // ✌️ 雙指縮放
     if (activePointers.size === 2) {
-      isDraggingItem = false;
-      isPanningCanvas = false;
+      isDragging = false;
       const pts = Array.from(activePointers.values());
       initialPinchDist = getPinchDistance(pts[0], pts[1]);
       initialZoom = viewZoom;
-      initialCenter = getPinchCenter(pts[0], pts[1]);
-      initialPan = { x: viewPanX, y: viewPanY };
       return;
     }
 
-    // ☝️ 單指觸摸
+    // ☝️ 單指操作
     if (activePointers.size === 1) {
       const rect = cv.getBoundingClientRect();
       const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
       const hit = getHitItem(clickX, clickY);
 
+      // 🌟 核心邏輯：如果已有選中嘅傢俬（下底出緊調色框），直接鎖定拖曳該傢俬！
+      if (selectedItemId) {
+        const r = getCurRoom();
+        const curIt = r.items.find(i => i.id === selectedItemId);
+        if (curIt) {
+          try { cv.setPointerCapture(e.pointerId); } catch(err) {}
+          isDragging = true;
+          dragStartX = clickX;
+          dragStartY = clickY;
+          itemOrigX = curIt.x;
+          itemOrigY = curIt.y;
+          return;
+        }
+      }
+
+      // 未選中時，正常尋找命中（已加強命中胖容差）
       if (hit) {
-        // 摸中傢俬：拖動傢俬
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
         selectedItemId = hit.id;
-        isDraggingItem = true;
-        isPanningCanvas = false;
+        isDragging = true;
         dragStartX = clickX;
         dragStartY = clickY;
         itemOrigX = hit.x;
         itemOrigY = hit.y;
         showFloatCtrl(hit);
-        draw2D();
-        renderChips();
-      } else {
-        // 摸空白位：自由平移畫布（把頂上去的電視拉回中心）
-        try { cv.setPointerCapture(e.pointerId); } catch(err) {}
-        selectedItemId = null;
-        isDraggingItem = false;
-        isPanningCanvas = true;
-        panStartX = clickX;
-        panStartY = clickY;
-        origPanX = viewPanX;
-        origPanY = viewPanY;
-        document.getElementById('float-ctrl').style.display = 'none';
         draw2D();
         renderChips();
       }
@@ -928,36 +921,25 @@
       activePointers.set(e.pointerId, e);
     }
 
-    // ✌️ 雙指縮放 + 平移手勢
-    if (activePointers.size === 2 && initialPinchDist && initialCenter) {
+    // ✌️ 雙指手勢縮放
+    if (activePointers.size === 2 && initialPinchDist) {
       const pts = Array.from(activePointers.values());
       const curDist = getPinchDistance(pts[0], pts[1]);
-      const curCenter = getPinchCenter(pts[0], pts[1]);
-
       const factor = curDist / initialPinchDist;
-      viewZoom = Math.min(4.5, Math.max(0.6, initialZoom * factor));
-
-      // 雙指平移
-      viewPanX = initialPan.x + (curCenter.x - initialCenter.x);
-      viewPanY = initialPan.y + (curCenter.y - initialCenter.y);
-
+      viewZoom = Math.min(4.0, Math.max(0.7, initialZoom * factor));
       draw2D();
       return;
     }
+
+    // ☝️ 單指推拉傢俬（鎖定狀態下，底圖定如泰山）
+    if (!isDragging || !selectedItemId) return;
 
     const rect = cv.getBoundingClientRect();
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
 
-    // ☝️ 單指拖動畫布（拉返部電視出嚟）
-    if (isPanningCanvas) {
-      viewPanX = origPanX + (curX - panStartX);
-      viewPanY = origPanY + (curY - panStartY);
-      draw2D();
-      return;
+    if (Math.hypot(curX - dragStartX, curY - dragStartY) > 5) {
+      hasMovedSignificantly = true;
     }
-
-    // ☝️ 單指推拉傢俬
-    if (!isDraggingItem || !selectedItemId) return;
 
     const r = getCurRoom();
     const it = r.items.find(i => i.id === selectedItemId);
@@ -989,18 +971,30 @@
     activePointers.delete(e.pointerId);
     if (activePointers.size < 2) {
       initialPinchDist = null;
-      initialCenter = null;
     }
     if (cv.hasPointerCapture && cv.hasPointerCapture(e.pointerId)) {
       try { cv.releasePointerCapture(e.pointerId); } catch(err) {}
     }
-    if (isDraggingItem) {
+
+    // 🌟 如果只是輕點空白處（無移動超過 5px），而且冇點中任何傢俬，先解除選中
+    if (!hasMovedSignificantly && selectedItemId) {
+      const rect = cv.getBoundingClientRect();
+      const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
+      const hit = getHitItem(clickX, clickY);
+      if (!hit) {
+        selectedItemId = null;
+        document.getElementById('float-ctrl').style.display = 'none';
+        draw2D();
+        renderChips();
+      }
+    }
+
+    if (isDragging) {
       syncToTxtArea();
       calcAllMaterials();
       renderChips();
     }
-    isDraggingItem = false;
-    isPanningCanvas = false;
+    isDragging = false;
   };
 
   cv.addEventListener('pointerup', stopCanvasDrag);
@@ -1012,6 +1006,7 @@
     draw2D();
   }, { passive: false });
 </script>
+
 
 
 
