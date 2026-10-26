@@ -713,51 +713,57 @@
     draw2D();
   }
 
-  function resolveCollision(it, targetX, targetY) {
+    function resolveCollision(it, targetX, targetY) {
     const r = getCurRoom();
-    const maxDimX = (it.face === 'left' || it.face === 'right') ? r.l : r.w;
-    const maxDimY = r.l;
-    
-    let resX = Math.max(0, Math.min(targetX, Math.max(0, maxDimX - it.w)));
-    let resY = Math.max(0, Math.min(targetY, Math.max(0, maxDimY - it.l)));
+    let x = targetX;
+    let y = targetY;
 
-    if (it.face === 'floor') {
-      r.structures.filter(s => s.type === 'pillar').forEach(p => {
-        if (resX < p.x + p.w && resX + it.w > p.x && resY < p.y + p.l && resY + it.l > p.y) {
-          const dL = p.x - (resX + it.w), dR = p.x + p.w - resX, dT = p.y - (resY + it.l), dB = p.y + p.l - resY;
-          const minA = Math.min(Math.abs(dL), Math.abs(dR), Math.abs(dT), Math.abs(dB));
-          if (minA === Math.abs(dR)) resX = p.x + p.w;
-          else if (minA === Math.abs(dL)) resX = p.x - it.w;
-          else if (minA === Math.abs(dB)) resY = p.y + p.l;
-          else if (minA === Math.abs(dT)) resY = p.y - it.l;
+    // 1. 最外圍邊界保護 (預留 50mm 踢腳線距離)
+    const minX = 50, maxX = r.w - it.w - 50;
+    const minY = 50, maxY = r.l - it.l - 50;
+    x = Math.max(minX, Math.min(x, maxX));
+    y = Math.max(minY, Math.min(y, maxY));
+
+    // 2. 通用多邊形室內判定 (射線法 Ray-Casting，適用任何開則)
+    if (r.polygon && r.polygon.length >= 3) {
+      const isInside = (px, py) => {
+        let inside = false;
+        const vs = r.polygon;
+        for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+          const xi = vs[i].x, yi = vs[i].y;
+          const xj = vs[j].x, yj = vs[j].y;
+          const intersect = ((yi > py) !== (yj > py)) &&
+                            (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
         }
-      });
+        return inside;
+      };
 
-      if (r.door && r.door.type === 'door' && r.door.swingRadius > 0) {
-        const doorLeft = r.door.x, doorRight = r.door.x + r.door.w;
-        const doorTop = r.l - r.door.swingRadius;
-        if (resY + it.l > doorTop && resX < doorRight && resX + it.w > doorLeft) {
-          resY = doorTop - it.l;
+      // 檢查傢俬四隻角：左上、右上、左下、右下
+      const checkCorners = (cx, cy) => {
+        const offset = 20; // 邊界容差
+        return isInside(cx + offset, cy + offset) &&
+               isInside(cx + it.w - offset, cy + offset) &&
+               isInside(cx + offset, cy + it.h - offset) &&
+               isInside(cx + it.w - offset, cy + it.h - offset);
+      };
+
+      // 衝出牆外即平滑回退，沿牆滑動
+      if (!checkCorners(x, y)) {
+        if (checkCorners(it.x, y)) {
+          x = it.x;
+        } else if (checkCorners(x, it.y)) {
+          y = it.y;
+        } else {
+          x = it.x;
+          y = it.y;
         }
       }
-
-      r.items.filter(other => other.id !== it.id && other.face === 'floor').forEach(other => {
-        if (resX < other.x + other.w && resX + it.w > other.x && resY < other.y + other.l && resY + it.l > other.y) {
-          const dL = other.x - (resX + it.w), dR = other.x + other.w - resX;
-          const dT = other.y - (resY + it.l), dB = other.y + other.l - resY;
-          const minA = Math.min(Math.abs(dL), Math.abs(dR), Math.abs(dT), Math.abs(dB));
-          if (minA === Math.abs(dR)) resX = other.x + other.w;
-          else if (minA === Math.abs(dL)) resX = other.x - it.w;
-          else if (minA === Math.abs(dB)) resY = other.y + other.l;
-          else if (minA === Math.abs(dT)) resY = other.y - it.l;
-        }
-      });
     }
 
-    resX = Math.max(0, Math.min(resX, Math.max(0, maxDimX - it.w)));
-    resY = Math.max(0, Math.min(resY, Math.max(0, maxDimY - it.l)));
-    return { x: Math.round(resX), y: Math.round(resY) };
+    return { x: Math.round(x), y: Math.round(y) };
   }
+
 
   function renderChips() {
     const r = getCurRoom();
@@ -854,54 +860,52 @@
   let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
   let panOrigX = 0, panOrigY = 0;
 
-    cv.addEventListener('pointerdown', e => {
-    cv.setPointerCapture(e.pointerId);
+  
+      // 🌟 2D 畫布鎖定：畫布底圖絕對唔會飛走，手指只用於選取及拖拉傢俬
+  let isDragging = false;
+  let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
+
+  cv.addEventListener('pointerdown', e => {
     const rect = cv.getBoundingClientRect();
     const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
     const hit = getHitItem(clickX, clickY);
-    dragStartX = clickX;
-    dragStartY = clickY;
 
     if (hit) {
+      cv.setPointerCapture(e.pointerId);
       selectedItemId = hit.id;
       isDragging = true;
-      isPanningCanvas = false;
+      dragStartX = clickX;
+      dragStartY = clickY;
       itemOrigX = hit.x;
       itemOrigY = hit.y;
       showFloatCtrl(hit);
+      draw2D();
+      renderChips();
     } else {
       selectedItemId = null;
       isDragging = false;
-      isPanningCanvas = true;
-      panOrigX = viewPanX;
-      panOrigY = viewPanY;
       document.getElementById('float-ctrl').style.display = 'none';
+      draw2D();
+      renderChips();
     }
-    draw2D();
-    renderChips();
   });
 
   cv.addEventListener('pointermove', e => {
+    if (!isDragging || !selectedItemId) return;
     const rect = cv.getBoundingClientRect();
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
 
-    if (isDragging && selectedItemId) {
-      const r = getCurRoom();
-      const it = r.items.find(i => i.id === selectedItemId);
-      if (it) {
-        const sc = getScale();
-        const targetX = itemOrigX + (curX - dragStartX) / sc;
-        const targetY = itemOrigY + (curY - dragStartY) / sc;
-        const resolved = resolveCollision(it, targetX, targetY);
-        it.x = resolved.x;
-        it.y = resolved.y;
-        draw2D();
-        updateItem3DTransformFast(it);
-      }
-    } else if (isPanningCanvas) {
-      viewPanX = panOrigX + (curX - dragStartX);
-      viewPanY = panOrigY + (curY - dragStartY);
+    const r = getCurRoom();
+    const it = r.items.find(i => i.id === selectedItemId);
+    if (it) {
+      const sc = getScale();
+      const targetX = itemOrigX + (curX - dragStartX) / sc;
+      const targetY = itemOrigY + (curY - dragStartY) / sc;
+      const resolved = resolveCollision(it, targetX, targetY);
+      it.x = resolved.x;
+      it.y = resolved.y;
       draw2D();
+      updateItem3DTransformFast(it);
     }
   });
 
@@ -915,11 +919,11 @@
       renderChips();
     }
     isDragging = false;
-    isPanningCanvas = false;
   };
 
   cv.addEventListener('pointerup', stopCanvasDrag);
   cv.addEventListener('pointercancel', stopCanvasDrag);
+
 
         
 
