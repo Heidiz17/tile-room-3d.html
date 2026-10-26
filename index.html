@@ -212,7 +212,6 @@
 
 
 
-
   <!-- ========================================================================= -->
 <!-- 📍 【方塊 2 / 共 5 塊】HTML 本體：常駐標註列、無假門舞台與可摺疊控制台 -->
 <!-- 💡 秘書備註：常駐 [標註/擺傢俬] 於畫布角位、剷除客廳假門、控制台一鍵伸縮 -->
@@ -565,8 +564,8 @@
 
 
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 5 塊】JS 核心：防穿透、按需省電渲染與毫秒級局部推拉連動 -->
-<!-- 💡 秘書備註：拔除 60fps 空跑、推拉期間只郁 Mesh 不拆牆、手指離屏才重算 -->
+<!-- 📍 【方塊 4 / 共 5 塊】JS 核心：防穿透、畫布自由上下拖曳、局部推拉連動 -->
+<!-- 💡 秘書備註：拖傢俬即動 Mesh、點空白拖動畫布(viewPanY)、保留一切原有邏輯 -->
 <!-- ========================================================================= -->
 <script>
   let activeDrawerId = null;
@@ -849,24 +848,32 @@
     }
   }
 
-  // 🌟 極限效能推拉：拖動時只更新單一 Mesh 坐標，不重繪全場，告別定時器空跑卡頓！
+  // 🌟 極限效能推拉：拖動傢俬；無中傢俬時拖動畫布上下（viewPanY），自由協調視野！
   const cv = document.getElementById('cv-2d');
-  let isDragging = false, dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
+  let isDragging = false, isPanningCanvas = false;
+  let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
+  let panOrigX = 0, panOrigY = 0;
 
   cv.addEventListener('pointerdown', e => {
     const rect = cv.getBoundingClientRect();
     const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
     const hit = getHitItem(clickX, clickY);
+    dragStartX = clickX;
+    dragStartY = clickY;
+
     if (hit) {
       selectedItemId = hit.id;
       isDragging = true;
-      dragStartX = clickX;
-      dragStartY = clickY;
+      isPanningCanvas = false;
       itemOrigX = hit.x;
       itemOrigY = hit.y;
       showFloatCtrl(hit);
     } else {
       selectedItemId = null;
+      isDragging = false;
+      isPanningCanvas = true;
+      panOrigX = viewPanX;
+      panOrigY = viewPanY;
       document.getElementById('float-ctrl').style.display = 'none';
     }
     draw2D();
@@ -874,24 +881,27 @@
   });
 
   window.addEventListener('pointermove', e => {
-    if (!isDragging || !selectedItemId) return;
     const rect = cv.getBoundingClientRect();
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
-    const r = getCurRoom();
-    const it = r.items.find(i => i.id === selectedItemId);
-    if (it) {
-      const sc = getScale();
-      const targetX = itemOrigX + (curX - dragStartX) / sc;
-      const targetY = itemOrigY + (curY - dragStartY) / sc;
-      const resolved = resolveCollision(it, targetX, targetY);
-      it.x = resolved.x;
-      it.y = resolved.y;
 
-      // 1. 2D 即刻畫 Canvas
+    if (isDragging && selectedItemId) {
+      const r = getCurRoom();
+      const it = r.items.find(i => i.id === selectedItemId);
+      if (it) {
+        const sc = getScale();
+        const targetX = itemOrigX + (curX - dragStartX) / sc;
+        const targetY = itemOrigY + (curY - dragStartY) / sc;
+        const resolved = resolveCollision(it, targetX, targetY);
+        it.x = resolved.x;
+        it.y = resolved.y;
+        draw2D();
+        updateItem3DTransformFast(it);
+      }
+    } else if (isPanningCanvas) {
+      // 🌟 自由拖動畫布，上下左右隨意微調，徹底唔會鎖死畫面！
+      viewPanX = panOrigX + (curX - dragStartX);
+      viewPanY = panOrigY + (curY - dragStartY);
       draw2D();
-
-      // 2. 3D 不拆牆、不重新起結構，極速局部推移該 Mesh
-      updateItem3DTransformFast(it);
     }
   });
 
@@ -902,6 +912,7 @@
       renderChips();
     }
     isDragging = false;
+    isPanningCanvas = false;
   });
 
   cv.addEventListener('wheel', e => {
@@ -915,9 +926,10 @@
 
 
 
+
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 5 / 共 5 塊】按需零空跑渲染、微秒級傢俬推移與開機生命週期 -->
-<!-- 💡 秘書備註：消除怪異彩色牆、樓底校準2400mm、還原立體光暗角、絕無假門 -->
+<!-- 📍 【方塊 5 / 共 5 塊】按需零空跑渲染、全屋穿透、尺寸留白與開機生命週期 -->
+<!-- 💡 秘書備註：全屋支援穿左/穿右、尺寸留白165、保留所有計算與生命週期 -->
 <!-- ========================================================================= -->
 <script>
   // 🌟 18 號室則師軸線黃金數據 (自洽閉合外胚層)
@@ -980,10 +992,10 @@
   let rooms = JSON.parse(JSON.stringify(initialRoomsData));
   function getCurRoom() { return rooms[curRoomKey] || rooms['fullHouse']; }
 
-  // 🌟 自動配對 230px 畫布高度，保證全相置中不切邊
+  // 🌟 自動配對 230px 畫布高度：縮小至 165，確保上下標註（5135/2350）留白充足不切邊
   function getScale() {
     const r = getCurRoom();
-    return (200 / Math.max(r.w, r.l)) * viewZoom;
+    return (165 / Math.max(r.w, r.l)) * viewZoom;
   }
 
   function getHitItem(cx, cy) {
@@ -1115,7 +1127,7 @@
   controls.enableDamping = false;
   controls.addEventListener('change', () => { renderer.render(scene, camera); });
 
-  // 🌟 還原 10月24日立體漫反射光暗質感：底光柔和，主光斜射自然明暗，徹底告別死白
+  // 🌟 還原立體漫反射光暗質感：底光柔和，主光斜射自然明暗，徹底告別死白
   scene.add(new THREE.AmbientLight(0xffffff, 0.45));
   const dLight1 = new THREE.DirectionalLight(0xffffff, 0.75);
   dLight1.position.set(6, 14, 8);
@@ -1161,7 +1173,7 @@
     return mesh;
   }
 
-  // 🌟 極限省電按需繪畫：重現場景 Mesh，絕無假門，結構色乾淨整齊
+  // 🌟 極限省電按需繪畫：重現場景 Mesh，支援全屋「穿左 / 穿右」動態透視
   function draw3DUnified() {
     itemMeshesMap.clear();
     while (renderGroup.children.length > 0) {
@@ -1189,8 +1201,14 @@
         const p1 = r.polygon[i], p2 = r.polygon[(i + 1) % r.polygon.length];
         const x1 = -W / 2 + p1[0] / 1000, z1 = -L / 2 + p1[1] / 1000, x2 = -W / 2 + p2[0] / 1000, z2 = -L / 2 + p2[1] / 1000;
         const dx = x2 - x1, dz = z2 - z1;
+        const midX = (x1 + x2) / 2;
+
+        // 🌟 全屋穿透判定：穿左時切開偏左外牆，穿右時切開偏右外牆
+        if (curViewMode === 'cut-left' && midX < -W * 0.15 && Math.abs(dz) > 0.1) continue;
+        if (curViewMode === 'cut-right' && midX > W * 0.15 && Math.abs(dz) > 0.1) continue;
+
         const geom = new THREE.BoxGeometry(Math.hypot(dx, dz), H, 0.15); // 外牆厚度 150mm
-        addSolidWall(geom, wallMat, (x1 + x2) / 2, H / 2, (z1 + z2) / 2, -Math.atan2(dz, dx));
+        addSolidWall(geom, wallMat, midX, H / 2, (z1 + z2) / 2, -Math.atan2(dz, dx));
       }
     } else {
       const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), floorMat);
@@ -1492,4 +1510,6 @@
 
 
 
-   
+
+
+  
