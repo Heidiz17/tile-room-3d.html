@@ -111,7 +111,13 @@
     #cam-ctrl button { background: rgba(14,18,30,0.85); color: #fff; border: 1px solid #3b4674; font-size: 9.5px; padding: 3px 6px; border-radius: 4px; font-weight: bold; cursor: pointer; }
     #cam-ctrl button.active { background: #0070f3; border-color: #00ffcc; }
 
-    canvas#cv-2d { background: #1c2235; border: 1.5px solid #2f3b5c; border-radius: 6px; }
+    canvas#cv-2d { 
+  background: #1c2235; 
+  border: 1.5px solid #2f3b5c; 
+  border-radius: 6px; 
+  touch-action: none; /* 🌟 核心：告訴手機瀏覽器，這塊畫布內禁止觸發頁面上下滾動，全權交由 JS 拖曳傢俬 */
+}
+
 
     /* 🛋️ 晶片卡槽樣式 */
     #cat-bar { padding: 4px 8px; background: #121622; display: flex; gap: 6px; border-bottom: 1px solid #23293d; align-items: center; flex-shrink: 0; font-size: 9.5px; }
@@ -861,12 +867,13 @@
   let isDragging = false;
   let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
 
-  cv.addEventListener('pointerdown', e => {
+    cv.addEventListener('pointerdown', e => {
     const rect = cv.getBoundingClientRect();
     const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
     const hit = getHitItem(clickX, clickY);
 
     if (hit) {
+      e.preventDefault(); // 🌟 摸中傢俬即刻鎖定，唔畀頁面搶走碌上下
       cv.setPointerCapture(e.pointerId);
       selectedItemId = hit.id;
       isDragging = true;
@@ -888,6 +895,8 @@
 
   cv.addEventListener('pointermove', e => {
     if (!isDragging || !selectedItemId) return;
+    e.preventDefault(); // 🌟 拖緊傢俬嗰陣，堅決唔畀頁面上下滾動
+
     const rect = cv.getBoundingClientRect();
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
 
