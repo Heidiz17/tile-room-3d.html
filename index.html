@@ -565,13 +565,9 @@
   </div>
 </div>
 
-
-
-
-
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 5 塊】JS 核心：防穿透、畫布自由上下拖曳、局部推拉連動 -->
-<!-- 💡 秘書備註：拖傢俬即動 Mesh、點空白拖動畫布(viewPanY)、保留一切原有邏輯 -->
+<!-- 📍 【方塊 4 / 共 5 塊】JS 核心：防穿透、雙指手勢放大縮小、局部推拉連動 -->
+<!-- 💡 秘書備註：雙指手勢直接擘大縮小(Pinch-Zoom)、單指推傢俬、不掉一顆螺絲 -->
 <!-- ========================================================================= -->
 <script>
   let activeDrawerId = null;
@@ -719,18 +715,16 @@
     draw2D();
   }
 
-    function resolveCollision(it, targetX, targetY) {
+  function resolveCollision(it, targetX, targetY) {
     const r = getCurRoom();
     let x = targetX;
     let y = targetY;
 
-    // 1. 最外圍邊界保護 (預留 50mm 踢腳線距離)
     const minX = 50, maxX = r.w - it.w - 50;
     const minY = 50, maxY = r.l - it.l - 50;
     x = Math.max(minX, Math.min(x, maxX));
     y = Math.max(minY, Math.min(y, maxY));
 
-    // 2. 通用多邊形室內判定 (射線法 Ray-Casting，適用任何開則)
     if (r.polygon && r.polygon.length >= 3) {
       const isInside = (px, py) => {
         let inside = false;
@@ -745,16 +739,14 @@
         return inside;
       };
 
-      // 檢查傢俬四隻角：左上、右上、左下、右下
       const checkCorners = (cx, cy) => {
-        const offset = 20; // 邊界容差
+        const offset = 20;
         return isInside(cx + offset, cy + offset) &&
                isInside(cx + it.w - offset, cy + offset) &&
                isInside(cx + offset, cy + it.h - offset) &&
                isInside(cx + it.w - offset, cy + it.h - offset);
       };
 
-      // 衝出牆外即平滑回退，沿牆滑動
       if (!checkCorners(x, y)) {
         if (checkCorners(it.x, y)) {
           x = it.x;
@@ -769,7 +761,6 @@
 
     return { x: Math.round(x), y: Math.round(y) };
   }
-
 
   function renderChips() {
     const r = getCurRoom();
@@ -860,38 +851,75 @@
     }
   }
 
-  
-  // 🌟 手機專用精準推拉：徹底解鎖傢俬，推拉順滑如絲
+  // 🌟 手機專用精準推拉 + 雙指手勢縮放 (Pinch-to-Zoom)
   const cv = document.getElementById('cv-2d');
   let isDragging = false;
   let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
 
-  cv.addEventListener('pointerdown', e => {
-    const rect = cv.getBoundingClientRect();
-    const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
-    const hit = getHitItem(clickX, clickY);
+  // 雙指手勢專用追蹤
+  const activePointers = new Map();
+  let initialPinchDist = null;
+  let initialZoom = 1.0;
 
-    if (hit) {
-      cv.setPointerCapture(e.pointerId);
-      selectedItemId = hit.id;
-      isDragging = true;
-      dragStartX = clickX;
-      dragStartY = clickY;
-      itemOrigX = hit.x;
-      itemOrigY = hit.y;
-      showFloatCtrl(hit);
-      draw2D();
-      renderChips();
-    } else {
-      selectedItemId = null;
+  function getPinchDistance(p1, p2) {
+    return Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    activePointers.set(e.pointerId, e);
+
+    // ✌️ 雙指觸摸：即時進入放大縮小模式
+    if (activePointers.size === 2) {
       isDragging = false;
-      document.getElementById('float-ctrl').style.display = 'none';
-      draw2D();
-      renderChips();
+      const pts = Array.from(activePointers.values());
+      initialPinchDist = getPinchDistance(pts[0], pts[1]);
+      initialZoom = viewZoom;
+      return;
+    }
+
+    // ☝️ 單指摸傢俬：進行選取並準備推拉
+    if (activePointers.size === 1) {
+      const rect = cv.getBoundingClientRect();
+      const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
+      const hit = getHitItem(clickX, clickY);
+
+      if (hit) {
+        try { cv.setPointerCapture(e.pointerId); } catch(err) {}
+        selectedItemId = hit.id;
+        isDragging = true;
+        dragStartX = clickX;
+        dragStartY = clickY;
+        itemOrigX = hit.x;
+        itemOrigY = hit.y;
+        showFloatCtrl(hit);
+        draw2D();
+        renderChips();
+      } else {
+        selectedItemId = null;
+        isDragging = false;
+        document.getElementById('float-ctrl').style.display = 'none';
+        draw2D();
+        renderChips();
+      }
     }
   });
 
   cv.addEventListener('pointermove', e => {
+    if (activePointers.has(e.pointerId)) {
+      activePointers.set(e.pointerId, e);
+    }
+
+    // ✌️ 雙指手勢：兩指一擘成間房放大，一捏縮小（0.7x 至 4.0x）
+    if (activePointers.size === 2 && initialPinchDist) {
+      const pts = Array.from(activePointers.values());
+      const curDist = getPinchDistance(pts[0], pts[1]);
+      const factor = curDist / initialPinchDist;
+      viewZoom = Math.min(4.0, Math.max(0.7, initialZoom * factor));
+      draw2D();
+      return;
+    }
+
+    // ☝️ 單指推拉傢俬
     if (!isDragging || !selectedItemId) return;
 
     const rect = cv.getBoundingClientRect();
@@ -926,6 +954,10 @@
   });
 
   const stopCanvasDrag = e => {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) {
+      initialPinchDist = null;
+    }
     if (cv.hasPointerCapture && cv.hasPointerCapture(e.pointerId)) {
       try { cv.releasePointerCapture(e.pointerId); } catch(err) {}
     }
@@ -940,16 +972,12 @@
   cv.addEventListener('pointerup', stopCanvasDrag);
   cv.addEventListener('pointercancel', stopCanvasDrag);
 
-
-
   cv.addEventListener('wheel', e => {
     e.preventDefault();
     viewZoom = Math.min(Math.max(0.6, viewZoom - e.deltaY * 0.001), 4.0);
     draw2D();
   }, { passive: false });
 </script>
-
-
 
 
 
