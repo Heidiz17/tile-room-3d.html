@@ -420,6 +420,8 @@
 
 
 
+
+
     <!-- ========================================================================= -->
 <!-- 📍 【方塊 3 / 共 6 塊】彈窗組：IKEA 傢俬庫聯動、自訂尺寸、牆柱與全屏 JSON -->
 <!-- 💡 秘書備註：100% 還原空間->款式連動選單，點選帶入尺寸與面別，不掉一顆螺絲 -->
@@ -570,8 +572,8 @@
 
 
     <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：卡帶自動填表、黑牆防穿透、推圖分流、按鈕著燈 -->
-<!-- 💡 秘書備註：彈窗款式自動代入、黑色間隔牆防穿透、六面牆按鈕著燈、推圖推件分流 -->
+<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：立面上下左右滑動、六面牆著燈、黑牆防穿透 -->
+<!-- 💡 秘書備註：放棄前後凌空、立面手指管左右+上下高度、黑牆防穿透、推圖分流 -->
 <!-- ========================================================================= -->
 <script>
   let activeDrawerId = null;
@@ -664,11 +666,10 @@
     if (typeof draw2D === 'function') draw2D();
   }
 
-  // 🌟 六面牆按鈕切換並強制著燈高亮
+  // 🌟 六面牆切換並即時點亮高亮藍燈
   function switchFace(face) {
     curFace = face;
-    const faces = ['floor', 'front', 'back', 'left', 'right', 'ceiling'];
-    faces.forEach(f => {
+    ['floor', 'front', 'back', 'left', 'right', 'ceiling'].forEach(f => {
       const btn = document.getElementById('btn-face-' + f);
       if (btn) btn.classList.toggle('active', f === face);
     });
@@ -676,7 +677,6 @@
     if (typeof updateAll === 'function') updateAll();
   }
 
-  // 🌟 卡帶庫聯動：切換空間即時填滿所有傢俬（包括 55 吋電視）
   function onCategoryChange() {
     const cat = document.getElementById('item-cat-select').value;
     const subSelect = document.getElementById('item-sub-select');
@@ -713,24 +713,20 @@
     }
   }
 
-  // 🌟 實體黑色間隔牆防穿透：石屎牆為實心禁區，傢俬絕不能穿牆！
+  // 🌟 物理碰撞防穿透（石屎黑牆實心化）
   function resolveCollision(it, targetX, targetY) {
     const r = getCurRoom();
     let x = targetX, y = targetY;
+    const fd = getRoomFaceDim(r, curFace);
     const dim = getItemFaceDim(it, curFace);
-    const minX = 20, maxX = r.w - dim.rw - 20;
-    const minY = 20, maxY = r.l - dim.rh - 20;
-    x = Math.max(minX, Math.min(x, maxX));
-    y = Math.max(minY, Math.min(y, maxY));
+    x = Math.max(10, Math.min(x, fd.rw - dim.rw - 10));
+    y = Math.max(10, Math.min(y, fd.rh - dim.rh - 10));
 
     if (curFace === 'floor' && r.structures && r.structures.length > 0) {
       r.structures.forEach(st => {
         const overlapX = (x < st.x + st.w) && (x + dim.rw > st.x);
         const overlapY = (y < st.y + st.l) && (y + dim.rh > st.y);
-        if (overlapX && overlapY) {
-          x = it.x;
-          y = it.y;
-        }
+        if (overlapX && overlapY) { x = it.x; y = it.y; }
       });
     }
     return { x: Math.round(x), y: Math.round(y) };
@@ -757,8 +753,7 @@
     hasMovedSignificantly = false;
 
     if (activePointers.size === 2) {
-      isDraggingItem = false;
-      isPanningCanvas = false;
+      isDraggingItem = false; isPanningCanvas = false;
       const pts = Array.from(activePointers.values());
       initialPinchDist = getPinchDistance(pts[0], pts[1]);
       initialZoom = viewZoom;
@@ -773,23 +768,15 @@
       if (hit) {
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
         selectedItemId = hit.id;
-        isDraggingItem = true;
-        isPanningCanvas = false;
-        dragStartX = clickX;
-        dragStartY = clickY;
-        itemOrigX = hit.x;
-        itemOrigY = hit.y;
-        showFloatCtrl(hit);
-        draw2D();
-        renderChips();
+        isDraggingItem = true; isPanningCanvas = false;
+        dragStartX = clickX; dragStartY = clickY;
+        itemOrigX = hit.x; itemOrigY = (curFace === 'floor' || curFace === 'ceiling') ? hit.y : (hit.elevationY || 300);
+        showFloatCtrl(hit); draw2D(); renderChips();
       } else {
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
-        isPanningCanvas = true;
-        isDraggingItem = false;
-        dragStartX = clickX;
-        dragStartY = clickY;
-        canvasOrigPanX = viewPanX;
-        canvasOrigPanY = viewPanY;
+        isPanningCanvas = true; isDraggingItem = false;
+        dragStartX = clickX; dragStartY = clickY;
+        canvasOrigPanX = viewPanX; canvasOrigPanY = viewPanY;
       }
     }
   });
@@ -817,8 +804,14 @@
         const targetX = itemOrigX + (curX - dragStartX) / sc;
         const targetY = itemOrigY + (curY - dragStartY) / sc;
         const resolved = resolveCollision(it, targetX, targetY);
+
         it.x = resolved.x;
-        it.y = resolved.y;
+        // 🌟 核心突破：立面視角手指上下推 = 改離地高度 elevationY！
+        if (curFace === 'floor' || curFace === 'ceiling') {
+          it.y = resolved.y;
+        } else {
+          it.elevationY = resolved.y;
+        }
         draw2D();
         updateItem3DTransformFast(it);
       }
@@ -842,18 +835,15 @@
       if (!getHitItem(clickX, clickY)) {
         selectedItemId = null;
         document.getElementById('float-ctrl').style.display = 'none';
-        draw2D();
-        renderChips();
+        draw2D(); renderChips();
       }
     }
 
     if (isDraggingItem) {
       if (typeof autoSaveToIndexedDB === 'function') autoSaveToIndexedDB();
-      calcAllMaterials();
-      renderChips();
+      calcAllMaterials(); renderChips();
     }
-    isDraggingItem = false;
-    isPanningCanvas = false;
+    isDraggingItem = false; isPanningCanvas = false;
   };
 
   cv.addEventListener('pointerup', stopCanvasDrag);
@@ -872,7 +862,7 @@
 
 
     <!-- ========================================================================= -->
-<!-- 📍 【方塊 5 / 共 6 塊】分房精準裁切、電視真大平板投影、金黃尺寸鏈、IndexedDB -->
+<!-- 📍 【方塊 5 / 共 6 塊】分房裁切、電視真大平板投影、金黃尺寸鏈、IndexedDB -->
 <!-- 💡 秘書備註：電視立面大平板、分房邊界裁切互通、全屋尺寸標註常駐、不掉螺絲 -->
 <!-- ========================================================================= -->
 <script>
@@ -971,7 +961,6 @@
     alert("✅ 新專案已成功建立！");
   }
 
-  // 🌟 分房邊界精準裁切：客廳傢俬只留客廳，全屋大圖睇晒全屋
   function syncRoomItemsFromGlobal() {
     Object.keys(rooms).forEach(k => {
       if (k === 'fullHouse') {
@@ -990,7 +979,7 @@
 
   function getCurRoom() { return rooms[curRoomKey] || rooms['fullHouse']; }
 
-  // 🌟 立面真投影：前牆/後牆展開成 (寬度 x 高度) 大平板！
+  // 🌟 電視真大平板：在立面視角時，寬度讀 w (1230)、高度讀 h (710)，徹底消滅牙籤！
   function getItemFaceDim(it, face) {
     if (face === 'floor' || face === 'ceiling') return { rw: it.w, rh: it.l };
     if (face === 'front' || face === 'back') return { rw: it.w, rh: it.h };
@@ -1019,9 +1008,10 @@
     return r.items.slice().reverse().find(it => {
       if (it.face !== curFace) return false;
       const dim = getItemFaceDim(it, curFace);
-      const rx = ox + it.x * sc, ry = oy + it.y * sc;
+      const iy = (curFace === 'floor' || curFace === 'ceiling') ? it.y : (it.elevationY || 300);
+      const rx = ox + it.x * sc, ry = oy + iy * sc;
       const rw = dim.rw * sc, rh = dim.rh * sc;
-      return cx >= rx - 25 && cx <= rx + rw + 25 && cy >= ry - 25 && cy <= ry + rh + 25;
+      return cx >= rx - 20 && cx <= rx + rw + 20 && cy >= ry - 20 && cy <= ry + rh + 20;
     });
   }
 
@@ -1102,16 +1092,16 @@
       const isSel = (it.id === selectedItemId);
       const dim = getItemFaceDim(it, curFace);
       const rw = dim.rw * sc, rh = dim.rh * sc;
+      const iy = (curFace === 'floor' || curFace === 'ceiling') ? it.y : (it.elevationY || 300);
       ctx.fillStyle = it.col || '#8c7ae6';
-      ctx.fillRect(ox + it.x * sc, oy + it.y * sc, rw, rh);
+      ctx.fillRect(ox + it.x * sc, oy + iy * sc, rw, rh);
       ctx.strokeStyle = isSel ? '#00ffcc' : '#ffffff';
       ctx.lineWidth = isSel ? 2.5 : 1;
-      ctx.strokeRect(ox + it.x * sc, oy + it.y * sc, rw, rh);
+      ctx.strokeRect(ox + it.x * sc, oy + iy * sc, rw, rh);
       ctx.fillStyle = '#fff'; ctx.font = '9.5px sans-serif';
-      ctx.fillText(it.name, ox + it.x * sc + 3, oy + it.y * sc + 11);
+      ctx.fillText(it.name, ox + it.x * sc + 3, oy + iy * sc + 11);
     });
 
-    // 🌟 尺寸標註：當 showDimensions 為 true 時自動繪出清晰金黃色標註線
     if (showDimensions && typeof drawDimLine === 'function') {
       if (curRoomKey === 'fullHouse' && curFace === 'floor') {
         drawDimLine(ctx, ox, oy, ox + 5135 * sc, oy, "5135", -16, false);
@@ -1133,8 +1123,8 @@
 
 
     <!-- ========================================================================= -->
-<!-- 📍 【方塊 6 / 共 6 塊】3D 實體牆與分房穿透、全屏 JSON 資料導出、生命週期 -->
-<!-- 💡 秘書備註：獨立房間3D實體牆+穿透透視、全屏JSON完整輸出、旋轉調色自動Save -->
+<!-- 📍 【方塊 6 / 共 6 塊】3D 實體牆與分房穿透、死吸牆身、全屏 JSON -->
+<!-- 💡 秘書備註：獨立房間3D實體牆+穿透透視、電視死吸牆身、全屏JSON完整輸出 -->
 <!-- ========================================================================= -->
 <script>
   function drawDimLine(ctx, x1, y1, x2, y2, text, offset = 0, isVertical = false) {
@@ -1198,14 +1188,13 @@
     ['left', 'right', 'box', 'ceiling'].forEach(m => {
       document.getElementById('btn-cam-' + m)?.classList.toggle('active', mode === m || (m === 'left' && mode === 'cut-left') || (m === 'right' && mode === 'cut-right'));
     });
-    if (mode === 'cut-left') { camera.position.set(-W * 1.8, H * 1.3, 0); controls.target.set(0, H * 0.4, 0); }
-    else if (mode === 'cut-right') { camera.position.set(W * 1.8, H * 1.3, 0); controls.target.set(0, H * 0.4, 0); }
-    else if (mode === 'box') { camera.position.set(W * 1.45, H * 1.8, L * 1.6); controls.target.set(0, H * 0.35, 0); }
+    if (mode === 'cut-left') { camera.position.set(-W * 1.8, H * 1.1, 0); controls.target.set(0, H * 0.4, 0); }
+    else if (mode === 'cut-right') { camera.position.set(W * 1.8, H * 1.1, 0); controls.target.set(0, H * 0.4, 0); }
+    else if (mode === 'box') { camera.position.set(W * 1.35, H * 1.4, L * 1.45); controls.target.set(0, H * 0.35, 0); }
     else if (mode === 'ceiling') { camera.position.set(0, 0.25, 0); controls.target.set(0, H, 0); }
     controls.update(); draw3DUnified();
   }
 
-  // 🌟 3D 渲染核心：全屋與獨立房間四面牆全面支援「穿左 / 穿右 / 實體牆」透視！
   function draw3DUnified() {
     itemMeshesMap.clear();
     while (renderGroup.children.length > 0) {
@@ -1242,7 +1231,6 @@
       const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), floorMat);
       fl.rotation.x = -Math.PI / 2; renderGroup.add(fl);
 
-      // 🌟 獨立房間四面牆：支援穿左、穿右拆牆透視
       const walls = [
         { geom: new THREE.BoxGeometry(W, H, 0.12), x: 0, y: H / 2, z: L / 2, cut: 'front' },
         { geom: new THREE.BoxGeometry(W, H, 0.12), x: 0, y: H / 2, z: -L / 2, cut: 'back' },
@@ -1264,14 +1252,32 @@
       renderGroup.add(mesh);
     });
 
+    // 🌟 掛件死死吸附在牆身（放棄前後凌空）
     (r.items || []).forEach(it => {
       const iw = it.w / 1000, il = it.l / 1000, ih = it.h / 1000;
       let geom = new THREE.BoxGeometry(iw, ih, il);
       let px = -W / 2 + (it.x / 1000) + iw / 2;
       let py = ih / 2;
       let pz = -L / 2 + (it.y / 1000) + il / 2;
-      if (it.face === 'front') { py = H * 0.5; pz = L / 2 - il / 2 - 0.05; }
-      else if (it.face === 'back') { py = H * 0.5; pz = -L / 2 + il / 2 + 0.05; }
+
+      const elev = (it.elevationY !== undefined ? it.elevationY : 300) / 1000;
+      if (it.face === 'front') {
+        py = H - elev - ih / 2;
+        pz = L / 2 - il / 2 - 0.02; // 死吸前牆表面
+      } else if (it.face === 'back') {
+        py = H - elev - ih / 2;
+        pz = -L / 2 + il / 2 + 0.02; // 死吸後牆表面
+      } else if (it.face === 'left') {
+        geom = new THREE.BoxGeometry(il, ih, iw);
+        px = -W / 2 + il / 2 + 0.02;
+        py = H - elev - ih / 2;
+        pz = -L / 2 + (it.x / 1000) + iw / 2;
+      } else if (it.face === 'right') {
+        geom = new THREE.BoxGeometry(il, ih, iw);
+        px = W / 2 - il / 2 - 0.02;
+        py = H - elev - ih / 2;
+        pz = -L / 2 + (it.x / 1000) + iw / 2;
+      }
       const mesh = new THREE.Mesh(geom, new THREE.MeshLambertMaterial({ color: it.col || 0xd4a373 }));
       mesh.position.set(px, py, pz);
       renderGroup.add(mesh);
@@ -1281,20 +1287,11 @@
   }
 
   function updateItem3DTransformFast(it) {
-    const mesh = itemMeshesMap.get(it.id);
-    if (!mesh) return;
+    draw3DUnified();
     const r = getCurRoom();
-    const W = r.w / 1000, L = r.l / 1000, iw = it.w / 1000, il = it.l / 1000;
-    if (it.face === 'floor') {
-      mesh.position.x = -W / 2 + (it.x / 1000) + iw / 2;
-      mesh.position.z = -L / 2 + (it.y / 1000) + il / 2;
-    } else if (it.face === 'front' || it.face === 'back') {
-      mesh.position.x = -W / 2 + (it.x / 1000) + iw / 2;
-    }
     it.globalX = (curRoomKey === 'fullHouse') ? it.x : (r.originX + it.x);
     it.globalY = (curRoomKey === 'fullHouse') ? it.y : (r.originY + it.y);
     autoSaveToIndexedDB();
-    renderer.render(scene, camera);
   }
 
   function reset2DView() { viewZoom = 1.0; viewPanX = 0; viewPanY = 0; draw2D(); }
@@ -1317,7 +1314,7 @@
     const newItem = {
       id: Date.now(), name: document.getElementById('it-name').value, face: fc,
       w: parseFloat(document.getElementById('it-w').value) || 1200, l: parseFloat(document.getElementById('it-l').value) || 700,
-      h: parseFloat(document.getElementById('it-h').value) || 700, x: 300, y: 300, rot: 0, col: document.getElementById('it-col').value || "#d4a373",
+      h: parseFloat(document.getElementById('it-h').value) || 700, x: 300, y: 300, elevationY: 400, rot: 0, col: document.getElementById('it-col').value || "#d4a373",
       globalX: (curRoomKey === 'fullHouse') ? 300 : (r.originX + 300),
       globalY: (curRoomKey === 'fullHouse') ? 300 : (r.originY + 300)
     };
@@ -1384,7 +1381,6 @@
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`);
   }
 
-  // 🌟 全屏 JSON：包含全屋所有傢俬資料，保證一個都唔漏！
   function openFullJsonEditor() {
     const r = getCurRoom();
     document.getElementById('full-json-area').value = JSON.stringify({
