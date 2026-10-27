@@ -213,7 +213,6 @@
 
 
 
-
     <!-- ========================================================================= -->
 <!-- 📍 【方塊 2 / 共 6 塊】HTML 本體：常駐標註列、無假門舞台與可摺疊控制台 -->
 <!-- 💡 秘書備註：加入【➕ 新增專案】掣、頂部常駐操作、控制台一鍵伸縮 -->
@@ -569,9 +568,11 @@
 
 
 
+
+
     <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：推圖與推傢俬分流、雙指手勢、防穿透 -->
-<!-- 💡 秘書備註：未選中推底圖、選中鎖死底圖專心推傢俬、雙指縮放平移 -->
+<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：卡帶自動填表、黑牆實體防穿透、推圖分流 -->
+<!-- 💡 秘書備註：彈窗款式自動填滿電視梳化、黑色間隔牆實心防穿透、未選推圖選中推件 -->
 <!-- ========================================================================= -->
 <script>
   let activeDrawerId = null;
@@ -581,7 +582,7 @@
   let viewZoom = 1.0, viewPanX = 0, viewPanY = 0;
   let curViewMode = 'box';
   let curMainMode = 'edit';
-  let showDimensions = true; // 預設開啟標註
+  let showDimensions = true;
   let isConsoleCollapsed = false;
 
   let projectMeta = { estate: '黃埔花園', block: '7期3座', floor: 'E', unit: '室' };
@@ -589,32 +590,6 @@
 
   let blueprintImg = null;
   let bpTransform = { locked: false };
-
-  const DEFAULT_IKEA_BACKUP = {
-    living: [
-      { id: "ik_l1", name: "【地】KIVIK 雙人梳化", face: "floor", w: 1900, l: 950, h: 830, col: "#4a69bd" },
-      { id: "ik_l2", name: "【地】BILLY 書櫃", face: "floor", w: 800, l: 280, h: 2020, col: "#f8f9fa" },
-      { id: "ik_l3", name: "【地】BESTÅ 電視地櫃", face: "floor", w: 1800, l: 420, h: 640, col: "#2f3542" },
-      { id: "ik_l4", name: "【牆】BESTÅ 掛牆吊櫃", face: "front", w: 1200, l: 300, h: 640, col: "#eef2f7" }
-    ],
-    bedroom: [
-      { id: "ik_b1", name: "【地】MALM 油壓雙人床 (5呎)", face: "floor", w: 1560, l: 2060, h: 1000, col: "#dcdde1" },
-      { id: "ik_b2", name: "【地】PAX 雙門衣櫃", face: "floor", w: 1500, l: 600, h: 2360, col: "#f5f6fa" }
-    ],
-    kitchen: [
-      { id: "ik_k1", name: "【地】METOD 雙頭電磁爐地櫃", face: "floor", w: 800, l: 600, h: 850, col: "#ced6e0" },
-      { id: "ik_k2", name: "【地】METOD 洗滌盆底櫃", face: "floor", w: 800, l: 600, h: 850, col: "#a4b0be" },
-      { id: "ik_k3", name: "【牆】METOD 掛牆抽油煙機吊櫃", face: "front", w: 800, l: 370, h: 600, col: "#dfe4ea" }
-    ],
-    bathroom: [
-      { id: "ik_w1", name: "【地】GODMORGON 鏡櫃洗手盆", face: "floor", w: 600, l: 470, h: 720, col: "#70a1ff" },
-      { id: "ik_w2", name: "【地】標準坐廁 (防穿透)", face: "floor", w: 400, l: 700, h: 800, col: "#ffffff" }
-    ],
-    fixtures: [
-      { id: "ik_f1", name: "【牆】13A 雙位英規電掣插座", face: "back", w: 146, l: 30, h: 86, col: "#ffd32a" },
-      { id: "ik_f2", name: "【天】超薄 LED 吸頂燈", face: "ceiling", w: 500, l: 500, h: 50, col: "#ffffff" }
-    ]
-  };
 
   function getIkeaCatalog() {
     if (typeof IKEA_CATALOG !== 'undefined' && IKEA_CATALOG) return IKEA_CATALOG;
@@ -690,6 +665,44 @@
     if (typeof draw2D === 'function') draw2D();
   }
 
+  // 🌟 卡帶庫聯動：切換空間即時填滿所有傢俬（包括 55 吋電視）
+  function onCategoryChange() {
+    const cat = document.getElementById('item-cat-select').value;
+    const subSelect = document.getElementById('item-sub-select');
+    subSelect.innerHTML = '';
+    const catalog = getIkeaCatalog();
+
+    if (!catalog[cat] || cat === 'custom') {
+      subSelect.innerHTML = '<option value="custom">-- 自訂尺寸件 --</option>';
+      document.getElementById('it-name').value = "自訂傢俬";
+      return;
+    }
+    catalog[cat].forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.innerText = item.name;
+      subSelect.appendChild(opt);
+    });
+    onSubItemChange();
+  }
+
+  function onSubItemChange() {
+    const cat = document.getElementById('item-cat-select').value;
+    const subId = document.getElementById('item-sub-select').value;
+    if (subId === 'custom') return;
+    const catalog = getIkeaCatalog();
+    const found = (catalog[cat] || []).find(i => i.id === subId);
+    if (found) {
+      document.getElementById('it-name').value = found.name;
+      document.getElementById('it-face').value = found.face || 'floor';
+      document.getElementById('it-w').value = found.w;
+      document.getElementById('it-l').value = found.l;
+      document.getElementById('it-h').value = found.h;
+      document.getElementById('it-col').value = found.col || '#d4a373';
+    }
+  }
+
+  // 🌟 實體黑色間隔牆防穿透：牆壁全部係石屎，傢俬絕不能穿牆！
   function resolveCollision(it, targetX, targetY) {
     const r = getCurRoom();
     let x = targetX, y = targetY;
@@ -698,6 +711,19 @@
     const minY = 20, maxY = r.l - dim.rh - 20;
     x = Math.max(minX, Math.min(x, maxX));
     y = Math.max(minY, Math.min(y, maxY));
+
+    // 檢查黑色間隔牆與石屎柱（r.structures）
+    if (curFace === 'floor' && r.structures && r.structures.length > 0) {
+      r.structures.forEach(st => {
+        const overlapX = (x < st.x + st.w) && (x + dim.rw > st.x);
+        const overlapY = (y < st.y + st.l) && (y + dim.rh > st.y);
+        if (overlapX && overlapY) {
+          // 撞牆即彈回前一個安全坐標
+          x = it.x;
+          y = it.y;
+        }
+      });
+    }
     return { x: Math.round(x), y: Math.round(y) };
   }
 
@@ -748,7 +774,6 @@
         draw2D();
         renderChips();
       } else {
-        // 未點中傢俬：鎖定拖動畫布底圖 (Pan)
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
         isPanningCanvas = true;
         isDraggingItem = false;
@@ -836,10 +861,9 @@
 
 
 
-
     <!-- ========================================================================= -->
-<!-- 📍 【方塊 5 / 共 6 塊】卡帶庫連動、分房精準裁切、立面真投影、IndexedDB -->
-<!-- 💡 秘書備註：支援外部ikea_catalog.js、分房邊界精準裁切、尺寸真立面大平板 -->
+<!-- 📍 【方塊 5 / 共 6 塊】分房精準裁切、立面真平板投影、金黃尺寸鏈、IndexedDB -->
+<!-- 💡 秘書備註：電視立面大平板、分房邊界裁切互通、全屋尺寸標註常駐、不掉螺絲 -->
 <!-- ========================================================================= -->
 <script>
   const unit18ArchitectPolygon = [
@@ -937,7 +961,7 @@
     alert("✅ 新專案已成功建立！");
   }
 
-  // 🌟 精準分房裁切：只有屬於該房邊界內的傢俬才會出現，全屋大圖睇晒全部！
+  // 🌟 分房邊界精準裁切：客廳傢俬只留客廳，全屋大圖睇晒全屋
   function syncRoomItemsFromGlobal() {
     Object.keys(rooms).forEach(k => {
       if (k === 'fullHouse') {
@@ -956,7 +980,7 @@
 
   function getCurRoom() { return rooms[curRoomKey] || rooms['fullHouse']; }
 
-  // 🌟 立面真投影：前牆/後牆即刻轉成 (寬度 x 高度) 大平板！
+  // 🌟 立面真投影：前牆/後牆展開成 (寬度 x 高度) 大平板！
   function getItemFaceDim(it, face) {
     if (face === 'floor' || face === 'ceiling') return { rw: it.w, rh: it.l };
     if (face === 'front' || face === 'back') return { rw: it.w, rh: it.h };
@@ -1077,7 +1101,7 @@
       ctx.fillText(it.name, ox + it.x * sc + 3, oy + it.y * sc + 11);
     });
 
-    // 🌟 尺寸標註：當 showDimensions 為 true 時自動繪出清晰金黃色標註線
+    // 🌟 標註線常駐繪畫
     if (showDimensions && typeof drawDimLine === 'function') {
       if (curRoomKey === 'fullHouse' && curFace === 'floor') {
         drawDimLine(ctx, ox, oy, ox + 5135 * sc, oy, "5135", -16, false);
@@ -1097,9 +1121,10 @@
 
 
 
+
     <!-- ========================================================================= -->
-<!-- 📍 【方塊 6 / 共 6 塊】3D 核心、旋轉調色、全屏 JSON 資料導出 -->
-<!-- 💡 秘書備註：全屏JSON完整輸出全屋傢俬、旋轉與調色即時同步存入DB -->
+<!-- 📍 【方塊 6 / 共 6 塊】3D 實體牆、全屏 JSON 資料導出、旋轉調色、生命週期 -->
+<!-- 💡 秘書備註：獨立房間3D實體牆補回、全屏JSON完整輸出、旋轉調色自動Save -->
 <!-- ========================================================================= -->
 <script>
   function drawDimLine(ctx, x1, y1, x2, y2, text, offset = 0, isVertical = false) {
@@ -1170,6 +1195,7 @@
     controls.update(); draw3DUnified();
   }
 
+  // 🌟 3D 渲染核心：補回獨立房間實體牆生成，全屋與分房立體感十足！
   function draw3DUnified() {
     itemMeshesMap.clear();
     while (renderGroup.children.length > 0) {
@@ -1205,6 +1231,19 @@
     } else {
       const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, L), floorMat);
       fl.rotation.x = -Math.PI / 2; renderGroup.add(fl);
+
+      // 🌟 獨立房間四面實體牆
+      const walls = [
+        { geom: new THREE.BoxGeometry(W, H, 0.12), x: 0, y: H / 2, z: L / 2 },
+        { geom: new THREE.BoxGeometry(W, H, 0.12), x: 0, y: H / 2, z: -L / 2 },
+        { geom: new THREE.BoxGeometry(0.12, H, L), x: -W / 2, y: H / 2, z: 0 },
+        { geom: new THREE.BoxGeometry(0.12, H, L), x: W / 2, y: H / 2, z: 0 }
+      ];
+      walls.forEach(wDef => {
+        const mesh = new THREE.Mesh(wDef.geom, wallMat);
+        mesh.position.set(wDef.x, wDef.y, wDef.z);
+        renderGroup.add(mesh);
+      });
     }
 
     (r.structures || []).forEach(s => {
@@ -1287,7 +1326,6 @@
     autoSaveToIndexedDB(); updateAll();
   }
 
-  // 🌟 旋轉 90 度並調轉長闊：即刻自動存入 IndexedDB
   function rotateSelectedItem() {
     const r = getCurRoom(); const it = r.items.find(i => i.id === selectedItemId); if (!it) return;
     const oldW = it.w; it.w = it.l; it.l = oldW;
@@ -1384,8 +1422,3 @@
 </script>
 </body>
 </html>
-
-
-
-
-
