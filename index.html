@@ -1,13 +1,13 @@
 <!-- ========================================================================= -->
 <!-- 📍 【方塊 1 / 共 6 塊】HTML 骨架、36vh 雙卡片、36px 肥滑軌與 CSS -->
-<!-- 💡 秘書備註：修正 HTML 標籤漏字，頂部高度大瘦身，釋放大量操作空間 -->
+<!-- 💡 秘書備註：修正 HTML 標籤漏字，還原頂部直觀物業與大門工具條樣式 -->
 <!-- ========================================================================= -->
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>圖層王 四代目 3D 裝修卡帶 - 清爽版</title>
+  <title>圖層王 四代目 3D 裝修卡帶 - 原裝直觀版</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="ikea_catalog.js"></script>
@@ -17,7 +17,7 @@
     
     #top-nav-bar { background: #161a26; border-bottom: 1.5px solid #2d3748; display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
     #proj-row { 
-      padding: 4px 8px; display: flex; gap: 5px; align-items: center; 
+      padding: 4px 8px; display: flex; gap: 4px; align-items: center; 
       border-bottom: 1px solid #23293d; font-size: 10px; flex-wrap: nowrap; overflow-x: hidden;
     }
     #proj-row input { background: #0b0e14; border: 1px solid #3b4674; color: #00ffcc; padding: 2px 4px; border-radius: 4px; font-size: 10px; }
@@ -32,12 +32,19 @@
     .room-tab.active { background: #0070f3; color: #fff; font-weight: 900; border-color: #00ffcc; box-shadow: 0 0 8px rgba(0,255,204,0.3); }
     .room-tab.full-active { background: #8e44ad; color: #fff; font-weight: 900; border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.4); }
 
-    /* 隱藏式抽屜內色彩與大門樣式 */
-    .drawer-field-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 2px 0; font-size: 10.5px; }
-    .color-input-badge { display: flex; align-items: center; gap: 3px; }
-    .color-input-badge input[type="color"] { width: 18px; height: 18px; border: none; background: none; cursor: pointer; border-radius: 50%; }
-    .color-input-badge input[type="text"] { width: 56px; font-family: monospace; font-size: 9.5px; background: #0b0e14; border: 1px solid #3b4674; color: #fff; padding: 1px 3px; border-radius: 4px; }
-    .door-sel { background: #2c1624; color: #ff6b81; border: 1px solid #ff4757; font-size: 10px; font-weight: 900; border-radius: 4px; padding: 2px 6px; }
+    /* 原裝頂部色彩工具條與大門選擇器 */
+    #surface-color-bar {
+      padding: 3px 8px; background: #141824; display: flex; gap: 6px; 
+      align-items: center; border-bottom: 1px solid #252d42; font-size: 10px; flex-shrink: 0; overflow-x: auto; white-space: nowrap;
+    }
+    .color-input-badge { display: flex; align-items: center; gap: 2px; }
+    .color-input-badge input[type="color"] { width: 16px; height: 16px; border: none; background: none; cursor: pointer; border-radius: 50%; }
+    .color-input-badge input[type="text"] { width: 50px; font-family: monospace; font-size: 9px; background: #0b0e14; border: 1px solid #3b4674; color: #fff; padding: 1px 3px; border-radius: 4px; }
+    .door-sel { background: #2c1624; color: #ff6b81; border: 1px solid #ff4757; font-size: 9.5px; font-weight: 900; border-radius: 4px; padding: 1px 4px; margin-left: auto; }
+
+    #cat-bar { padding: 4px 8px; background: #121622; display: flex; gap: 6px; border-bottom: 1px solid #23293d; align-items: center; flex-shrink: 0; font-size: 9.5px; }
+    .btn-cat { background: #202636; color: #aaa; padding: 2px 7px; border-radius: 10px; font-size: 9.5px; border: 1px solid #3b4674; cursor: pointer; }
+    .btn-cat.active { background: #2980b9; color: #fff; font-weight: bold; border-color: #00ffcc; }
 
     #stage-scroll-wrapper {
       flex: 1; width: 100%; overflow-y: auto; overflow-x: hidden;
@@ -123,17 +130,23 @@
 
 
 
+
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 2 / 共 6 塊】HTML 本體：頂部極簡大收納、雙舞台與 XYZ 微調箱 -->
-<!-- 💡 秘書備註：頂部移走繁雜文字收納入抽屜，加入傢俬獨立 XYZ 超肥推桿箱 -->
+<!-- 📍 【方塊 2 / 共 6 塊】HTML 本體：原裝頂部大門色彩列、雙舞台與控制台 -->
+<!-- 💡 秘書備註：100% 還原原裝頂部控制工具條，操作最順手，一目了然 -->
 <!-- ========================================================================= -->
 <body>
 
-  <!-- 🏷️ 1. 頂部極簡導航：只留核心大掣與空間卡帶 -->
+  <!-- 🏷️ 1. 頂部原裝直觀導航：物業、大門、空間卡帶 -->
   <div id="top-nav-bar">
     <div id="proj-row">
-      <button class="btn-mode" style="background:#8e44ad; color:#fff; border-color:#ffd700;" onclick="toggleDrawer('drawer-settings')">⚙️ 樓盤與色彩</button>
-      <button class="btn-mode" style="background:#27ae60; color:#fff; border-color:#2ecc71;" onclick="openModal('modal-item')">➕ 買傢俬</button>
+      <span style="flex-shrink:0;">📍</span>
+      <input type="text" id="p-estate" value="黃埔花園" placeholder="屋苑" style="width:68px;" onchange="saveProjectMeta()">
+      <input type="text" id="p-block" value="7期3座" placeholder="座數" style="width:44px;" onchange="saveProjectMeta()">
+      <input type="text" id="p-floor" value="E" placeholder="室" style="width:22px;" onchange="saveProjectMeta()">
+      <input type="text" id="p-unit" value="室" placeholder="室" style="width:22px;" onchange="saveProjectMeta()">
+      
+      <button class="btn-mode" style="background:#27ae60; color:#fff; border-color:#2ecc71;" onclick="createNewProject()">➕ 新增專案</button>
 
       <div class="mode-btn-group">
         <button id="btn-mode-edit" class="btn-mode active" onclick="switchMainViewMode('edit')">🛠️ 設計</button>
@@ -152,10 +165,38 @@
       <div class="room-tab active full-active" onclick="switchRoom('fullHouse')">🌐 18號室則師藍圖</div>
     </div>
 
-    <!-- 🏷️ 傢俬晶片貨架 (Chips Deck) -->
+    <!-- 🎨 牆面色彩 + 🚪 全屋大門口絕對坐標方位選單 -->
+    <div id="surface-color-bar">
+      <span style="color:#00ffcc; font-weight:bold;">🎨 色彩:</span>
+      <div class="color-input-badge">
+        <span>牆</span>
+        <input type="color" id="col-wall" value="#efede6" onchange="syncWallColorFromPicker(this.value)">
+        <input type="text" id="col-wall-hex" value="#efede6" onchange="syncWallColorFromHex(this.value)">
+      </div>
+      <div class="color-input-badge">
+        <span>地</span>
+        <input type="color" id="col-floor" value="#3d4452" onchange="syncFloorColorFromPicker(this.value)">
+        <input type="text" id="col-floor-hex" value="#3d4452" onchange="syncFloorColorFromHex(this.value)">
+      </div>
+      <select id="sel-main-door" class="door-sel" onchange="changeMainDoorWall(this.value)" title="全屋絕對方向以大門口為準">
+        <option value="south">🚪 大門: 下(後牆) ➔ 望上(前牆)</option>
+        <option value="north">🚪 大門: 上(後牆) ➔ 望下(前牆)</option>
+        <option value="west">🚪 大門: 左(後牆) ➔ 望右(前牆)</option>
+        <option value="east">🚪 大門: 右(後牆) ➔ 望左(前牆)</option>
+      </select>
+    </div>
+
+    <!-- 🛋️ 建築與傢俬分類條 -->
+    <div id="cat-bar">
+      <button id="cat-btn-struct" class="btn-cat" onclick="switchCategory('struct')">🏛️ 建築 (<span id="count-struct">0</span>)</button>
+      <button id="cat-btn-item" class="btn-cat active" onclick="switchCategory('item')">🛋️ 傢俬 (<span id="count-item">0</span>)</button>
+      <span style="margin-left:auto; font-size:9.5px; color:#ffd700;">🚪 背對大門=後牆｜面向=前牆</span>
+    </div>
+
+    <!-- 🏷️ 傢俬與牆體晶片貨架 (Chips Deck) -->
     <div id="item-deck"><div id="chips-container" style="display:inline-flex; gap:6px;"></div></div>
 
-    <!-- 🧱 六面牆空間切換 (背對大門=後牆，直望=前牆) -->
+    <!-- 🧱 六面牆空間切換 (支援掛牆與吊天花，統一跟隨大門口絕對方向) -->
     <div id="face-tabs">
       <div class="tab-btn active" id="btn-face-floor" onclick="switchFace('floor')">地板</div>
       <div class="tab-btn" id="btn-face-front" onclick="switchFace('front')">前牆(對門)</div>
@@ -175,6 +216,7 @@
 
     <div id="pane-2d" class="pane-card">
       <div class="pane-top-bar">
+        <button class="btn-pane-action" style="color:#00ffcc; border-color:#00ffcc;" onclick="openModal('modal-item')">➕ 擺傢俬</button>
         <button id="btn-toggle-dim" class="btn-pane-action active" onclick="toggleDimensionsDisplay()">📐 標註: ON</button>
         <button class="btn-pane-action" onclick="toggleRefShelf()">🖼️ 原圖架</button>
       </div>
@@ -226,7 +268,6 @@
     </div>
 
     <div class="bottom-btn-row">
-      <button class="btn-bottom" style="color:#00ffcc;" onclick="toggleDrawer('drawer-sliders')">🎚️ 傢俬三維推桿</button>
       <input type="file" id="inp-blueprint-file" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
       <button class="btn-bottom" onclick="document.getElementById('inp-blueprint-file').click()">🖼️ 載底圖</button>
       <button class="btn-bottom" style="color:#ff6b6b;" onclick="clearBlueprintImage()">🗑️ 剷底圖</button>
@@ -235,102 +276,49 @@
       <button class="btn-bottom" onclick="openFullJsonEditor()">📋 全屏JSON</button>
       <button class="btn-bottom" style="color:#00ffcc;" onclick="resetToArchitectGolden()">⚡ 18號室重置</button>
       <button class="btn-bottom" onclick="reset2DView()">🔍 居中</button>
+      <button class="btn-bottom" style="background:#27ae60; color:#fff;" onclick="openModal('modal-item')">🛋️ 加傢俬</button>
       <button class="btn-bottom" onclick="openModal('modal-struct')">🏛️ 加牆/柱</button>
       <button class="btn-bottom" onclick="openModal('modal-material')">📊 點料</button>
       <button class="btn-bottom" style="background:#25D366; color:#fff;" onclick="exportWhatsApp()">📲 出單</button>
     </div>
 
-    <!-- 🗄️ 抽屜 0：【樓盤與空間設定抽屜】（頂部收納核心） -->
-    <div id="drawer-settings" class="drawer-card">
-      <div class="drawer-head" onclick="toggleDrawer('drawer-settings')">
-        <span class="drawer-title">⚙️ 樓盤資訊與大門色彩設定</span>
-        <span id="arrow-drawer-settings" style="font-size:10px; color:#8892b0;">▼ 展開</span>
-      </div>
-      <div class="drawer-body">
-        <div class="drawer-field-row">
-          <span>屋苑/座/室:</span>
-          <div style="display:flex; gap:3px;">
-            <input type="text" id="p-estate" value="黃埔花園" style="width:65px;" onchange="saveProjectMeta()">
-            <input type="text" id="p-block" value="7期3座" style="width:45px;" onchange="saveProjectMeta()">
-            <input type="text" id="p-floor" value="E" style="width:25px;" onchange="saveProjectMeta()">
-          </div>
-        </div>
-        <div class="drawer-field-row">
-          <span>牆身/地面色彩:</span>
-          <div style="display:flex; gap:6px;">
-            <div class="color-input-badge"><span>牆</span><input type="color" id="col-wall" value="#efede6" onchange="syncWallColorFromPicker(this.value)"><input type="text" id="col-wall-hex" value="#efede6" onchange="syncWallColorFromHex(this.value)"></div>
-            <div class="color-input-badge"><span>地</span><input type="color" id="col-floor" value="#3d4452" onchange="syncFloorColorFromPicker(this.value)"><input type="text" id="col-floor-hex" value="#3d4452" onchange="syncFloorColorFromHex(this.value)"></div>
-          </div>
-        </div>
-        <div class="drawer-field-row">
-          <span>🚪 大門口方位基準:</span>
-          <select id="sel-main-door" class="door-sel" onchange="changeMainDoorWall(this.value)">
-            <option value="south">🚪 大門: 下(後牆) ➔ 望上(前牆)</option>
-            <option value="north">🚪 大門: 上(後牆) ➔ 望下(前牆)</option>
-            <option value="west">🚪 大門: 左(後牆) ➔ 望右(前牆)</option>
-            <option value="east">🚪 大門: 右(後牆) ➔ 望左(前牆)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🗄️ 抽屜 1：【傢俬三維獨立微調推桿箱】 -->
-    <div id="drawer-sliders" class="drawer-card">
-      <div class="drawer-head" onclick="toggleDrawer('drawer-sliders')">
-        <span class="drawer-title">🎚️ 傢俬三維微調推桿箱 (XYZ 獨立鎖頭)</span>
-        <span id="arrow-drawer-sliders" style="font-size:10px; color:#8892b0;">▼ 展開</span>
-      </div>
-      <div class="drawer-body">
-        <div class="slider-full-row">
-          <div class="slider-title"><span>水平左右 X 軸</span><span class="val" id="disp-slider-x">0mm</span></div>
-          <input type="range" class="huge-slider" id="slider-item-x" min="0" max="6000" step="10" value="0" oninput="updateItemFromSlider('x', this.value)">
-        </div>
-        <div class="slider-full-row">
-          <div class="slider-title"><span>垂直離地 Y 軸 (高度)</span><span class="val" id="disp-slider-y">0mm</span></div>
-          <input type="range" class="huge-slider" id="slider-item-y" min="0" max="2400" step="10" value="0" oninput="updateItemFromSlider('y', this.value)">
-        </div>
-        <div class="slider-full-row">
-          <div class="slider-title"><span>進深 Z 軸 (離牆厚度)</span><span class="val" id="disp-slider-z">0mm</span></div>
-          <input type="range" class="huge-slider" id="slider-item-z" min="0" max="6000" step="10" value="0" oninput="updateItemFromSlider('z', this.value)">
-        </div>
-      </div>
-    </div>
-
     <div id="drawer-bp" class="drawer-card">
       <div class="drawer-head" onclick="toggleDrawer('drawer-bp')">
-        <span class="drawer-title">🖼️ 底圖四維校準 (超長推桿)</span>
+        <span class="drawer-title">🖼️ 底圖四維校準 (第一重天超長推桿)</span>
         <span id="arrow-drawer-bp" style="font-size:10px; color:#8892b0;">▼ 展開</span>
       </div>
       <div class="drawer-body">
         <div class="slider-full-row">
-          <div class="slider-title"><span>透光度</span><span class="val" id="disp-bp-op">50%</span></div>
+          <div class="slider-title"><span>透光度 (Opacity)</span><span class="val" id="disp-bp-op">50%</span></div>
           <input type="range" class="huge-slider" id="bp-op" min="0" max="1" step="0.05" value="0.5" oninput="updateBpTransform()">
         </div>
         <div class="slider-full-row">
-          <div class="slider-title"><span>縮放比例</span><span class="val" id="disp-bp-scale">1.00x</span></div>
+          <div class="slider-title"><span>縮放比例 (Scale / Zoom)</span><span class="val" id="disp-bp-scale">1.00x</span></div>
           <input type="range" class="huge-slider" id="bp-scale" min="0.3" max="3.0" step="0.005" value="1.0" oninput="updateBpTransform()">
         </div>
         <div class="slider-full-row">
-          <div class="slider-title"><span>水平 X 軸</span><span class="val" id="disp-bp-x">0px</span></div>
+          <div class="slider-title"><span>水平 X 軸微調</span><span class="val" id="disp-bp-x">0px</span></div>
           <input type="range" class="huge-slider" id="bp-x" min="-300" max="300" step="1" value="0" oninput="updateBpTransform()">
         </div>
         <div class="slider-full-row">
-          <div class="slider-title"><span>垂直 Y 軸</span><span class="val" id="disp-bp-y">0px</span></div>
+          <div class="slider-title"><span>垂直 Y 軸微調</span><span class="val" id="disp-bp-y">0px</span></div>
           <input type="range" class="huge-slider" id="bp-y" min="-300" max="300" step="1" value="0" oninput="updateBpTransform()">
         </div>
-        <button id="btn-bp-lock" class="btn-drawer-lock unlocked" onclick="toggleBpLock()">🔓 未鎖定</button>
+        <button id="btn-bp-lock" class="btn-drawer-lock unlocked" onclick="toggleBpLock()">🔓 未鎖定 (點擊鎖死所有推桿並收起)</button>
       </div>
     </div>
 
     <div id="drawer-txt" class="drawer-card">
       <div class="drawer-head" onclick="toggleDrawer('drawer-txt')">
-        <span class="drawer-title">📝 則師自然語言手帳</span>
+        <span class="drawer-title">📝 則師自然語言手帳 (地盤尺寸直讀)</span>
         <span id="arrow-drawer-txt" style="font-size:10px; color:#8892b0;">▼ 展開</span>
       </div>
       <div class="drawer-body">
-        <textarea id="txt-area" spellcheck="false" style="width:100%; height:90px; background:#070a12; color:#00ffcc; border:1px solid #3b4674; border-radius:4px; padding:5px; font-family:monospace; font-size:10.5px; resize:none;"></textarea>
+        <span style="font-size:10px; color:#8892b0;">支援圖紙尺寸鏈直接輸入，後台自洽閉合外框：</span>
+        <textarea id="txt-area" spellcheck="false" style="width:100%; height:90px; background:#070a12; color:#00ffcc; border:1px solid #3b4674; border-radius:4px; padding:5px; font-family:monospace; font-size:10.5px; line-height:1.35; resize:none;" placeholder="在此貼入手帳或尺寸鏈..."></textarea>
         <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:2px;">
-          <button style="background:#27ae60; color:#fff; border:none; padding:4px 10px; font-weight:bold; font-size:10.5px; border-radius:4px; cursor:pointer;" onclick="applyTxtBlueprint()">⚡ 套用手帳</button>
+          <button style="background:#27ae60; color:#fff; border:none; padding:4px 10px; font-weight:bold; font-size:10.5px; border-radius:4px; cursor:pointer;" onclick="applyTxtBlueprint()">⚡ 立即套用手帳</button>
+          <button style="background:#576574; color:#fff; border:none; padding:4px 10px; font-weight:bold; font-size:10.5px; border-radius:4px; cursor:pointer;" onclick="toggleDrawer('drawer-txt')">收起</button>
         </div>
       </div>
     </div>
@@ -339,6 +327,7 @@
   <div id="info-bar" style="padding:4px 10px; background:#070910; font-size:10.5px; display:flex; justify-content:space-between; align-items:center; border-top:1.5px solid #00ffcc; gap:6px; flex-shrink:0;">
     <div id="stat-text" style="flex:1; line-height:1.3; color:#ddd;">計算中...</div>
   </div>
+
 
 
 
@@ -495,8 +484,8 @@
 
 
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：XYZ 三維推桿聯動、右牆左右滑動解鎖 -->
-<!-- 💡 秘書備註：加入 updateItemFromSlider，推桿調校與手指推拉雙向 100% 同步 -->
+<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：全牆通用物理引擎、左右上下完全解鎖 -->
+<!-- 💡 秘書備註：左牆右牆手指左右拖動直接驅動 Y 軸深進，徹底打通全牆滑動 -->
 <!-- ========================================================================= -->
 <script>
   let activeDrawerId = null;
@@ -526,38 +515,6 @@
     if (typeof autoSaveToIndexedDB === 'function') autoSaveToIndexedDB();
     if (typeof updateAll === 'function') updateAll();
     if (typeof set3DCameraMode === 'function') set3DCameraMode(curViewMode);
-  }
-
-  // 🎚️ XYZ 獨立推桿聯動核心：推桿即時改變選中傢俬數值
-  function updateItemFromSlider(axis, val) {
-    const r = getCurRoom();
-    const it = r.items.find(i => i.id === selectedItemId);
-    if (!it) return;
-    const num = parseFloat(val);
-    if (axis === 'x') {
-      it.x = num;
-      document.getElementById('disp-slider-x').innerText = num + 'mm';
-    } else if (axis === 'y') {
-      it.elevationY = num;
-      document.getElementById('disp-slider-y').innerText = num + 'mm';
-    } else if (axis === 'z') {
-      it.y = num;
-      document.getElementById('disp-slider-z').innerText = num + 'mm';
-    }
-    draw2D();
-    updateItem3DTransformFast(it);
-  }
-
-  function syncSlidersFromItem(it) {
-    if (!it) return;
-    const r = getCurRoom();
-    const fd = getRoomFaceDim(r, curFace);
-    const slX = document.getElementById('slider-item-x');
-    const slY = document.getElementById('slider-item-y');
-    const slZ = document.getElementById('slider-item-z');
-    if (slX) { slX.max = fd.rw; slX.value = it.x || 0; document.getElementById('disp-slider-x').innerText = (it.x || 0) + 'mm'; }
-    if (slY) { slY.value = it.elevationY || 350; document.getElementById('disp-slider-y').innerText = (it.elevationY || 350) + 'mm'; }
-    if (slZ) { slZ.max = fd.rh; slZ.value = it.y || 0; document.getElementById('disp-slider-z').innerText = (it.y || 0) + 'mm'; }
   }
 
   function toggleBottomConsole() {
@@ -673,28 +630,27 @@
     }
   }
 
-  // 🌟 解鎖右牆左右滑動邊界，實心黑牆防穿透
-  function resolveCollision(it, targetX, targetY) {
+  // 🌟 全牆通用物理防穿透算法（側牆限制深進，主牆限制寬度）
+  function resolveCollision(it, targetU, targetV) {
     const r = getCurRoom();
-    let x = targetX, y = targetY;
     const fd = getRoomFaceDim(r, curFace);
     const dim = getItemFaceDim(it, curFace);
-    x = Math.max(10, Math.min(x, fd.rw - dim.rw - 10));
-    y = Math.max(10, Math.min(y, fd.rh - dim.rh - 10));
+    let u = Math.max(10, Math.min(targetU, fd.rw - dim.rw - 10));
+    let v = Math.max(10, Math.min(targetV, fd.rh - dim.rh - 10));
 
     if (curFace === 'floor' && r.structures && r.structures.length > 0) {
       r.structures.forEach(st => {
-        const overlapX = (x < st.x + st.w) && (x + dim.rw > st.x);
-        const overlapY = (y < st.y + st.l) && (y + dim.rh > st.y);
-        if (overlapX && overlapY) { x = it.x; y = it.y; }
+        const overlapX = (u < st.x + st.w) && (u + dim.rw > st.x);
+        const overlapY = (v < st.y + st.l) && (v + dim.rh > st.y);
+        if (overlapX && overlapY) { u = it.x; v = it.y; }
       });
     }
-    return { x: Math.round(x), y: Math.round(y) };
+    return { u: Math.round(u), v: Math.round(v) };
   }
 
   const cv = document.getElementById('cv-2d');
   let isDraggingItem = false, isPanningCanvas = false;
-  let dragStartX = 0, dragStartY = 0, itemOrigX = 0, itemOrigY = 0;
+  let dragStartX = 0, dragStartY = 0, origU = 0, origV = 0;
   let canvasOrigPanX = 0, canvasOrigPanY = 0, hasMovedSignificantly = false;
   const activePointers = new Map();
   let initialPinchDist = null, initialZoom = 1.0;
@@ -716,8 +672,10 @@
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
         selectedItemId = hit.id; isDraggingItem = true; isPanningCanvas = false;
         dragStartX = clickX; dragStartY = clickY;
-        itemOrigX = hit.x; itemOrigY = (curFace === 'floor' || curFace === 'ceiling') ? hit.y : (hit.elevationY || 350);
-        showFloatCtrl(hit); syncSlidersFromItem(hit); draw2D(); renderChips();
+        // 🌟 核心：側牆左右軸讀 y，主牆讀 x；立面上下軸永遠讀 elevationY
+        origU = (curFace === 'left' || curFace === 'right') ? hit.y : hit.x;
+        origV = (curFace === 'floor' || curFace === 'ceiling') ? hit.y : (hit.elevationY || 350);
+        showFloatCtrl(hit); draw2D(); renderChips();
       } else {
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
         isPanningCanvas = true; isDraggingItem = false;
@@ -741,11 +699,22 @@
       const r = getCurRoom(); const it = r.items.find(i => i.id === selectedItemId);
       if (it) {
         const sc = getScale();
-        const resolved = resolveCollision(it, itemOrigX + (curX - dragStartX) / sc, itemOrigY + (curY - dragStartY) / sc);
-        it.x = resolved.x;
-        if (curFace === 'floor' || curFace === 'ceiling') it.y = resolved.y;
-        else it.elevationY = resolved.y;
-        syncSlidersFromItem(it); draw2D(); updateItem3DTransformFast(it);
+        const targetU = origU + (curX - dragStartX) / sc;
+        const targetV = origV + (curY - dragStartY) / sc;
+        const resolved = resolveCollision(it, targetU, targetV);
+
+        // 🌟 四面牆通用映射：手指左右推動側牆改 y、主牆改 x；手指上下推動立面改 elevationY！
+        if (curFace === 'left' || curFace === 'right') {
+          it.y = resolved.u; // 側牆水平左右滑動 = 房間進深 Y 軸自由滑動！
+          it.elevationY = resolved.v; // 垂直高度升降
+        } else if (curFace === 'front' || curFace === 'back') {
+          it.x = resolved.u; // 主景牆水平左右滑動 = 房間 X 軸自由滑動！
+          it.elevationY = resolved.v; // 垂直高度升降
+        } else {
+          it.x = resolved.u;
+          it.y = resolved.v;
+        }
+        draw2D(); updateItem3DTransformFast(it);
       }
     } else if (isPanningCanvas) {
       viewPanX = canvasOrigPanX + (curX - dragStartX); viewPanY = canvasOrigPanY + (curY - dragStartY); draw2D();
@@ -774,9 +743,10 @@
 
 
 
+
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 5 / 共 6 塊】消滅牙籤（面闊讀 w）、大門標記、分房裁切、尺寸標註 -->
-<!-- 💡 秘書備註：右牆與左牆掛件全面採用 it.w x it.h 大平板，徹底消滅牙籤！ -->
+<!-- 📍 【方塊 5 / 共 6 塊】2D 四面牆立面渲染、面闊讀 it.w、精準命中判定 -->
+<!-- 💡 秘書備註：左牆右牆立面 100% 讀取 it.w 面闊，電視吊櫃皆為大平板，絕無牙籤 -->
 <!-- ========================================================================= -->
 <script>
   const unit18ArchitectPolygon = [
@@ -846,6 +816,7 @@
               document.getElementById('p-estate').value = projectMeta.estate || '黃埔花園';
               document.getElementById('p-block').value = projectMeta.block || '7期3座';
               document.getElementById('p-floor').value = projectMeta.floor || 'E';
+              document.getElementById('p-unit').value = projectMeta.unit || '室';
             }
             syncRoomItemsFromGlobal(); resolve(true);
           } else { resolve(false); }
@@ -862,6 +833,7 @@
     document.getElementById('p-estate').value = projectMeta.estate;
     document.getElementById('p-block').value = projectMeta.block;
     document.getElementById('p-floor').value = projectMeta.floor;
+    document.getElementById('p-unit').value = projectMeta.unit;
     syncRoomItemsFromGlobal(); await autoSaveToIndexedDB();
     switchRoom('fullHouse'); reset2DView(); alert("✅ 新專案已成功建立！");
   }
@@ -884,16 +856,16 @@
 
   function getCurRoom() { return rooms[curRoomKey] || rooms['fullHouse']; }
 
-  // 🌟 徹底消滅牙籤核心：無論前牆、後牆、左牆定右牆，立面面闊永遠讀 it.w (1230mm)！
+  // 🌟 徹底消滅牙籤：任何立面牆（前、後、左、右），傢俬面闊永遠讀 it.w，高度讀 it.h！
   function getItemFaceDim(it, face) {
     if (face === 'floor' || face === 'ceiling') return { rw: it.w, rh: it.l };
-    return { rw: it.w, rh: it.h }; // 🌟 前後左右四幅立面牆，面闊永遠係寬度，高度永遠係高度！
+    return { rw: it.w, rh: it.h };
   }
 
   function getRoomFaceDim(r, face) {
     if (face === 'floor' || face === 'ceiling') return { rw: r.w, rh: r.l };
     if (face === 'front' || face === 'back') return { rw: r.w, rh: r.h };
-    return { rw: r.l, rh: r.h }; // 側牆長度為房深 L，高度為 H
+    return { rw: r.l, rh: r.h }; // 側牆寬度為房間進深 L，高度為房間高度 H
   }
 
   function getScale() {
@@ -901,14 +873,16 @@
     return (165 / Math.max(fd.rw, fd.rh)) * viewZoom;
   }
 
+  // 🌟 命中判定：精準依據各面座標原點，側牆用 it.y，主牆用 it.x
   function getHitItem(cx, cy) {
     const r = getCurRoom(); const sc = getScale(); const fd = getRoomFaceDim(r, curFace);
     const ox = (cv.width - fd.rw * sc) / 2 + viewPanX, oy = (cv.height - fd.rh * sc) / 2 + viewPanY;
     return r.items.slice().reverse().find(it => {
       if (it.face !== curFace) return false;
       const dim = getItemFaceDim(it, curFace);
-      const iy = (curFace === 'floor' || curFace === 'ceiling') ? it.y : (it.elevationY || 350);
-      const rx = ox + it.x * sc, ry = oy + iy * sc, rw = dim.rw * sc, rh = dim.rh * sc;
+      const iu = (curFace === 'left' || curFace === 'right') ? it.y : it.x;
+      const iv = (curFace === 'floor' || curFace === 'ceiling') ? it.y : (it.elevationY || 350);
+      const rx = ox + iu * sc, ry = oy + iv * sc, rw = dim.rw * sc, rh = dim.rh * sc;
       return cx >= rx - 20 && cx <= rx + rw + 20 && cy >= ry - 20 && cy <= ry + rh + 20;
     });
   }
@@ -940,12 +914,7 @@
 
   function selectItemFromChip(id) {
     selectedItemId = id; const r = getCurRoom(); const it = r.items.find(i => i.id === id);
-    if (it) { 
-      if (curFace !== it.face) switchFace(it.face); 
-      showFloatCtrl(it); 
-      if (typeof syncSlidersFromItem === 'function') syncSlidersFromItem(it);
-      updateAll(); 
-    }
+    if (it) { if (curFace !== it.face) switchFace(it.face); showFloatCtrl(it); updateAll(); }
   }
 
   function draw2D() {
@@ -987,13 +956,16 @@
       (r.structures || []).forEach(s => { ctx.fillStyle = s.col || '#576574'; ctx.fillRect(ox + s.x * sc, oy + s.y * sc, s.w * sc, s.l * sc); });
     }
 
+    // 🌟 2D 畫布繪製：側牆用 it.y 作為水平軸，主牆用 it.x 作為水平軸
     (r.items || []).filter(i => i.face === curFace).forEach(it => {
       const isSel = (it.id === selectedItemId), dim = getItemFaceDim(it, curFace);
-      const rw = dim.rw * sc, rh = dim.rh * sc, iy = (curFace === 'floor' || curFace === 'ceiling') ? it.y : (it.elevationY || 350);
-      ctx.fillStyle = it.col || '#8c7ae6'; ctx.fillRect(ox + it.x * sc, oy + iy * sc, rw, rh);
+      const rw = dim.rw * sc, rh = dim.rh * sc;
+      const iu = (curFace === 'left' || curFace === 'right') ? it.y : it.x;
+      const iv = (curFace === 'floor' || curFace === 'ceiling') ? it.y : (it.elevationY || 350);
+      ctx.fillStyle = it.col || '#8c7ae6'; ctx.fillRect(ox + iu * sc, oy + iv * sc, rw, rh);
       ctx.strokeStyle = isSel ? '#00ffcc' : '#ffffff'; ctx.lineWidth = isSel ? 2.5 : 1;
-      ctx.strokeRect(ox + it.x * sc, oy + iy * sc, rw, rh);
-      ctx.fillStyle = '#fff'; ctx.font = '9.5px sans-serif'; ctx.fillText(it.name, ox + it.x * sc + 3, oy + iy * sc + 11);
+      ctx.strokeRect(ox + iu * sc, oy + iv * sc, rw, rh);
+      ctx.fillStyle = '#fff'; ctx.font = '9.5px sans-serif'; ctx.fillText(it.name, ox + iu * sc + 3, oy + iv * sc + 11);
     });
 
     if (showDimensions && typeof drawDimLine === 'function') {
@@ -1013,9 +985,10 @@
 
 
 
+
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 6 / 共 6 塊】3D 全屋絕對對齊、無限加傢俬不覆蓋、生命週期 -->
-<!-- 💡 秘書備註：全屋藍圖與分房坐標無縫對齊、加件自動微調偏移防止覆蓋 -->
+<!-- 📍 【方塊 6 / 共 6 塊】3D 通用映射引擎、全屋無縫對齊、生命週期 -->
+<!-- 💡 秘書備註：側牆與主牆 3D 幾何映射大統一，右牆大平板完美吸附且順滑滑動 -->
 <!-- ========================================================================= -->
 <script>
   function drawDimLine(ctx, x1, y1, x2, y2, text, offset = 0, isVertical = false) {
@@ -1139,15 +1112,16 @@
       renderGroup.add(mesh);
     });
 
+    // 🌟 3D 通用映射引擎：側牆立體物件幾何尺寸為 (厚度 il, 高度 ih, 面闊 iw)
     (r.items || []).forEach(it => {
       const iw = it.w / 1000, il = it.l / 1000, ih = it.h / 1000;
-      let geom = new THREE.BoxGeometry(iw, ih, il);
       const hostRoom = rooms[it.roomKey] || r;
       const isFull = (curRoomKey === 'fullHouse');
       
       const baseX = isFull ? (it.globalX !== undefined ? it.globalX : (hostRoom.originX + it.x)) : it.x;
       const baseY = isFull ? (it.globalY !== undefined ? it.globalY : (hostRoom.originY + it.y)) : it.y;
       
+      let geom = new THREE.BoxGeometry(iw, ih, il);
       let px = -W / 2 + (baseX / 1000) + iw / 2;
       let py = ih / 2;
       let pz = -L / 2 + (baseY / 1000) + il / 2;
@@ -1160,12 +1134,12 @@
         py = H - elev - ih / 2;
         pz = isFull ? (-L / 2 + ((hostRoom.originY + hostRoom.l) / 1000) - il / 2 - 0.02) : (L / 2 - il / 2 - 0.02);
       } else if (it.face === 'left') {
-        geom = new THREE.BoxGeometry(il, ih, iw);
+        geom = new THREE.BoxGeometry(il, ih, iw); // 厚度 il，面闊 iw
         px = isFull ? (-W / 2 + (hostRoom.originX / 1000) + il / 2 + 0.02) : (-W / 2 + il / 2 + 0.02);
         py = H - elev - ih / 2;
         pz = -L / 2 + (baseY / 1000) + iw / 2;
       } else if (it.face === 'right') {
-        geom = new THREE.BoxGeometry(il, ih, iw);
+        geom = new THREE.BoxGeometry(il, ih, iw); // 厚度 il，面闊 iw
         px = isFull ? (-W / 2 + ((hostRoom.originX + hostRoom.w) / 1000) - il / 2 - 0.02) : (W / 2 - il / 2 - 0.02);
         py = H - elev - ih / 2;
         pz = -L / 2 + (baseY / 1000) + iw / 2;
@@ -1219,11 +1193,9 @@
     allProjectItems.push(newItem);
     syncRoomItemsFromGlobal();
     selectedItemId = newItem.id;
-    closeModal('modal-item');
+    closeModal('modal-item'); switchCategory('item');
     if (curFace !== fc) switchFace(fc);
-    showFloatCtrl(newItem); 
-    if (typeof syncSlidersFromItem === 'function') syncSlidersFromItem(newItem);
-    autoSaveToIndexedDB(); updateAll();
+    showFloatCtrl(newItem); autoSaveToIndexedDB(); updateAll();
   }
 
   function removeItem(id) {
