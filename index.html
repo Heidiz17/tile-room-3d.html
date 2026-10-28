@@ -3,7 +3,7 @@
 <!-- 💡 秘書備註：兼容第一重天 PWA 變數命名、新增大門口方位選擇器樣式 -->
 <!-- ========================================================================= -->
 <!DOCTYPE html>
-<html lang="zh-HK">
+< lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -134,7 +134,7 @@
 <!-- 📍 【方塊 2 / 共 6 塊】HTML 本體：大門口絕對方位基準選單、雙舞台與控制台 -->
 <!-- 💡 秘書備註：頂部新增【🚪 大門口方位】選單，全屋所有房間統一跟隨大門口方向 -->
 <!-- ========================================================================= -->
-<body>
+<>
 
   <!-- 🏷️ 1. 頂部極簡導航：物業資料與房間卡帶 -->
   <div id="top-nav-bar">
@@ -956,12 +956,9 @@
 </script>
 
 
-
-
-
-  <!-- ========================================================================= -->
-<!-- 📍 【方塊 6 / 共 6 塊】3D 大門口絕對方位映射、無限加傢俬、全屏 JSON -->
-<!-- 💡 秘書備註：修復加第2件傢俬覆蓋問題、前後左右牆全自動跟隨大門口絕對方向 -->
+<!-- ========================================================================= -->
+<!-- 📍 【方塊 6 / 共 6 塊】全屋與分房絕對世界坐標對齊、3D 渲染核心、生命週期 -->
+<!-- 💡 秘書備註：修復全屋藍圖睇唔到客廳電視Bug，全屋與獨立房傢俬完美對齊 -->
 <!-- ========================================================================= -->
 <script>
   function drawDimLine(ctx, x1, y1, x2, y2, text, offset = 0, isVertical = false) {
@@ -1072,7 +1069,7 @@
         { geom: new THREE.BoxGeometry(0.12, H, L), x: W / 2, y: H / 2, z: 0, cut: 'cut-right' }
       ];
       walls.forEach(wDef => {
-        if (curViewMode === wDef.cut || (curViewMode === 'box' && wDef.cut === 'back')) return; // 門口視角自動開後牆方便直望前牆
+        if (curViewMode === wDef.cut || (curViewMode === 'box' && wDef.cut === 'back')) return;
         const mesh = new THREE.Mesh(wDef.geom, wallMat);
         mesh.position.set(wDef.x, wDef.y, wDef.z); renderGroup.add(mesh);
       });
@@ -1085,28 +1082,45 @@
       renderGroup.add(mesh);
     });
 
-    // 🌟 3D 傢俬與掛件：完全對齊大門口絕對坐標（後牆=南 +L/2，前牆=北 -L/2）
+    // 🌟 全屋與獨立房坐標無縫對齊：精準映射全屋大圖的世界位置
     (r.items || []).forEach(it => {
       const iw = it.w / 1000, il = it.l / 1000, ih = it.h / 1000;
       let geom = new THREE.BoxGeometry(iw, ih, il);
-      let px = -W / 2 + (it.x / 1000) + iw / 2, py = ih / 2, pz = -L / 2 + (it.y / 1000) + il / 2;
+      const hostRoom = rooms[it.roomKey] || r;
+      const isFull = (curRoomKey === 'fullHouse');
+      
+      const baseX = isFull ? (it.globalX !== undefined ? it.globalX : (hostRoom.originX + it.x)) : it.x;
+      const baseY = isFull ? (it.globalY !== undefined ? it.globalY : (hostRoom.originY + it.y)) : it.y;
+      
+      let px = -W / 2 + (baseX / 1000) + iw / 2;
+      let py = ih / 2;
+      let pz = -L / 2 + (baseY / 1000) + il / 2;
       const elev = (it.elevationY !== undefined ? it.elevationY : 300) / 1000;
 
       if (it.face === 'front') {
-        py = H - elev - ih / 2; pz = -L / 2 + il / 2 + 0.02; // 死吸正對大門的前牆 (北方 -Z)
+        py = H - elev - ih / 2;
+        pz = isFull ? (-L / 2 + (hostRoom.originY / 1000) + il / 2 + 0.02) : (-L / 2 + il / 2 + 0.02);
       } else if (it.face === 'back') {
-        py = H - elev - ih / 2; pz = L / 2 - il / 2 - 0.02;  // 死吸大門口背脊的後牆 (南方 +Z)
+        py = H - elev - ih / 2;
+        pz = isFull ? (-L / 2 + ((hostRoom.originY + hostRoom.l) / 1000) - il / 2 - 0.02) : (L / 2 - il / 2 - 0.02);
       } else if (it.face === 'left') {
         geom = new THREE.BoxGeometry(il, ih, iw);
-        px = -W / 2 + il / 2 + 0.02; py = H - elev - ih / 2; pz = -L / 2 + (it.x / 1000) + iw / 2;
+        px = isFull ? (-W / 2 + (hostRoom.originX / 1000) + il / 2 + 0.02) : (-W / 2 + il / 2 + 0.02);
+        py = H - elev - ih / 2;
+        pz = -L / 2 + (baseY / 1000) + iw / 2;
       } else if (it.face === 'right') {
         geom = new THREE.BoxGeometry(il, ih, iw);
-        px = W / 2 - il / 2 - 0.02; py = H - elev - ih / 2; pz = -L / 2 + (it.x / 1000) + iw / 2;
+        px = isFull ? (-W / 2 + ((hostRoom.originX + hostRoom.w) / 1000) - il / 2 - 0.02) : (W / 2 - il / 2 - 0.02);
+        py = H - elev - ih / 2;
+        pz = -L / 2 + (baseY / 1000) + iw / 2;
       } else if (it.face === 'ceiling') {
         py = H - ih / 2;
       }
+
       const mesh = new THREE.Mesh(geom, new THREE.MeshLambertMaterial({ color: it.col || 0xd4a373 }));
-      mesh.position.set(px, py, pz); renderGroup.add(mesh); itemMeshesMap.set(it.id, mesh);
+      mesh.position.set(px, py, pz);
+      renderGroup.add(mesh);
+      itemMeshesMap.set(it.id, mesh);
     });
     renderer.render(scene, camera);
   }
@@ -1133,13 +1147,12 @@
     syncRoomItemsFromGlobal(); syncToTxtArea(); updateAll(); set3DCameraMode(curViewMode);
   }
 
-  // 🌟 修復加第二件傢俬覆蓋問題：獨立不重複 ID + 坐標微調錯開 + 綁定 roomKey
   function addItemManual() {
     const r = getCurRoom(); const fc = document.getElementById('it-face').value;
     const offset = (allProjectItems.length % 5) * 80;
     const newItem = {
       id: Date.now() + Math.floor(Math.random() * 1000),
-      roomKey: curRoomKey,
+      roomKey: curRoomKey === 'fullHouse' ? 'living' : curRoomKey,
       name: document.getElementById('it-name').value, face: fc,
       w: parseFloat(document.getElementById('it-w').value) || 1200, l: parseFloat(document.getElementById('it-l').value) || 700,
       h: parseFloat(document.getElementById('it-h').value) || 700,
@@ -1246,3 +1259,7 @@
 </script>
 </body>
 </html>
+
+
+    
+
