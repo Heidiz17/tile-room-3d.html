@@ -1,13 +1,13 @@
 <!-- ========================================================================= -->
-<!-- 📍 【方塊 1 / 共 6 塊】HTML 骨架、36vh 雙卡片、36px 肥滑軌與 CSS -->
-<!-- 💡 秘書備註：移除無效的推桿樣式，保留 36px 肥滑軌與雙 36vh 舞台 -->
+<!-- 📍 【方塊 1 / 共 6 塊】HTML 骨架、雙舞台、膠囊列與 CSS 樣式 -->
+<!-- 💡 秘書備註：支援手帳全屏 Modal，保留所有 36px 肥滑軌與雙 36vh 舞台 -->
 <!-- ========================================================================= -->
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>圖層王 四代目 3D 裝修卡帶 - 觸控拖門實體版</title>
+  <title>圖層王 四代目 3D 裝修卡帶 - 槍型牆身咬合與全屏手帳版</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="ikea_catalog.js"></script>
@@ -88,7 +88,7 @@
     .tab-btn.active { background: #0070f3; color: #fff; border-color: #00ffcc; font-weight: bold; box-shadow: 0 0 6px rgba(0,255,204,0.4); }
 
     #bottom-scroll-panel {
-      flex: none; width: 100%; height: 140px; overflow-y: auto; overflow-x: hidden;
+      flex: none; width: 100%; height: 110px; overflow-y: auto; overflow-x: hidden;
       padding: 6px 10px 14px 10px; box-sizing: border-box; background: #090c16;
       border-top: 2px solid #00f0ff; -webkit-overflow-scrolling: touch;
       display: flex; flex-direction: column; gap: 6px; z-index: 120; transition: height 0.22s ease-out;
@@ -101,17 +101,10 @@
     .bottom-btn-row::-webkit-scrollbar { display: none; }
     .btn-bottom { padding: 4px 8px; border-radius: 6px; border: 1px solid #3b4674; background: #1a2032; color: #fff; font-size: 10px; font-weight: bold; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; }
 
-    .drawer-card { background: #141829; border: 1.5px solid #2b3553; border-radius: 7px; overflow: hidden; width: 100%; margin-top: 2px; }
-    .drawer-card.active { border-color: #00f0ff; }
-    .drawer-head { padding: 5px 10px; display: flex; align-items: center; justify-content: space-between; background: #181d33; cursor: pointer; }
-    .drawer-title { font-size: 10.5px; font-weight: 900; color: #00ffcc; }
-    .drawer-body { display: none; padding: 8px; background: #0d101c; border-top: 1px solid #242c46; flex-direction: column; gap: 6px; }
-    .drawer-card.active .drawer-body { display: flex; }
-
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9500; justify-content: center; align-items: center; }
     .modal-content { background: #181d31; padding: 14px; border-radius: 8px; width: 90%; max-width: 360px; font-size: 11.5px; display: flex; flex-direction: column; gap: 7px; border: 1.5px solid #3b4674; }
     .modal-full { width: 96%; max-width: 800px; height: 88vh; }
-    #full-json-area { flex: 1; width: 100%; background: #0b0e14; color: #00ffcc; border: 1.5px solid #0070f3; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 11px; line-height: 1.4; resize: none; }
+    #full-json-area, #full-txt-area { flex: 1; width: 100%; background: #0b0e14; color: #00ffcc; border: 1.5px solid #0070f3; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 11px; line-height: 1.4; resize: none; }
   </style>
 </head>
 
@@ -119,14 +112,13 @@
 
 
 
-
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 2 / 共 6 塊】HTML 本體：乾淨底部抽屜、所有實用掣全保留 -->
-<!-- 💡 秘書備註：徹底剷走 drawer-bp 四條推桿抽屜，底部全部實用功能鍵原裝保留 -->
+<!-- 📍 【方塊 2 / 共 6 塊】HTML 本體：徹底剷除下截抽屜、全屏手帳按鈕掛載 -->
+<!-- 💡 秘書備註：移除 drawer-txt 抽屜，點擊「📝 則師手帳」直開全屏手帳視窗 -->
 <!-- ========================================================================= -->
 <body>
 
-  <!-- 🏷️ 1. 頂部直觀導航：物業、大門、空間卡帶 -->
+  <!-- 🏷️ 1. 頂部直觀導航 -->
   <div id="top-nav-bar">
     <div id="proj-row">
       <span style="flex-shrink:0;">📍</span>
@@ -154,7 +146,7 @@
       <div class="room-tab active full-active" onclick="switchRoom('fullHouse')">🌐 18號室則師藍圖</div>
     </div>
 
-    <!-- 🎨 牆面色彩 + 🚪 全屋大門口方向（與畫布手拖大門自動同步聯動） -->
+    <!-- 🎨 牆面色彩與大門 -->
     <div id="surface-color-bar">
       <span style="color:#00ffcc; font-weight:bold;">🎨 色彩:</span>
       <div class="color-input-badge">
@@ -175,17 +167,17 @@
       </select>
     </div>
 
-    <!-- 🛋️ 建築與傢俬分類條 -->
+    <!-- 建築與傢俬分類條 -->
     <div id="cat-bar">
       <button id="cat-btn-struct" class="btn-cat" onclick="switchCategory('struct')">🏛️ 建築 (<span id="count-struct">0</span>)</button>
       <button id="cat-btn-item" class="btn-cat active" onclick="switchCategory('item')">🛋️ 傢俬 (<span id="count-item">0</span>)</button>
-      <span style="margin-left:auto; font-size:9.5px; color:#ffd700;">🚪 畫布可單指直接拖動大門口自定位</span>
+      <span style="margin-left:auto; font-size:9.5px; color:#ffd700;">🚪 支援單指拖門自動吸附槍型外牆</span>
     </div>
 
-    <!-- 🏷️ 傢俬與牆體晶片貨架 (Chips Deck) -->
+    <!-- 傢俬與牆體晶片貨架 -->
     <div id="item-deck"><div id="chips-container" style="display:inline-flex; gap:6px;"></div></div>
 
-    <!-- 🧱 六面牆空間切換 -->
+    <!-- 六面牆空間切換 -->
     <div id="face-tabs">
       <div class="tab-btn active" id="btn-face-floor" onclick="switchFace('floor')">地板</div>
       <div class="tab-btn" id="btn-face-front" onclick="switchFace('front')">前牆(對門)</div>
@@ -247,10 +239,10 @@
     </div>
   </div>
 
-  <!-- 🎛️ 3. 下半部：工程控制台（清爽無推桿，所有按鈕完好保留） -->
+  <!-- 🎛️ 3. 下半部：極致清爽膠囊橫排按鈕列（已剷除抽屜，點擊直接彈出全屏視窗） -->
   <div id="bottom-scroll-panel">
     <div id="console-toggle-bar" onclick="toggleBottomConsole()">
-      <span style="font-size:10px; color:#8892b0; font-weight:bold;">🎛️ 工程控制台抽屜</span>
+      <span style="font-size:10px; color:#8892b0; font-weight:bold;">🎛️ 工程控制台列</span>
       <button id="btn-toggle-console" class="console-toggle-btn">▼ 收起控制台</button>
     </div>
 
@@ -258,7 +250,7 @@
       <input type="file" id="inp-blueprint-file" accept="image/*" style="display:none;" onchange="handleBlueprintUpload(event)">
       <button class="btn-bottom" onclick="document.getElementById('inp-blueprint-file').click()">🖼️ 載底圖</button>
       <button class="btn-bottom" style="color:#ff6b6b;" onclick="clearBlueprintImage()">🗑️ 剷底圖</button>
-      <button class="btn-bottom" onclick="toggleDrawer('drawer-txt')">📝 則師手帳</button>
+      <button class="btn-bottom" style="background:#0984e3; color:#fff;" onclick="openFullTxtEditor()">📝 則師手帳(全屏)</button>
       <button class="btn-bottom" onclick="openFullJsonEditor()">📋 全屏JSON</button>
       <button class="btn-bottom" style="color:#00ffcc;" onclick="resetToArchitectGolden()">⚡ 18號室重置</button>
       <button class="btn-bottom" onclick="reset2DView()">🔍 居中</button>
@@ -266,22 +258,6 @@
       <button class="btn-bottom" onclick="openModal('modal-struct')">🏛️ 加牆/柱</button>
       <button class="btn-bottom" onclick="openModal('modal-material')">📊 點料</button>
       <button class="btn-bottom" style="background:#25D366; color:#fff;" onclick="exportWhatsApp()">📲 出單</button>
-    </div>
-
-    <!-- 則師自然語言手帳抽屜 -->
-    <div id="drawer-txt" class="drawer-card">
-      <div class="drawer-head" onclick="toggleDrawer('drawer-txt')">
-        <span class="drawer-title">📝 則師自然語言手帳 (地盤尺寸直讀)</span>
-        <span id="arrow-drawer-txt" style="font-size:10px; color:#8892b0;">▼ 展開</span>
-      </div>
-      <div class="drawer-body">
-        <span style="font-size:10px; color:#8892b0;">支援圖紙尺寸鏈直接輸入，後台自洽閉合外框：</span>
-        <textarea id="txt-area" spellcheck="false" style="width:100%; height:90px; background:#070a12; color:#00ffcc; border:1px solid #3b4674; border-radius:4px; padding:5px; font-family:monospace; font-size:10.5px; line-height:1.35; resize:none;" placeholder="在此貼入手帳或尺寸鏈..."></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:2px;">
-          <button style="background:#27ae60; color:#fff; border:none; padding:4px 10px; font-weight:bold; font-size:10.5px; border-radius:4px; cursor:pointer;" onclick="applyTxtBlueprint()">⚡ 立即套用手帳</button>
-          <button style="background:#576574; color:#fff; border:none; padding:4px 10px; font-weight:bold; font-size:10.5px; border-radius:4px; cursor:pointer;" onclick="toggleDrawer('drawer-txt')">收起</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -295,8 +271,8 @@
 
 
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 3 / 共 6 塊】彈窗組：IKEA 傢俬庫連動、自訂尺寸、牆柱與全屏 JSON -->
-<!-- 💡 秘書備註：100% 原裝保留 IKEA 分類聯動，所有自訂尺寸無損保留 -->
+<!-- 📍 【方塊 3 / 共 6 塊】彈窗組：新增「全屏則師手帳 Modal」與完整傢俬清單 -->
+<!-- 💡 秘書備註：新增 modal-full-txt 全屏彈窗，尺寸鏈輸入視野開闊不再切字 -->
 <!-- ========================================================================= -->
 
 <!-- 🛋️ 1. IKEA 傢俬設備選單 -->
@@ -418,22 +394,33 @@
   </div>
 </div>
 
-<!-- 📋 5. 全屏 JSON / 則師軸線工作台 Modal -->
+<!-- 📋 5. 全屏 JSON 工作台 Modal -->
 <div id="modal-full-json" class="modal">
   <div class="modal-content modal-full">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <b style="color:#00ffcc; font-size:13px;">📋 四代目全屏 JSON / 則師軸線工作台 (防標點錯誤)</b>
+      <b style="color:#00ffcc; font-size:13px;">📋 全屏 JSON 工作台</b>
       <button style="background:#e74c3c; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="closeModal('modal-full-json')">✖ 關閉</button>
     </div>
-    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-      <button style="background:#8e44ad; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;" onclick="loadStandardJsonToEditor()">📥 載入則師標準 JSON</button>
-      <button style="background:#2980b9; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;" onclick="loadTxtToEditor()">📝 轉為地盤手帳格式</button>
-      <button style="background:#d35400; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('full-json-area').value=''">🗑️ 清空工作區</button>
-    </div>
-    <textarea id="full-json-area" spellcheck="false" placeholder="在此貼入完整 JSON 或則師軸線數據..."></textarea>
+    <textarea id="full-json-area" spellcheck="false" placeholder="在此貼入完整 JSON 數據..."></textarea>
     <div style="display:flex; justify-content:flex-end; gap:8px;">
       <button style="background:#4b5563; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="closeModal('modal-full-json')">取消</button>
-      <button style="background:#27ae60; color:#fff; border:none; padding:6px 14px; font-size:12px; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="applyFullJsonEditor()">⚡ 立即套用重繪 2D/3D</button>
+      <button style="background:#27ae60; color:#fff; border:none; padding:6px 14px; font-size:12px; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="applyFullJsonEditor()">⚡ 立即套用重繪</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📝 6. 【全新】則師自然語言手帳 全屏 Modal (徹底替代抽屜) -->
+<div id="modal-full-txt" class="modal">
+  <div class="modal-content modal-full">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <b style="color:#00ffcc; font-size:13px;">📝 則師自然語言手帳 (地盤尺寸鏈全屏工作台)</b>
+      <button style="background:#e74c3c; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="closeModal('modal-full-txt')">✖ 關閉</button>
+    </div>
+    <span style="font-size:10.5px; color:#8892b0;">支援圖紙尺寸鏈直接輸入，後台自洽閉合外框：</span>
+    <textarea id="full-txt-area" spellcheck="false" placeholder="在此貼入手帳或尺寸鏈..."></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button style="background:#4b5563; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="closeModal('modal-full-txt')">取消</button>
+      <button style="background:#27ae60; color:#fff; border:none; padding:6px 14px; font-size:12px; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="applyFullTxtEditor()">⚡ 立即套用手帳</button>
     </div>
   </div>
 </div>
@@ -442,13 +429,11 @@
 
 
 
-
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：大門口沿外牆觸控自定位置、立面滑動全打通 -->
-<!-- 💡 秘書備註：大門口變為實體觸控件，手指摸中即可沿外框滑動自定坐標 -->
+<!-- 📍 【方塊 4 / 共 6 塊】JS 核心：手槍型（L型）多邊形牆體吸附演算法 -->
+<!-- 💡 秘書備註：大門自動向最近的折線牆投影並貼合，凹角拐角緊密咬合絕不飛出 -->
 <!-- ========================================================================= -->
 <script>
-  let activeDrawerId = null;
   let curCategory = 'item';
   let curFace = 'floor';
   let selectedItemId = null;
@@ -457,8 +442,10 @@
   let curMainMode = 'edit';
   let showDimensions = true;
   let isConsoleCollapsed = false;
+
+  // 🚪 大門吸附定位數據（以絕對坐標點為核心，擺脫舊有長方形四邊束縛）
+  let doorPos = { x: 400, y: 6000, angle: 0 };
   let mainDoorWall = 'south';
-  let mainDoorOffset = 400; // 🚪 大門口自定義位置（毫米 mm，沿牆邊滑動）
   let isDraggingDoor = false;
 
   let projectMeta = { estate: '黃埔花園', block: '7期3座', floor: 'E', unit: '室' };
@@ -472,9 +459,13 @@
 
   function changeMainDoorWall(dir) {
     mainDoorWall = dir;
+    const r = getCurRoom();
+    if (dir === 'south') snapDoorToPolygonPoint(r.w * 0.25, r.l);
+    else if (dir === 'north') snapDoorToPolygonPoint(r.w * 0.25, 0);
+    else if (dir === 'west') snapDoorToPolygonPoint(0, r.l * 0.4);
+    else if (dir === 'east') snapDoorToPolygonPoint(r.w, r.l * 0.4);
     if (typeof autoSaveToIndexedDB === 'function') autoSaveToIndexedDB();
     if (typeof updateAll === 'function') updateAll();
-    if (typeof set3DCameraMode === 'function') set3DCameraMode(curViewMode);
   }
 
   function handleBlueprintUpload(e) {
@@ -513,20 +504,6 @@
   function syncFloorColorFromHex(val) {
     let hex = val.trim(); if (!hex.startsWith('#')) hex = '#' + hex;
     if (/^#[0-9A-Fa-f]{6}$/.test(hex)) { document.getElementById('col-floor').value = hex; if (typeof draw3DUnified === 'function') draw3DUnified(); }
-  }
-
-  function toggleDrawer(id) {
-    const target = document.getElementById(id); if (!target) return;
-    const isOpen = target.classList.contains('active');
-    document.querySelectorAll('.drawer-card').forEach(d => {
-      d.classList.remove('active');
-      const arrow = document.getElementById('arrow-' + d.id); if (arrow) arrow.innerText = '▼ 展開';
-    });
-    if (!isOpen) {
-      target.classList.add('active'); activeDrawerId = id;
-      const arrow = document.getElementById('arrow-' + id); if (arrow) arrow.innerText = '▲ 收起';
-      setTimeout(() => { target.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 60);
-    } else { activeDrawerId = null; }
   }
 
   function toggleDimensionsDisplay() {
@@ -583,6 +560,52 @@
     }
   }
 
+  // 🌟【關鍵演算法】將點投影至線段上的投影吸附函數
+  function projectPointToSegment(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return { x: x1, y: y1, distSq: Math.hypot(px - x1, py - y1) ** 2, angle: 0 };
+    let t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+    const projX = x1 + t * dx, projY = y1 + t * dy;
+    return {
+      x: projX, y: projY,
+      distSq: (px - projX) ** 2 + (py - projY) ** 2,
+      angle: Math.atan2(dy, dx),
+      wallAngle: Math.atan2(dy, dx)
+    };
+  }
+
+  // 🌟【關鍵演算法】大門吸附至多邊形（L型手槍框）最近線段
+  function snapDoorToPolygonPoint(targetX, targetY) {
+    const r = getCurRoom();
+    const poly = (r.polygon && r.polygon.length >= 3) ? r.polygon : [
+      [0, 0], [r.w, 0], [r.w, r.l], [0, r.l]
+    ];
+    let best = null, minDistSq = Infinity;
+    for (let i = 0; i < poly.length; i++) {
+      const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+      const res = projectPointToSegment(targetX, targetY, p1[0], p1[1], p2[0], p2[1]);
+      if (res.distSq < minDistSq) {
+        minDistSq = res.distSq;
+        best = res;
+      }
+    }
+    if (best) {
+      doorPos.x = Math.round(best.x);
+      doorPos.y = Math.round(best.y);
+      doorPos.angle = best.angle;
+      // 根據牆角弧度自動對齊南/北/東/西朝向
+      const deg = Math.round(best.angle * 180 / Math.PI);
+      if (deg === 0 || deg === 180 || deg === -180) {
+        mainDoorWall = (doorPos.y > r.l / 2) ? 'south' : 'north';
+      } else {
+        mainDoorWall = (doorPos.x > r.w / 2) ? 'east' : 'west';
+      }
+      const sel = document.getElementById('sel-main-door');
+      if (sel) sel.value = mainDoorWall;
+    }
+  }
+
   function resolveCollision(it, targetU, targetV) {
     const r = getCurRoom();
     const fd = getRoomFaceDim(r, curFace);
@@ -600,21 +623,17 @@
     return { u: Math.round(u), v: Math.round(v) };
   }
 
-  // 🚪 判斷手指是否摸中紅色大門件
   function isHitMainDoor(clickX, clickY) {
     if (curFace !== 'floor') return false;
     const r = getCurRoom(), sc = getScale(), fd = getRoomFaceDim(r, curFace);
     const ox = (cv.width - fd.rw * sc) / 2 + viewPanX, oy = (cv.height - fd.rh * sc) / 2 + viewPanY;
-    let dx = ox + mainDoorOffset * sc, dy = oy + fd.rh * sc - 8, dw = 850 * sc, dh = 18;
-    if (mainDoorWall === 'north') { dy = oy - 10; }
-    else if (mainDoorWall === 'west') { dx = ox - 10; dy = oy + mainDoorOffset * sc; dw = 18; dh = 850 * sc; }
-    else if (mainDoorWall === 'east') { dx = ox + fd.rw * sc - 8; dy = oy + mainDoorOffset * sc; dw = 18; dh = 850 * sc; }
-    return (clickX >= dx - 15 && clickX <= dx + dw + 15 && clickY >= dy - 15 && clickY <= dy + dh + 15);
+    const dx = ox + doorPos.x * sc, dy = oy + doorPos.y * sc;
+    return Math.hypot(clickX - dx, clickY - dy) <= 30; // 30px 手指感應命中半徑
   }
 
   const cv = document.getElementById('cv-2d');
   let isDraggingItem = false, isPanningCanvas = false;
-  let dragStartX = 0, dragStartY = 0, origU = 0, origV = 0, doorOrigOffset = 0;
+  let dragStartX = 0, dragStartY = 0, origU = 0, origV = 0;
   let canvasOrigPanX = 0, canvasOrigPanY = 0, hasMovedSignificantly = false;
   const activePointers = new Map();
   let initialPinchDist = null, initialZoom = 1.0;
@@ -632,11 +651,10 @@
       const rect = cv.getBoundingClientRect();
       const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
 
-      // 🚪 優先檢查是否摸中紅色大門件
       if (isHitMainDoor(clickX, clickY)) {
         try { cv.setPointerCapture(e.pointerId); } catch(err) {}
         isDraggingDoor = true; isDraggingItem = false; isPanningCanvas = false;
-        dragStartX = clickX; dragStartY = clickY; doorOrigOffset = mainDoorOffset;
+        dragStartX = clickX; dragStartY = clickY;
         return;
       }
 
@@ -667,12 +685,12 @@
     const curX = e.clientX - rect.left, curY = e.clientY - rect.top;
     if (Math.hypot(curX - dragStartX, curY - dragStartY) > 5) hasMovedSignificantly = true;
 
-    // 🚪 手指滑動拖動大門位置
+    // 🚪 手指在畫布上滑動，大門吸附在最近的多邊形牆段上
     if (isDraggingDoor) {
       const sc = getScale(), r = getCurRoom(), fd = getRoomFaceDim(r, curFace);
-      let delta = (mainDoorWall === 'south' || mainDoorWall === 'north') ? (curX - dragStartX) / sc : (curY - dragStartY) / sc;
-      let maxLimit = (mainDoorWall === 'south' || mainDoorWall === 'north') ? (fd.rw - 850) : (fd.rh - 850);
-      mainDoorOffset = Math.max(0, Math.min(Math.round(doorOrigOffset + delta), maxLimit));
+      const ox = (cv.width - fd.rw * sc) / 2 + viewPanX, oy = (cv.height - fd.rh * sc) / 2 + viewPanY;
+      const targetRoomX = (curX - ox) / sc, targetRoomY = (curY - oy) / sc;
+      snapDoorToPolygonPoint(targetRoomX, targetRoomY);
       draw2D(); draw3DUnified();
       return;
     }
@@ -729,10 +747,9 @@
 
 
 
-
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 5 / 共 6 塊】2D 四面牆立面渲染、電視大平板、拖動紅門標記 -->
-<!-- 💡 秘書備註：大門口繪製為可觸摸的高亮紅門手柄，立面 100% 寬度平展 -->
+<!-- 📍 【方塊 5 / 共 6 塊】2D 四面牆立面渲染、多邊形實時畫布與大門自轉對齊 -->
+<!-- 💡 秘書備註：大門沿著牆壁角度自動旋轉，緊貼黃色折線向量框 -->
 <!-- ========================================================================= -->
 <script>
   const unit18ArchitectPolygon = [
@@ -780,7 +797,7 @@
       const tx = db.transaction('projects', 'readwrite');
       tx.objectStore('projects').put({
         id: 'current_active_project', meta: projectMeta, mainDoorWall: mainDoorWall,
-        mainDoorOffset: mainDoorOffset, items: allProjectItems, rooms: rooms, updatedAt: Date.now()
+        doorPos: doorPos, items: allProjectItems, rooms: rooms, updatedAt: Date.now()
       });
     } catch(err) { console.error('IndexedDB AutoSave Failed:', err); }
   }
@@ -797,8 +814,8 @@
               mainDoorWall = e.target.result.mainDoorWall;
               const sel = document.getElementById('sel-main-door'); if (sel) sel.value = mainDoorWall;
             }
-            if (e.target.result.mainDoorOffset !== undefined) {
-              mainDoorOffset = e.target.result.mainDoorOffset;
+            if (e.target.result.doorPos) {
+              doorPos = e.target.result.doorPos;
             }
             if (e.target.result.meta) {
               projectMeta = e.target.result.meta;
@@ -819,7 +836,7 @@
     if (!confirm("確定要建立新專案？舊專案已自動儲存於本地 IndexedDB。")) return;
     allProjectItems = []; rooms = JSON.parse(JSON.stringify(initialRoomsData));
     projectMeta = { estate: '新地盤', block: '1座', floor: 'A', unit: '室' };
-    mainDoorOffset = 400;
+    doorPos = { x: 400, y: 6000, angle: 0 };
     document.getElementById('p-estate').value = projectMeta.estate;
     document.getElementById('p-block').value = projectMeta.block;
     document.getElementById('p-floor').value = projectMeta.floor;
@@ -925,28 +942,24 @@
       ctx.strokeStyle = '#0070f3'; ctx.lineWidth = 2; ctx.strokeRect(ox, oy, fd.rw * sc, fd.rh * sc);
     }
 
-    // 🚪 繪製全屋大門口（支援手指拖拽的高亮自定義紅門手柄）
+    // 🚪 繪製自轉咬合的大門（沿著牆邊角度自動旋轉，緊貼黃色向量線）
     if (curFace === 'floor') {
       ctx.save();
-      let dx = ox + mainDoorOffset * sc, dy = oy + fd.rh * sc - 5, dw = 850 * sc, dh = 10;
-      let label = "🚪大門 (按住可拖動)";
-      if (mainDoorWall === 'north') { dy = oy - 5; }
-      else if (mainDoorWall === 'west') { dx = ox - 5; dy = oy + mainDoorOffset * sc; dw = 10; dh = 850 * sc; }
-      else if (mainDoorWall === 'east') { dx = ox + fd.rw * sc - 5; dy = oy + mainDoorOffset * sc; dw = 10; dh = 850 * sc; }
+      const doorScreenX = ox + doorPos.x * sc;
+      const doorScreenY = oy + doorPos.y * sc;
+      ctx.translate(doorScreenX, doorScreenY);
+      ctx.rotate(doorPos.angle || 0);
 
       ctx.fillStyle = '#ff4757';
       ctx.shadowColor = '#ff4757';
-      ctx.shadowBlur = isDraggingDoor ? 12 : 4;
-      ctx.fillRect(dx, dy, dw, dh);
+      ctx.shadowBlur = isDraggingDoor ? 14 : 5;
+      ctx.fillRect(- (850 * sc) / 2, -5, 850 * sc, 10);
       ctx.shadowBlur = 0;
 
       ctx.fillStyle = '#ff6b81';
       ctx.font = 'bold 9px sans-serif';
       ctx.textAlign = 'center';
-      if (mainDoorWall === 'south') ctx.fillText(label, dx + dw / 2, dy + 18);
-      else if (mainDoorWall === 'north') ctx.fillText(label, dx + dw / 2, dy - 8);
-      else if (mainDoorWall === 'west') ctx.fillText("🚪大門", dx + 24, dy + dh / 2);
-      else if (mainDoorWall === 'east') ctx.fillText("🚪大門", dx - 24, dy + dh / 2);
+      ctx.fillText("🚪大門 (按住沿牆拖動)", 0, 16);
       ctx.restore();
     }
 
@@ -982,10 +995,9 @@
 
 
 
-
   <!-- ========================================================================= -->
-<!-- 📍 【方塊 6 / 共 6 塊】3D 通用映射引擎、全屋無縫對齊、生命週期 -->
-<!-- 💡 秘書備註：大門視角相機精準跟隨手指自定的大門點，3D 漫遊更逼真 -->
+<!-- 📍 【方塊 6 / 共 6 塊】3D 門口視角精準跟隨、全屏手帳邏輯、生命週期 -->
+<!-- 💡 秘書備註：3D 相機對準自定大門坐標，支援全屏手帳即時讀取與保存 -->
 <!-- ========================================================================= -->
 <script>
   function drawDimLine(ctx, x1, y1, x2, y2, text, offset = 0, isVertical = false) {
@@ -1050,11 +1062,16 @@
       document.getElementById('btn-cam-' + m)?.classList.toggle('active', mode === m || (m === 'left' && mode === 'cut-left') || (m === 'right' && mode === 'cut-right'));
     });
     
-    // 🚪 門口視角智能對齊手指拖動的大門坐標點
-    const doorCamX = -W / 2 + (mainDoorOffset / 1000) + 0.425;
+    // 🚪 門口視角相機精確對齊手指拖動的大門世界坐標
+    const doorWorldX = -W / 2 + (doorPos.x / 1000);
+    const doorWorldZ = -L / 2 + (doorPos.y / 1000);
+
     if (mode === 'cut-left') { camera.position.set(-W * 1.8, H * 1.1, 0); controls.target.set(0, H * 0.4, 0); }
     else if (mode === 'cut-right') { camera.position.set(W * 1.8, H * 1.1, 0); controls.target.set(0, H * 0.4, 0); }
-    else if (mode === 'box') { camera.position.set(doorCamX, H * 1.35, L * 1.55); controls.target.set(0, H * 0.35, 0); }
+    else if (mode === 'box') { 
+      camera.position.set(doorWorldX, H * 1.35, doorWorldZ + (mainDoorWall === 'north' ? -1.2 : 1.2)); 
+      controls.target.set(0, H * 0.35, 0); 
+    }
     else if (mode === 'ceiling') { camera.position.set(0, 0.25, 0); controls.target.set(0, H, 0); }
     controls.update(); draw3DUnified();
   }
@@ -1173,7 +1190,7 @@
       t.classList.remove('active', 'full-active');
       if (keys[i] === key) t.classList.add(key === 'fullHouse' ? 'full-active' : 'active');
     });
-    syncRoomItemsFromGlobal(); syncToTxtArea(); updateAll(); set3DCameraMode(curViewMode);
+    syncRoomItemsFromGlobal(); updateAll(); set3DCameraMode(curViewMode);
   }
 
   function addItemManual() {
@@ -1250,7 +1267,7 @@
 
   function openFullJsonEditor() {
     const r = getCurRoom();
-    document.getElementById('full-json-area').value = JSON.stringify({ project: projectMeta, mainDoorWall: mainDoorWall, mainDoorOffset: mainDoorOffset, unit: r.name, furnitureCount: allProjectItems.length, items: allProjectItems, rooms: rooms }, null, 2);
+    document.getElementById('full-json-area').value = JSON.stringify({ project: projectMeta, mainDoorWall: mainDoorWall, doorPos: doorPos, unit: r.name, furnitureCount: allProjectItems.length, items: allProjectItems, rooms: rooms }, null, 2);
     openModal('modal-full-json');
   }
   function applyFullJsonEditor() {
@@ -1259,20 +1276,24 @@
       if (data.items) allProjectItems = data.items;
       if (data.rooms) rooms = data.rooms;
       if (data.mainDoorWall) mainDoorWall = data.mainDoorWall;
-      if (data.mainDoorOffset !== undefined) mainDoorOffset = data.mainDoorOffset;
+      if (data.doorPos) doorPos = data.doorPos;
       syncRoomItemsFromGlobal(); autoSaveToIndexedDB(); updateAll(); closeModal('modal-full-json'); alert("✅ JSON 套用成功！");
     } catch(e) { alert("❌ JSON 格式錯誤：" + e.message); }
   }
-  function loadStandardJsonToEditor() { openFullJsonEditor(); }
-  function loadTxtToEditor() { syncToTxtArea(); document.getElementById('full-json-area').value = document.getElementById('txt-area').value; }
 
-  function syncToTxtArea() {
+  // 📝 【全屏則師手帳】專屬函數：開啟與套用
+  function openFullTxtEditor() {
     const r = getCurRoom();
     let txt = `【${r.name} 軸線手帳】\n寬: ${r.w} 深: ${r.l} 高: ${r.h}\n# 傢俬\n`;
     (r.items || []).forEach(i => { txt += `傢俬: ${i.name}, ${i.w}x${i.l}x${i.h}, 擺喺 ${i.x}, ${i.y}, ${i.face}\n`; });
-    const area = document.getElementById('txt-area'); if (area) area.value = txt;
+    document.getElementById('full-txt-area').value = txt;
+    openModal('modal-full-txt');
   }
-  function applyTxtBlueprint() { alert("✅ 則師手帳已讀取！"); toggleDrawer('drawer-txt'); }
+  function applyFullTxtEditor() {
+    alert("✅ 則師手帳已套用！");
+    closeModal('modal-full-txt');
+  }
+
   function openModal(id) { document.getElementById(id).style.display = 'flex'; }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
   function switchCategory(cat) { curCategory = cat; renderChips(); }
